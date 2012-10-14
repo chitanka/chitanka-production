@@ -1,0 +1,15 @@
+/app/config/parameters.yml
+/app/cache/*
+/app/logs/*
+/web/content
+/web/cache/*
+/web/tor/*
+/web/todo/*
+*.php~
+.last
+.lock
+/update/*/*
+/app/spool/*
+.DS_Store
+!.gitignore
+!.gitkeep

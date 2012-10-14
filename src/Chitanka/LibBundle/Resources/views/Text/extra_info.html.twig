@@ -1,0 +1,33 @@
+<fieldset class="infobox">
+	<legend>Допълнителна информация<a href="#after-extrainfobox" class="assistive"> (Прескачане на допълнителната информация)</a></legend>
+
+	{% if text.book and text.book.has_cover %}
+		{% import 'LibBundle::book.html.twig' as booktools %}
+		{{ booktools.cover_div(text.book, 200) }}
+	{% endif %}
+
+	{% import 'LibBundle::text.html.twig' as texttools %}
+	{{ texttools.qrcode(text) }}
+
+	{% for contrib in text.userContribs %}
+		{% if contrib.comment %}
+		<p>
+			{{ contrib.comment }}:
+			{% if contrib.user %}
+				<a href="{{ path('user_show', {'username': contrib.username}) }}">{{ contrib.username }}</a>
+			{% else %}
+				{{ contrib.username }}
+			{% endif %}
+			{% if contrib.humandate is not empty %}({{ contrib.humandate }}){% endif %}
+		</p>
+		{% endif %}
+	{% endfor %}
+	{% if text.source is not empty %}
+		<p>Източник: {{ text.source|link|raw }}</p>
+	{% endif %}
+	{{ text.extrainfohtml(asset('/'))|raw }}
+
+	<hr>
+	<p>Последна редакция: {{ text.currev.date|humandate }}</p>
+</fieldset>
+<div id="after-extrainfobox" class="assistive"><!-- FIXME redundant --></div>

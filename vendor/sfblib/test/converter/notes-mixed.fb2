@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><genre>prose_classic</genre>
+<author><nickname>(неизвестен автор)</nickname></author>
+<book-title>(няма заглавие)</book-title>
+<lang>bg</lang>
+</title-info>
+<document-info><author><nickname>(неизвестен автор)</nickname></author>
+<version>0.0</version>
+</document-info>
+</description>
+<body><section>
+<p>дума<a l:href="#note_1-1" type="note">1</a> в бележка едно<a l:href="#note_1-2" type="note">2</a> бележка две<a l:href="#note_1-3" type="note">3</a> дума<a l:href="#note_1-4" type="note">4</a>.</p>
+<p>дума<a l:href="#note_1-5" type="note">5</a> в бележка три<a l:href="#note_1-6" type="note">6</a> бележка четири<a l:href="#note_1-7" type="note">7</a> дума<a l:href="#note_1-8" type="note">8</a>.</p>
+</section>
+</body>
+<body name="notes"><section id="note_1-1">
+<title><p>1</p></title>
+<p>дума</p>
+</section>
+<section id="note_1-2">
+<title><p>2</p></title>
+<p>Бел.1</p>
+</section>
+<section id="note_1-3">
+<title><p>3</p></title>
+<p>Бел.2</p>
+</section>
+<section id="note_1-4">
+<title><p>4</p></title>
+<p>дума дума</p>
+</section>
+<section id="note_1-5">
+<title><p>5</p></title>
+<p>дума дума дума</p>
+</section>
+<section id="note_1-6">
+<title><p>6</p></title>
+<p>Бел.3</p>
+</section>
+<section id="note_1-7">
+<title><p>7</p></title>
+<p>Бел.4</p>
+</section>
+<section id="note_1-8">
+<title><p>8</p></title>
+<p>дума дума дума дума</p>
+</section>
+</body>
+</FictionBook>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><genre>prose_classic</genre>
+<author><nickname>(неизвестен автор)</nickname></author>
+<book-title>(няма заглавие)</book-title>
+<lang>bg</lang>
+</title-info>
+<document-info><author><nickname>(неизвестен автор)</nickname></author>
+<version>0.0</version>
+</document-info>
+</description>
+<body><section>
+<p><style name="frame">
+Наградата „Ars electronica“<a l:href="#note_1-1" type="note">1</a>
+</style></p>
+<p><style name="frame">
+за културно новаторство в дигиталната ера
+</style></p>
+</section>
+</body>
+<body name="notes"><section id="note_1-1">
+<title><p>1</p></title>
+<p>Електронно изкуство (лат.). — Б.пр.</p>
+</section>
+</body>
+</FictionBook>

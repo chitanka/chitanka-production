@@ -1,0 +1,63 @@
+{% macro book(book) %}
+	{% import 'LibBundle::link.html.twig' as link %}
+	<dl>
+		<dt>
+			<a href="{{ path('book_show', {'id': book.id ~'-'~ book.slug}) }}" rel="{{ path('book_show', {'id': book.id, '_format': 'clue'}) }}" class="booklink" data-edit="{{ path('admin_book_edit', {'id': book.id}) }}">{{ _self.cover(book, 90) }}<br> <i>{{ book.title }}</i>{% if book.subtitle is defined %}<br>{{ book.subtitle|replace({'\\n': '<br>'})|raw }}{% endif %}</a>
+		</dt>
+		<dd>
+		{% if book.authors|length %}
+			<span class="bookauthor">{{ link.persons_comma(book.authors) }}</span>
+		{% endif %}
+		{% if book.sequence is not empty %}
+			<br><span class="bookseq">{{ link.sequence(book.sequence) }}{% if book.seqnr is not empty and book.sequence.is_seqnr_visible %}, №&nbsp;{{ book.seqnr }}{% endif %}</span>
+		{% endif %}
+		{% if book.category is not empty %}
+			<br><span class="bookcat">{{ link.category(book.category) }}</span>
+		{% endif %}
+		</dd>
+		{% if book.removed_notice is empty %}
+			<dd class="download">{{ _self.download_links(book) }}</dd>
+		{% endif %}
+	</dl>
+{% endmacro %}
+
+{% macro download_link(book, format) %}
+	{% spaceless %}
+	<a href="{{ path('book_show', {'id': book.id ~'-'~ book.slug, '_format': format}) }}" title="Сваляне във формат {{ format }}" class="dl dl-{{ format|replace({'.zip': ''}) }} action"><span>{{ format }}</span></a>
+	{% endspaceless %}
+{% endmacro %}
+
+{% macro download_links(book, class) %}
+	<ul class="{{ class|default('dl-list') }}">
+		{% if book.type == 'pic' %}
+			{% set formats = [] %}
+		{% elseif book.type == 'djvu' %}
+			{% set formats = ['djvu'] %}
+		{% else %}
+			{% set formats = ['fb2.zip', 'epub', 'txt.zip', 'sfb.zip'] %}
+		{% endif %}
+		{% for format in formats %}
+			<li>{{ _self.download_link(book, format) }}</li>
+		{% else %}
+			<li></li>
+		{% endfor %}
+	</ul>
+{% endmacro %}
+
+{% macro cover(book, width) %}
+	<img class="cover" src="{{ asset(book.has_cover ? cover(book.id, width) : cover(0, width, 'png')) }}" alt="Корица" width="{{ width }}">
+{% endmacro %}
+
+{% macro cover_div(book, width) %}
+	<div class="cover">
+		{% if book.has_cover %}
+			<a href="{{ asset(cover(book.id, 'max')) }}"><img src="{{ asset(cover(book.id, width)) }}" alt="Корица" width="{{ width }}"></a>
+		{% else %}
+			<img src="{{ asset(cover(0, width, 'png')) }}" alt="Корица" width="{{ width }}">
+		{% endif %}
+	</div>
+{% endmacro %}
+
+{% macro qrcode(book) %}
+	<a href="http://bg.wikipedia.org/wiki/QR_%D0%BA%D0%BE%D0%B4" class="qrcode"><img src="{{ url('book_show', {'id': book.id ~'-'~ book.slug})|qrcode }}"></a>
+{% endmacro %}

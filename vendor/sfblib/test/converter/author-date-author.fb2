@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><genre>prose_classic</genre>
+<author><nickname>(неизвестен автор)</nickname></author>
+<book-title>(няма заглавие)</book-title>
+<lang>bg</lang>
+</title-info>
+<document-info><author><nickname>(неизвестен автор)</nickname></author>
+<version>0.0</version>
+</document-info>
+</description>
+<body><section>
+<p>Три седмици по-късно Волфганг получи копие от следния указ:</p>
+<cite>
+<p>В изпълнение на този указ…</p>
+<p><emphasis>
+Розенберг
+</emphasis></p>
+<p><emphasis>
+Началник на Императорската и кралска канцелария,
+</emphasis></p>
+<text-author>
+Виена, 7 декември 1787 година.
+</text-author>
+<text-author>
+Йохан Торварт.
+</text-author>
+</cite>
+<empty-line/>
+<poem>
+<stanza>
+<v>В изпълнение на този указ…</v>
+</stanza>
+<text-author>
+Розенберг
+</text-author>
+<text-author>
+Началник на Императорската и кралска канцелария,
+</text-author>
+<text-author>
+Виена, 7 декември 1787 година.
+</text-author>
+</poem>
+</section>
+</body>
+</FictionBook>

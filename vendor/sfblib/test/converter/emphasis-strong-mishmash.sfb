@@ -1,0 +1,18 @@
+	1. emphasis with strong begin
+	текст ___strong__ starts emphasis_ текст
+	текст ___str_ong__ starts emphasis_ текст
+
+	2. strong with emphasis begin
+	текст ___emphasis_ starts strong__ текст
+
+	3. emphasis with strong end
+	текст _emphasis ends in __strong___ текст
+
+	4. strong with emphasis end
+	текст __strong ends in _emphasis___ текст
+
+	5. strong
+	текст __strong__ текст
+
+	6. em
+	текст _emphasis_ текст

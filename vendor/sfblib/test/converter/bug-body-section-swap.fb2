@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><genre>prose_classic</genre>
+<author><nickname>(неизвестен автор)</nickname></author>
+<book-title>(няма заглавие)</book-title>
+<lang>bg</lang>
+</title-info>
+<document-info><author><nickname>(неизвестен автор)</nickname></author>
+<version>0.0</version>
+</document-info>
+</description>
+<body><section>
+<p>Глухият старец се засмя така сърдечно, че лулата падна от устата му.</p>
+</section>
+</body>
+<body name="info">
+<title><p>Информация за текста</p></title>
+<section>
+<p>Цялостно преработен и поправен за СI<a l:href="#note_1-1" type="note">1</a>, 1938, с. 145–158.</p>
+<p>Последна редакция: 2008-02-06 20:00:00</p>
+</section>
+</body>
+<body name="notes"><section id="note_1-1">
+<title><p>1</p></title>
+<p>Съчинения на Елин Пелин. Под редакцията на Т. Боров, С., к-во „Хемус“, т. I, 1-о изд. 1938</p>
+</section>
+</body>
+</FictionBook>

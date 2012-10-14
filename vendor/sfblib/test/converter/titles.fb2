@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><genre>prose_classic</genre>
+<author><nickname>(неизвестен автор)</nickname></author>
+<book-title>(няма заглавие)</book-title>
+<lang>bg</lang>
+</title-info>
+<document-info><author><nickname>(неизвестен автор)</nickname></author>
+<version>0.0</version>
+</document-info>
+</description>
+<body><section id="t-chast_pyrva-sreshtu_glupostta">
+<title><p>ЧАСТ ПЪРВА</p><p>Срещу глупостта…</p></title>
+<section id="t-glava_1">
+<title><p>Глава 1</p></title>
+<section id="t-_">
+<p>…</p>
+</section>
+<section id="t-_1">
+<title><p>1.</p></title>
+<p>…</p>
+</section>
+<section id="t-_2">
+<title><p>2.</p></title>
+<p>…</p>
+</section>
+</section>
+<section id="t-glava_2">
+<title><p>Глава 2</p></title>
+<p>…</p>
+</section>
+</section>
+<section id="t-chast_vtora-samite_bogove">
+<title><p>ЧАСТ ВТОРА</p><p>…самите богове…</p></title>
+<section id="t-glava_1.2">
+<title><p>Глава 1</p></title>
+<p>…</p>
+</section>
+<section id="t-glava_2.2">
+<title><p>Глава 2</p></title>
+<p>…</p>
+</section>
+</section>
+</body>
+</FictionBook>

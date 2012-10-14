@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><genre>prose_classic</genre>
+<author><nickname>(неизвестен автор)</nickname></author>
+<book-title>(няма заглавие)</book-title>
+<lang>bg</lang>
+</title-info>
+<document-info><author><nickname>(неизвестен автор)</nickname></author>
+<version>0.0</version>
+</document-info>
+</description>
+<body><section>
+<poem>
+<stanza>
+<v>Ах, приятелю, за бога,</v>
+<v>възхити се за минута,</v>
+<v>ний пътуваме със тебе</v>
+<v>из Италия прочута;</v>
+</stanza>
+<stanza>
+<v>из земята благородна</v>
+<v>на венчаните поети,</v>
+<v>на изкуствата безсмъртни,</v>
+<v>на великите скелети.</v>
+</stanza>
+</poem>
+</section>
+</body>
+</FictionBook>

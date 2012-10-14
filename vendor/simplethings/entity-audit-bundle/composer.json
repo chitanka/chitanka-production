@@ -1,0 +1,16 @@
+{
+    "name": "simplethings/entity-audit-bundle",
+    "license": "New BSD",
+    "keywords": ["Persistence", "Database", "Audit"],
+    "description": "Audit for Doctrine Entities",
+    "require": {
+        "doctrine/orm": ">=2.1.0,<2.4"
+    },
+    "require-dev": {
+        "symfony/framework-bundle": "*"
+    },
+    "autoload": {
+        "psr-0": {"SimpleThings\\EntityAudit": "src/"}
+    }
+}
+

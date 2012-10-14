@@ -1,0 +1,3 @@
+	{img:favicon.png|Картинка 1|-left|#Заглавие 1}
+	{img:favicon.png|Картинка 2|-left|#Заглавие 2} С текст.
+	{img:favicon.png|Картинка 3|-left|=100|#Заглавие 3} С текст.

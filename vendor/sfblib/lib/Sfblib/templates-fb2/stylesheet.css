@@ -1,0 +1,63 @@
+style[name="sujet2"] {
+	font-family: Georgia, serif;
+	font-style: italic;
+}
+style[name="center"] {
+	text-align: center;
+}
+style[name="right"] {
+	text-align: right;
+}
+style[name="frame"] {
+	margin: 1em auto;
+	padding: .5em;
+	width: 50%;
+	min-width: 15em;
+	border: thin solid black;
+	font-weight: bold;
+	font-style: normal;
+	text-align: center;
+	text-indent: 0;
+}
+style[name="bold"] {
+	font-weight: bold;
+}
+style[name="italic"] {
+	font-style: italic;
+}
+style[name="smallcaps"] {
+	font-variant: small-caps;
+}
+style[name="underline"] {
+	text-decoration: underline;
+}
+style[name="overline"] {
+	text-decoration: overline;
+}
+style[name="upper"] {
+	text-transform: uppercase;
+}
+style[name="large"] {
+	font-size: 110%;
+}
+style[name="x-large"] {
+	font-size: 120%;
+}
+style[name="xx-large"] {
+	font-size: 130%;
+}
+style[name="xxx-large"] {
+	font-size: 140%;
+}
+style[name="small"] {
+	font-size: 90%;
+}
+style[name="x-small"] {
+	font-size: 80%;
+}
+style[name="xx-small"] {
+	font-size: 70%;
+}
+style[name="xxx-small"] {
+	font-size: 60%;
+}

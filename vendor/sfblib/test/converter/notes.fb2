@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><genre>prose_classic</genre>
+<author><nickname>(неизвестен автор)</nickname></author>
+<book-title>(няма заглавие)</book-title>
+<lang>bg</lang>
+</title-info>
+<document-info><author><nickname>(неизвестен автор)</nickname></author>
+<version>0.0</version>
+</document-info>
+</description>
+<body><section>
+<p>Текст с бележка<a l:href="#note_1-1" type="note">1</a>.</p>
+<p>Текст с две<a l:href="#note_1-2" type="note">2</a> бележки<a l:href="#note_1-3" type="note">3</a>.</p>
+<p>Текст с две<a l:href="#note_1-4" type="note">4</a> цифрови<a l:href="#note_1-5" type="note">5</a> бележки. Просто *** звездички.</p>
+</section>
+</body>
+<body name="notes"><section id="note_1-1">
+<title><p>1</p></title>
+<p>Бележка 1.</p>
+</section>
+<section id="note_1-2">
+<title><p>2</p></title>
+<p>Бележка 2.</p>
+<p>На два реда.</p>
+</section>
+<section id="note_1-3">
+<title><p>3</p></title>
+<p>Бележка 3.</p>
+<p>Ще бъде на три реда.</p>
+<p>Трети ред.</p>
+</section>
+<section id="note_1-4">
+<title><p>4</p></title>
+<p>Бележка 4.</p>
+</section>
+<section id="note_1-5">
+<title><p>5</p></title>
+<p>Бележка 5.</p>
+</section>
+</body>
+</FictionBook>

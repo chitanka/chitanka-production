@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><genre>prose_classic</genre>
+<author><nickname>(неизвестен автор)</nickname></author>
+<book-title>(няма заглавие)</book-title>
+<annotation>
+<p>Кратка анотация.</p>
+</annotation>
+<lang>bg</lang>
+</title-info>
+<document-info><author><nickname>(неизвестен автор)</nickname></author>
+<version>0.0</version>
+</document-info>
+</description>
+<body><epigraph>
+<p>Епиграф 1</p>
+<text-author>
+Епиграф Епиграфов
+</text-author>
+</epigraph>
+<epigraph>
+<p>Посвещава се на Великия Тестер</p>
+</epigraph>
+<section id="t-zaglavie_1">
+<title><p>Заглавие 1</p></title>
+<epigraph>
+<p>Епиграф 2</p>
+<p>продължава</p>
+<text-author>
+Епиграфов
+</text-author>
+</epigraph>
+<section id="t-zaglavie_11">
+<title><p>Заглавие 1.1</p></title>
+<p>Изречение след заглавието. Има и <emphasis>акцентиран</emphasis> текст. Има и <strikethrough>изтрит</strikethrough> текст. Има и <strong>мнооого акцентиран</strong> текст. Има и <emphasis>интересни, ама супер интересни</emphasis> акценти.</p>
+<cite>
+<subtitle>
+Мухи се блъскат в прозорци
+</subtitle>
+<p>Репортаж на Пурко Пуркович. Съдържанието друг път.</p>
+</cite>
+</section>
+<section id="t-zaglavie_12">
+<title><p>Заглавие 1.2</p></title>
+<p>Изречение след заглавието.</p>
+<cite>
+<p>Писмо започва тук</p>
+<text-author>
+Писачев
+</text-author>
+</cite>
+</section>
+</section>
+<section id="t-zaglavie_2">
+<title><p>Заглавие 2</p></title>
+<p>Свободен текст след заглавието. Още текст след заглавието. И още малко текст. Една интересна<a l:href="#note_1-1" type="note">1</a> бележка.</p>
+<empty-line/>
+<subtitle>
+Заглавие на таблицата
+</subtitle>
+<subtitle>
+Втори ред от заглавието
+</subtitle>
+<table><tr><th>Заглавие 1</th><th>Заглавие 2</th></tr><tr><td>Клетка 1.1</td><td>Клетка 1.2</td></tr><tr><td>Клетка 2.1</td><td>Клетка 2.2</td></tr></table>
+<empty-line/>
+<p>Сега една табела:</p>
+<p><style name="frame">
+Моята табела
+</style></p>
+<empty-line/>
+<p><style name="frame">
+Трети ред на табелата
+</style></p>
+<empty-line/>
+<p>Може и едноредово:</p>
+<p><style name="frame">
+Едноредова табела
+</style></p>
+<p>Край.</p>
+<empty-line/>
+<p><emphasis>
+Влизат двама.
+</emphasis></p>
+<empty-line/>
+<poem>
+<stanza>
+<v>Стих един това е.</v>
+</stanza>
+<stanza>
+<v><style name="center">
+Център, како, център.
+</style></v>
+<v><style name="center">
+Ех, как хубаво така е!
+</style></v>
+</stanza>
+</poem>
+<subtitle>
+* * *
+</subtitle>
+<p>Текста продължава тук с подзаглавие.</p>
+<subtitle>
+Подзаглавието.
+</subtitle>
+</section>
+<section id="t-posledno_zaglavie">
+<title><p>Последно заглавие</p></title>
+<poem>
+<stanza>
+<v>Тук всичко свършва.</v>
+</stanza>
+<stanza>
+<v>Край, край, край.</v>
+</stanza>
+</poem>
+</section>
+</body>
+<body name="info">
+<title><p>Информация за текста</p></title>
+<section>
+<p>Информация за файла</p>
+</section>
+</body>
+<body name="notes"><section id="note_1-1">
+<title><p>1</p></title>
+<p>Интересна бележка. Б.Бележков</p>
+</section>
+</body>
+</FictionBook>
