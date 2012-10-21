@@ -129,11 +129,13 @@ class Sfblib_XmlElement
 			$text = '_' . $text;
 		}
 
-		if ( isset($this->_anchorNames[$text]) ) {
-			$this->_anchorNames[$text]++;
-			$text .= '.' . $this->_anchorNames[$text];
-		} else {
-			$this->_anchorNames[$text] = 1;
+		if ($unique) {
+			if (isset($this->_anchorNames[$text])) {
+				$this->_anchorNames[$text]++;
+				$text .= '.' . $this->_anchorNames[$text];
+			} else {
+				$this->_anchorNames[$text] = 1;
+			}
 		}
 
 		return $text;

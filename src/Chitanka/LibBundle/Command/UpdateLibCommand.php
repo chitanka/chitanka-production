@@ -393,7 +393,7 @@ EOT
 		if (isset($work['year'])) $set['year'] = $work['year'];
 		if (isset($work['year2'])) $set['year2'] = $work['year2'];
 		if (isset($work['trans_year'])) $set['trans_year'] = $work['trans_year'];
-		if (isset($work['anno'])) $set['has_anno'] = 1;
+		if (isset($work['anno'])) $set['has_anno'] = filesize($work['anno']) ? 1 : 0;
 
 		if (isset($work['series'])) $set['series_id'] = $this->getObjectId('series', $work['series']);
 
@@ -513,6 +513,7 @@ EOT
 				if ( ! file_exists($dir)) {
 					mkdir($dir, 0755, true);
 				}
+				`touch $work[img]/*`;
 				`cp $work[img]/* $dir`;
 				// TODO check if images are referenced from the text file
 			}
@@ -670,6 +671,7 @@ QUERY
 		}
 		File::make_parent($dest);
 		copy($source, $dest);
+		touch($dest);
 	}
 
 	static private function copyDir($sourceDir, $destDir)

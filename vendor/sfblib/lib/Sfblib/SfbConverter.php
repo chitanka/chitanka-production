@@ -754,7 +754,7 @@ class Sfblib_SfbConverter
 		// we have read the next non-title line, make sure this is known
 		$this->hasNextLine = true;
 
-		$this->doTitleStart($marker, $this->generateSectionId($title));
+		$this->doTitleStart($marker, $this->generateInternalId($title));
 
 		$this->inTitle($title, $marker);
 
@@ -764,9 +764,12 @@ class Sfblib_SfbConverter
 	}
 
 
-	protected function generateSectionId($titles)
+	protected function generateInternalId($name, $unique = true)
 	{
-		return 't-' . $this->out->getAnchorName(implode('-', $titles));
+		if (is_array($name)) {
+			$name = implode('-', $name);
+		}
+		return 'l-' . $this->out->getAnchorName($name, $unique);
 	}
 
 
@@ -2464,7 +2467,7 @@ class Sfblib_SfbConverter
 
 	/**
 	 * Generate an internal link
-	 * 
+	 *
 	 * @param string	$target	Link target
 	 * @param string	$text	Link text
 	 * @return string	An XML anchor element
@@ -2479,11 +2482,17 @@ class Sfblib_SfbConverter
 				$text = $target;
 			}
 		}
+		$target = $this->generateInternalId($target, false);
 		return $this->out->xmlElement('a', $text, array(
 			'href'  => $this->internalLinkTarget . "#$target",
 		), false);
 	}
 
+
+	public function setInternalLinkTarget($target)
+	{
+		$this->internalLinkTarget = $target;
+	}
 
 	/**
 	* Sometimes a paragraph can be on the same line as the starting block marker.
