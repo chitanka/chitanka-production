@@ -130,6 +130,7 @@ class CommentManager extends BaseCommentManager
      */
     protected function doSaveComment(CommentInterface $comment)
     {
+        $comment->setAuthor($this->em->merge($comment->getAuthor())); // borislav
         $this->em->persist($comment->getThread());
         $this->em->persist($comment);
         $this->em->flush();

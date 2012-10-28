@@ -108,7 +108,7 @@ EOT
 
 	private function validateWorks($workIds, $entity)
 	{
-		foreach ($workIds as $workId) {sleep(3);
+		foreach ($workIds as $workId) {
 			$work = $this->em->getRepository("LibBundle:$entity")->find($workId);
 			if (!$work) {
 				continue;
@@ -117,8 +117,7 @@ EOT
 			$fb2 = $work->getContentAsFb2();
 			if (!$this->validator->isValid($fb2)) {
 				$this->saveFileInTmpDir($entity.'-'.$work->getId().'.fb2', $fb2);
-				#throw new \Exception($this->validator->getErrors());
-				$this->output->writeln('<error>'.$this->validator->getErrors().'</error>');
+				throw new \Exception($this->validator->getErrors());
 			}
 		}
 	}
