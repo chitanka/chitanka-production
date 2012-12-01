@@ -12,6 +12,7 @@ class SearchController extends Controller
 {
 	protected $responseAge = 86400; // 24 hours
 	private $minQueryLength = 3;
+	private $maxQueryLength = 60;
 
 	public function indexAction($_format)
 	{
@@ -23,12 +24,12 @@ class SearchController extends Controller
 		}
 
 		$lists = array(
-			'persons'      => $this->getPersonRepository()->getByNames($query['text']),
-			'texts'        => $this->getTextRepository()->getByTitles($query['text']),
-			'books'        => $this->getBookRepository()->getByTitles($query['text']),
-			'series'       => $this->getSeriesRepository()->getByNames($query['text']),
-			'sequences'    => $this->getSequenceRepository()->getByNames($query['text']),
-			'work_entries' => $this->getWorkEntryRepository()->getByTitleOrAuthor($query['text']),
+			'persons'      => $this->getPersonRepository()->getByNames($query['text'], 15),
+			'texts'        => $this->getTextRepository()->getByTitles($query['text'], 15),
+			'books'        => $this->getBookRepository()->getByTitles($query['text'], 15),
+			'series'       => $this->getSeriesRepository()->getByNames($query['text'], 15),
+			'sequences'    => $this->getSequenceRepository()->getByNames($query['text'], 15),
+			//'work_entries' => $this->getWorkEntryRepository()->getByTitleOrAuthor($query['text']),
 			'labels'       => $this->getLabelRepository()->getByNames($query['text']),
 			'categories'   => $this->getCategoryRepository()->getByNames($query['text']),
 		);
@@ -313,7 +314,7 @@ class SearchController extends Controller
 		$request = $this->get('request')->query;
 		$query = trim($request->get('q'));
 
-		if ( ! $query) {
+		if (empty($query)) {
 			$this->view = array(
 				'latest_strings' => $this->getSearchStringRepository()->getLatest(30),
 				'top_strings' => $this->getSearchStringRepository()->getTop(30),
@@ -325,11 +326,15 @@ class SearchController extends Controller
 		$query = String::fixEncoding($query);
 
 		$matchType = $request->get('match');
-		if ($matchType != 'exact' && mb_strlen($query, 'utf-8') < $this->minQueryLength) {
-			$this->view['message'] = sprintf('Трябва да въведете поне %d знака.', $this->minQueryLength);
-			$this->responseStatusCode = 400;
+		if ($matchType != 'exact') {
+			try {
+				$this->validateQueryLength($query);
+			} catch (\Exception $e) {
+				$this->view['message'] = $e->getMessage();
+				$this->responseStatusCode = 400;
 
-			return $this->display("message.$_format");
+				return $this->display("message.$_format");
+			}
 		}
 
 		return array(
@@ -337,6 +342,16 @@ class SearchController extends Controller
 			'by'    => $request->get('by'),
 			'match' => $matchType,
 		);
+	}
+
+	private function validateQueryLength($query) {
+		$queryLength = mb_strlen($query, 'utf-8');
+		if ($queryLength < $this->minQueryLength) {
+			throw new \Exception(sprintf('Трябва да въведете поне %d знака.', $this->minQueryLength));
+		}
+		if ($queryLength > $this->maxQueryLength) {
+			throw new \Exception(sprintf('Не може да въвеждате повече от %d знака.', $this->maxQueryLength));
+		}
 	}
 
 	private function logSearch($query)
