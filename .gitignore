@@ -10,6 +10,9 @@
 .lock
 /update/*/*
 /app/spool/*
+test
+tests
+Tests
 .DS_Store
 !.gitignore
 !.gitkeep
