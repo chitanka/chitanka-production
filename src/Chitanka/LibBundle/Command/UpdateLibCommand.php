@@ -636,7 +636,7 @@ EOT
 				self::copyFile($book['cover'], "$this->contentDir/book-cover/$path.jpg");
 			}
 			if (isset($book['djvu'])) {
-				self::copyFile($book['djvu'], "$this->contentDir/book/$path.djvu");
+				self::copyFile($book['djvu'], "$this->contentDir/book-djvu/$path");
 			}
 			if (isset($book['img'])) {
 				self::copyDir($book['img'], "$this->contentDir/book-img/$path");
