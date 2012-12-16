@@ -10,9 +10,9 @@ function hex2rgba($hexColor, $alpha)
 
 function backgroundLinearGradient($value)
 {
-	return "background-image: linear-gradient($value);
-	background-image: -moz-linear-gradient($value);
-	background-image: -webkit-linear-gradient($value);";
+	return "background-image: -moz-linear-gradient($value);
+	background-image: -webkit-linear-gradient($value);
+	background-image: linear-gradient($value);";
 }
 function borderRadius($value)
 {
@@ -2564,9 +2564,6 @@ ul.two-columns {
 } /* end max-width: 480px */
 
 @media screen and (max-width: 320px) {
-#q {
-	background-color: red;
-}
 .project-links li a {
 	font-size: 60%;
 	padding: 0;
