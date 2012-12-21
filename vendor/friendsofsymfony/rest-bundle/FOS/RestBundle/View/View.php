@@ -174,7 +174,6 @@ class View
     public function setSerializerVersion($serializerVersion)
     {
         $this->serializerVersion = $serializerVersion;
-        $this->serializerGroups = null;
 
         return $this;
     }
@@ -187,7 +186,6 @@ class View
     public function setSerializerGroups($serializerGroups)
     {
         $this->serializerGroups = $serializerGroups;
-        $this->serializerVersion = null;
 
         return $this;
     }
@@ -195,7 +193,7 @@ class View
     /**
      * set the serializer callback
      *
-     * function (\FOS\RestBundle\View\ViewHnadler $viewHandler, \JMS\SerializerBundle\Serializer\SerializerInterface $serializer) { .. }
+     * function (\FOS\RestBundle\View\ViewHandler $viewHandler, \JMS\SerializerBundle\Serializer\SerializerInterface $serializer) { .. }
      *
      * @param  callable $serializerCallback
      * @return View
@@ -428,26 +426,9 @@ class View
     }
 
     /**
-     * get the serializer exclusion strategy
-     *
-     * @return string|null serializer groups
-     */
-    public function getSerializerExclusionStrategy()
-    {
-        if ($this->serializerVersion) {
-            return 'version';
-        }
-        if ($this->serializerGroups) {
-            return 'groups';
-        }
-
-        return null;
-    }
-
-    /**
      * get the serializer callback
      *
-     * @return calllable|null serializer callback
+     * @return callable|null serializer callback
      */
     public function getSerializerCallback()
     {

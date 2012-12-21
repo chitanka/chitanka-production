@@ -328,7 +328,6 @@ fos_user:
 Or if you prefer XML:
 
 ``` xml
-# app/config/config.xml
 <!-- app/config/config.xml -->
 
 <!-- other valid 'db-driver' values are 'mongodb' and 'couchdb' -->
@@ -458,7 +457,7 @@ The following documents are available:
 - [Emails](emails.md)
 - [Using the groups](groups.md)
 - [More about the Doctrine implementations](doctrine.md)
-- [Supplemental Documenation](supplemental.md)
+- [Supplemental Documentation](supplemental.md)
 - [Replacing the canonicalizer](canonicalizer.md)
 - [Using a custom storage layer](custom_storage_layer.md)
 - [Configuration Reference](configuration_reference.md)

@@ -25,11 +25,9 @@ class OdmGenerator implements GeneratorInterface
     }
 
     /**
-     * @param \Symfony\Component\Console\Output\OutputInterface $output
-     * @param \Sonata\EasyExtendsBundle\Bundle\BundleMetadata $bundleMetadata
-     * @return void
+     * {@inheritdoc}
      */
-    function generate(OutputInterface $output, BundleMetadata $bundleMetadata)
+    public function generate(OutputInterface $output, BundleMetadata $bundleMetadata)
     {
         $this->generateMappingDocumentFiles($output, $bundleMetadata);
         $this->generateDocumentFiles($output, $bundleMetadata);
@@ -37,11 +35,10 @@ class OdmGenerator implements GeneratorInterface
     }
 
     /**
-     * @param \Symfony\Component\Console\Output\OutputInterface $output
-     * @param \Sonata\EasyExtendsBundle\Bundle\BundleMetadata $bundleMetadata
-     * @return void
+     * @param OutputInterface $output
+     * @param BundleMetadata  $bundleMetadata
      */
-    public function generateMappingDocumentFiles(OutputInterface $output, BundleMetadata $bundleMetadata)
+    protected function generateMappingDocumentFiles(OutputInterface $output, BundleMetadata $bundleMetadata)
     {
         $output->writeln(' - Copy document files');
 
@@ -64,11 +61,10 @@ class OdmGenerator implements GeneratorInterface
     }
 
     /**
-     * @param \Symfony\Component\Console\Output\OutputInterface $output
-     * @param \Sonata\EasyExtendsBundle\Bundle\BundleMetadata $bundleMetadata
-     * @return void
+     * @param OutputInterface $output
+     * @param BundleMetadata  $bundleMetadata
      */
-    public function generateDocumentFiles(OutputInterface $output, BundleMetadata $bundleMetadata)
+    protected function generateDocumentFiles(OutputInterface $output, BundleMetadata $bundleMetadata)
     {
         $output->writeln(' - Generating document files');
 
@@ -109,11 +105,10 @@ class OdmGenerator implements GeneratorInterface
     }
 
     /**
-     * @param \Symfony\Component\Console\Output\OutputInterface $output
-     * @param \Sonata\EasyExtendsBundle\Bundle\BundleMetadata $bundleMetadata
-     * @return void
+     * @param OutputInterface $output
+     * @param BundleMetadata  $bundleMetadata
      */
-    public function generateDocumentRepositoryFiles(OutputInterface $output, BundleMetadata $bundleMetadata)
+    protected function generateDocumentRepositoryFiles(OutputInterface $output, BundleMetadata $bundleMetadata)
     {
         $output->writeln(' - Generating document repository files');
 

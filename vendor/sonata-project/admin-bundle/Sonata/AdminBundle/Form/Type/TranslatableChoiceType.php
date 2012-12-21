@@ -47,16 +47,8 @@ class TranslatableChoiceType extends AbstractType
      * {@inheritDoc}
      */
     public function buildView(FormView $view, FormInterface $form, array $options)
-    {
-        // translate options before building form
-        foreach ($view->vars['choices'] as $choiceView) {
-            $choiceView->label = $this->translator->trans($choiceView->label, array(), $options['catalogue']);
-        }
-
-        // translate empty value
-        if (!empty($view->vars['empty_value'])) {
-            $view->vars['empty_value'] = $this->translator->trans($view->vars['empty_value'], array(), $options['catalogue']);
-        }
+    {       
+        $view->vars['translation_domain'] = $options['catalogue'];
     }
 
     /**

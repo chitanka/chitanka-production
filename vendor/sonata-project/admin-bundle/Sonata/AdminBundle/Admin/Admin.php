@@ -205,6 +205,13 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     protected $label;
 
     /**
+     * Whether or not to persist the filters in the session
+     *
+     * @var boolean
+     */
+    protected $persistFilters = false;
+
+    /**
      * Array of routes related to this admin
      *
      * @var \Sonata\AdminBundle\Route\RouteCollection
@@ -340,7 +347,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     protected $datagrid;
 
     /**
-     * The router intance
+     * The router instance
      *
      * @var RouteGeneratorInterface
      */
@@ -459,7 +466,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     /**
      * {@inheritdoc}
      */
-    protected function configureSideMenu(MenuItemInterface $menu, $action, Admin $childAdmin = null)
+    protected function configureSideMenu(MenuItemInterface $menu, $action, AdminInterface $childAdmin = null)
     {
 
     }
@@ -683,10 +690,21 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
 
         // build the values array
         if ($this->hasRequest()) {
+            $filters = $this->request->query->get('filter', array());
+
+            // if persisting filters, save filters to session, or pull them out of session if no new filters set
+            if ($this->persistFilters) {
+                if ($filters == array() && $this->request->query->get('filters') != 'reset') {
+                    $filters = $this->request->getSession()->get($this->getCode().'.filter.parameters', array());
+                } else {
+                    $this->request->getSession()->set($this->getCode().'.filter.parameters', $filters);
+                }
+            }
+
             $parameters = array_merge(
                 $this->getModelManager()->getDefaultSortValues($this->getClass()),
                 $this->datagridValues,
-                $this->request->query->get('filter', array())
+                $filters
             );
 
             // always force the parent value
@@ -1374,6 +1392,14 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     public function getLabel()
     {
         return $this->label;
+    }
+
+    /**
+     * @param boolean $persist
+     */
+    public function setPersistFilters($persist)
+    {
+        $this->persistFilters = $persist;
     }
 
     /**

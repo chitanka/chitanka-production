@@ -34,6 +34,7 @@ return array(
     'JMS\\SecurityExtraBundle' => $vendorDir . '/jms/security-extra-bundle/',
     'JMS\\DiExtraBundle' => $vendorDir . '/jms/di-extra-bundle/',
     'JMS\\AopBundle' => $vendorDir . '/jms/aop-bundle/',
+    'Google\\Authenticator' => $vendorDir . '/sonata-project/google-authenticator/lib/',
     'FOS\\UserBundle' => $vendorDir . '/friendsofsymfony/user-bundle/',
     'FOS\\RestBundle' => $vendorDir . '/friendsofsymfony/rest-bundle/',
     'FOS\\Rest' => $vendorDir . '/friendsofsymfony/rest/',

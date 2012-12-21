@@ -11,7 +11,8 @@ function hex2rgba($hexColor, $alpha)
 function backgroundLinearGradient($value)
 {
 	return "background-image: -moz-linear-gradient($value);
-	background-image: -webkit-linear-gradient($value);";
+	background-image: -webkit-linear-gradient($value);
+	background-image: linear-gradient($value);";
 }
 function borderRadius($value)
 {
@@ -24,6 +25,11 @@ function boxShadow($value)
 function columnCount($value)
 {
 	return "column-count:$value;-moz-column-count:$value;";
+}
+function image($imageFile)
+{
+	$data = base64_encode(file_get_contents(dirname(__FILE__)."/images/$imageFile"));
+	return "data:image/png;base64,$data";
 }
 
 $defSkinName = 'orange';
@@ -60,9 +66,7 @@ $sprites = array(
 	'actions'   => $imgDir . 'sprite-actions.png',
 	'basebig'   => $imgDir . 'sprite-basebig.png',
 	'progress'  => $imgDir . 'sprite-progress.png',
-	'rating'    => $imgDir . 'sprite-rating.png',
 	'sort'      => $imgDir . 'sprite-sort.png',
-	'texttypes' => $imgDir . 'sprite-texttypes.png',
 );
 
 if ( ! function_exists('valueAfterNav') ) {
@@ -206,17 +210,10 @@ fieldset > ul,
 }
 form fieldset > ul {
 	margin: 0 auto;
-	text-align: center;
 }
 form fieldset > ul li,
 noscript div {
-	display: inline;
-}
-form fieldset > ul li {
-	padding: .4em .3em;
-	border: thin solid transparent;
-	line-height: 2em;
-	white-space: nowrap;
+	list-style-type: none;
 }
 
 /* заглавията в кутиите за групиране */
@@ -418,6 +415,7 @@ h2 a:visited {
 #content-wrapper {
 	position: relative;
 	padding: 0 1.5em;
+	clear: both;
 }
 /* елемент, обхващащ основното съдържание */
 #main-content-wrapper {
@@ -813,7 +811,7 @@ li img {
 .save,
 .email,
 .close,
-#cluetip-close a,
+.cluetip-close a,
 .idea,
 .stop,
 .error,
@@ -867,21 +865,22 @@ span.frozen {
 	opacity: .6;
 }
 .close,
-#cluetip-close a {
+.cluetip-close a {
 	background-position: 0 -396px;
 }
 .idea {
 	background-position: 0 -1052px;
 }
 .comments:after {
-	content: url(images/actions/034-comments.png);
+	content: url(<?php echo image('actions/034-comments.png') ?>);
 }
 
 /* Типове текстове */
 .title,
 .texttype {
 	padding-left: 1.3em;
-	background: url(<?php echo $sprites['texttypes']?>) no-repeat top left;
+	background-position: 0 .2em;
+	background-repeat: no-repeat;
 }
 li.title {
 	margin-left: 0;
@@ -912,27 +911,27 @@ li.title {
 .t-dialogue,
 .t-speech,
 .t-jure {
-	background-position: 0 -48px;
+	background-image: url(<?php echo image('texttypes/othergenre.png') ?>);
 }
 .t-shortstory,
 .t-novelette {
-	background-position: 0 -114px;
+	background-image: url(<?php echo image('texttypes/shortstory.png') ?>);
 }
 .t-poetry,
 .t-poem,
 .t-prosepoetry,
 .t-haiku {
-	background-position: 0 -180px;
+	background-image: url(<?php echo image('texttypes/poetry.png') ?>);
 }
 .t-novel {
-	background-position: 0 -246px;
+	background-image: url(<?php echo image('texttypes/novel.png') ?>);
 }
 .t-novella {
-	background-position: 0 -312px;
+	background-image: url(<?php echo image('texttypes/novella.png') ?>);
 }
 .t-tale,
 .t-fable {
-	background-position: 0 -378px;
+	background-image: url(<?php echo image('texttypes/tale.png') ?>);
 }
 
 
@@ -955,22 +954,16 @@ li.title {
 .rating {
 	position: relative;
 	padding-left: 1.25em;
-	background: url(<?php echo $sprites['rating']?>) no-repeat top left;
 	font-weight: bold;
+	background-position: 0 50%;
+	background-repeat: no-repeat;
 }
-.rating-10 { background-position: 0 -29px; }
-.rating-1 { background-position: 0 -75px; }
-.rating-9 { background-position: 0 -121px; }
-.rating-6 { background-position: 0 -167px; }
-.rating-3 { background-position: 0 -213px; }
-.rating-12 { background-position: 0 -259px; }
-.rating-4 { background-position: 0 -305px; }
-.rating-5 { background-position: 0 -351px; }
-.rating-0 { background-position: 0 -397px; }
-.rating-11 { background-position: 0 -443px; }
-.rating-7 { background-position: 0 -489px; }
-.rating-2 { background-position: 0 -535px; }
-.rating-8 { background-position: 0 -581px; }
+<?php for ($rating = 0; $rating <= 12; $rating++): ?>
+
+.rating-<?php echo $rating ?> {
+	background-image: url(<?php echo image('rating/'.$rating.'.png') ?>);
+}
+<?php endfor ?>
 
 
 .feed-standalone a,
@@ -1236,7 +1229,7 @@ a.dl:hover {
 .dl-list li:last-child {
 	margin-right: 0;
 }
-body:hover .superlist .action {
+.superlist .action {
 	opacity: 0.05;
 }
 .superlist li:hover .action,
@@ -1469,7 +1462,7 @@ th.headerSortDown {
 .singleuser span,
 .multiuser span,
 .rating span,
-#cluetip-close a span,
+.cluetip-close a span,
 .feed-standalone a span,
 .texttype span,
 .dl-list span {
@@ -1790,7 +1783,7 @@ div.tabbedpanebody {
 	margin: .2em 0 .1em 0;
 	padding: .1em;
 }
-#cluetip-title #cluetip-close {
+.cluetip-title .cluetip-close {
 	float: left;
 }
 
@@ -1974,14 +1967,23 @@ article h1 {
 .box {
 	float: left;
 	margin-right: 1%;
+	vertical-align: top;
+}
+.special-books {
+	text-align: center;
+}
+.special-books .box {
+	float: none;
+	display: inline-block;
+	text-align: center;
 }
 /* one of three boxes in a row */
 .box3 {
-	width: 32%;
+	width: 31%;
 }
 /* one of two boxes in a row */
 .box2 {
-	width: 49%;
+	width: 48%;
 }
 .bookbox {
 	text-align: center;
@@ -2134,7 +2136,7 @@ table.toccolours td {
 .main-form select {
 	font-family: sans-serif;
 	font-size: 1em;
-	width: 30em;
+	width: 98%;
 }
 .main-form textarea {
 	height: 12em;
@@ -2249,14 +2251,14 @@ ul.two-columns {
 .bookshelf {
 	margin: 0 auto;
 	padding: 0;
-	width: 51em;
+	text-align: center;
 }
 
 .bookshelf li {
-	float: left;
+	display: inline-block;
 	margin: 0 2em 1em 0;
 	padding: .8em;
-	height: 16em;
+	min-height: 16em;
 	width: 13em;
 	border: thin solid <?php echo $navTitleBgColor?>;
 	<?php echo borderRadius('.8em') ?>
@@ -2264,6 +2266,7 @@ ul.two-columns {
 	color: <?php echo $tocFgColor?>;
 	background-color: <?php echo $tocBgColor?>;
 	text-align: center;
+	vertical-align: top;
 }
 
 .action-new {
@@ -2301,6 +2304,9 @@ ul.two-columns {
 	background: url(images/bookmark_active.png) no-repeat 0 0;
 }
 
+.project-links {
+	clear: both;
+}
 .project-links h3 {
 	display: none;
 }
@@ -2357,7 +2363,7 @@ div.person-aleks_boldin .dl-epub {
 }
 
 /* for small displays */
-@media handheld, screen and (max-width: 900px), screen and (max-device-width: 900px) {
+@media screen and (max-width: 900px) {
 /* one of two boxes in a row */
 .box2 {
 	width: 100%;
@@ -2372,7 +2378,203 @@ div.person-aleks_boldin .dl-epub {
 .insidenews {
 	width: 100%;
 }
-} /* end small displays */
+.p_homepage .textbox .superlist {
+	margin: 0;
+}
+.p_homepage article {
+	margin: 1.5em 0 0 0;
+}
+} /* end max-width: 900px */
+
+@media screen and (max-width: 800px) {
+#main-content-wrapper {
+	float: none;
+	margin-top: 0;
+	padding-top: 4em;
+}
+#content-wrapper {
+	padding: 0 .5em;
+}
+#main-content {
+	margin: 0;
+}
+#navigation {
+	float: none;
+	width: auto;
+	max-width: 14em;
+	margin: 0 auto 1em auto;
+}
+#navigation .navbody {
+	font-size: 1em;
+}
+#navigation li {
+	padding: .5em;
+	font-size: 1em;
+}
+#personal {
+	width: auto;
+	position: static;
+	display: block;
+}
+#personal h3 {
+	display: block;
+}
+#personal li {
+	display: block;
+}
+#search form {
+	display: block;
+	margin: 0;
+	width: 100%;
+}
+#search li {
+	padding: 0;
+}
+#q {
+	width: 70%;
+}
+#toggle-nav-link {
+	display: none;
+}
+#logo {
+	margin: 0 auto;
+	width: 66%;
+	max-width: 12em;
+}
+#logo a {
+	height: 155px;
+}
+#logo span {
+	background-size: 100%;
+}
+#jump-to {
+	display: block;
+}
+#jump-to p, #jump-to ul, #jump-to li {
+	float: left;
+}
+#jump-to-content,
+#jump-to-search {
+	display: none;
+}
+.cover {
+	float: none;
+}
+.superlist dt,
+.superlist dd,
+dd.tauthor,
+dd.download,
+dl.download-multi dt {
+	float: none;
+	max-width: 100%;
+	width: 100%;
+}
+.superlist dt {
+	font-size: 115%;
+	padding: .3em 0;
+}
+.superlist li {
+	border-bottom: medium dotted <?php echo $fieldsetBordColor?>;
+	padding-bottom: .5em;
+	margin-bottom: .5em;
+}
+.superlist .action {
+	opacity: 1;
+	margin-left: 1em;
+}
+dd.download {
+	clear: both;
+}
+dl.download-multi dt {
+	text-align: left;
+}
+.qrcode {
+	display: none;
+}
+.buttonmenu a,
+.pagination a {
+	padding: .6em .8em;
+	line-height: 3.5em;
+}
+#footer li {
+	white-space: nowrap;
+}
+input,
+button {
+	font-size: 110%;
+}
+ul,
+ol,
+dl {
+	margin-left: 1em;
+	padding-left: .5em;
+}
+.dashboard {
+	width: 100%;
+}
+.welcome {
+	padding: .2em;
+}
+.box3 {
+	width: 18em;
+}
+.p_homepage .separator {
+	height: 0;
+}
+ul.two-columns {
+	-moz-column-count: 1;
+}
+.main-form {
+	width: 100%;
+}
+.main-form dt {
+	width: 98%;
+	float: none;
+	text-align: left;
+}
+.main-form dd {
+	margin-left: 0;
+	width: 98%;
+}
+.title,
+.texttype {
+	background-position: 0 .6em;
+}
+.project-links li a {
+	width: auto;
+	font-size: 80%;
+}
+}  /* end max-width: 800px */
+
+
+@media screen and (max-width: 600px) {
+#mp-insidenews {
+	width: 100%;
+}
+#mp-search {
+	clear: both;
+	width: 100%;
+} /* end max-width: 600px */
+
+@media screen and (max-width: 480px) {
+.project-links li a {
+	font-size: 70%;
+	padding: 0;
+}
+} /* end max-width: 480px */
+
+@media screen and (max-width: 320px) {
+.project-links li a {
+	font-size: 60%;
+	padding: 0;
+}
+} /* end max-width: 320px */
+
+@media screen and (max-width: 260px) {
+#q {
+	width: 60%;
+}
+} /* end max-width: 260px */
 
 @media print {
 

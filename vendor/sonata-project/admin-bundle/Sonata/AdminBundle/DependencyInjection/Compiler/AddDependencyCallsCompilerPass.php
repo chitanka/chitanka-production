@@ -58,8 +58,8 @@ class AddDependencyCallsCompilerPass implements CompilerPassInterface
                 $admins[] = $id;
                 $classes[$arguments[1]] = $id;
 
-                $showInDashBord = (boolean)(isset($attributes['show_in_dashboard']) ? $attributes['show_in_dashboard'] : true);
-                if (!$showInDashBord) {
+                $showInDashboard = (boolean)(isset($attributes['show_in_dashboard']) ? $attributes['show_in_dashboard'] : true);
+                if (!$showInDashboard) {
                     continue;
                 }
 
@@ -204,6 +204,14 @@ class AddDependencyCallsCompilerPass implements CompilerPassInterface
         }
 
         $definition->addMethodCall('setLabel', array($label));
+
+        if (isset($attributes['persist_filters'])) {
+            $persistFilters = (bool) $attributes['persist_filters'];
+        } else {
+            $persistFilters = (bool) $container->getParameter('sonata.admin.configuration.filters.persist');
+        }
+
+        $definition->addMethodCall('setPersistFilters', array($persistFilters));
 
         $this->fixTemplates($container, $definition);
 

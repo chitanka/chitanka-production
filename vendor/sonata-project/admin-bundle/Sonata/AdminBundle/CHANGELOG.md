@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+### 2012-11-25
+
+* [BC BREAK] change the configureSideMenu signature to use the AdminInterface
+
+    -    protected function configureSideMenu(MenuItemInterface $menu, $action, Admin $childAdmin = null)
+    +    protected function configureSideMenu(MenuItemInterface $menu, $action, AdminInterface $childAdmin = null)
+
 ### 2012-08-05
 
 * [BC BREAK] remove ``getListTemplate``, ``getEditTemplate``, ``getShowTemplate`` => just use ``getTemplate('edit')``
@@ -30,7 +37,7 @@ CHANGELOG
     * The dashboard list is now a block, so it can be removed from the sonata_admin configuration.
     * More blocks can be created please follow the instruction here : http://sonata-project.org/bundles/block/master/doc/reference/your_first_block.html
 
-* [BC BREAK] New configuration format for the dasboard section.
+* [BC BREAK] New configuration format for the dashboard section.
 
 ### 2012-02-28
 

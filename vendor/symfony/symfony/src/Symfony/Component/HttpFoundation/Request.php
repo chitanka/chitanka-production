@@ -30,7 +30,28 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
  */
 class Request
 {
+    const HEADER_CLIENT_IP = 'client_ip';
+    const HEADER_CLIENT_HOST = 'client_host';
+    const HEADER_CLIENT_PROTO = 'client_proto';
+    const HEADER_CLIENT_PORT = 'client_port';
+
     protected static $trustProxy = false;
+
+    protected static $trustedProxies = array();
+
+    /**
+     * Names for headers that can be trusted when
+     * using trusted proxies.
+     *
+     * The default names are non-standard, but widely used
+     * by popular reverse proxies (like Apache mod_proxy or Amazon EC2).
+     */
+    protected static $trustedHeaders = array(
+        self::HEADER_CLIENT_IP    => 'X_FORWARDED_FOR',
+        self::HEADER_CLIENT_HOST  => 'X_FORWARDED_HOST',
+        self::HEADER_CLIENT_PROTO => 'X_FORWARDED_PROTO',
+        self::HEADER_CLIENT_PORT  => 'X_FORWARDED_PORT',
+    );
 
     /**
      * @var \Symfony\Component\HttpFoundation\ParameterBag
@@ -286,7 +307,7 @@ class Request
         }
 
         if (!isset($components['path'])) {
-            $components['path'] = '';
+            $components['path'] = '/';
         }
 
         switch (strtoupper($method)) {
@@ -439,14 +460,50 @@ class Request
     /**
      * Trusts $_SERVER entries coming from proxies.
      *
-     * You should only call this method if your application
-     * is hosted behind a reverse proxy that you manage.
-     *
-     * @api
+     * @deprecated Deprecated since version 2.0, to be removed in 2.3. Use setTrustedProxies instead.
      */
     public static function trustProxyData()
     {
         self::$trustProxy = true;
+    }
+
+    /**
+     * Sets a list of trusted proxies.
+     *
+     * You should only list the reverse proxies that you manage directly.
+     *
+     * @param array $proxies A list of trusted proxies
+     *
+     * @api
+     */
+    public static function setTrustedProxies(array $proxies)
+    {
+        self::$trustedProxies = $proxies;
+        self::$trustProxy = $proxies ? true : false;
+    }
+
+    /**
+     * Sets the name for trusted headers.
+     *
+     * The following header keys are supported:
+     *
+     *  * Request::HEADER_CLIENT_IP:    defaults to X-Forwarded-For   (see getClientIp())
+     *  * Request::HEADER_CLIENT_HOST:  defaults to X-Forwarded-Host  (see getClientHost())
+     *  * Request::HEADER_CLIENT_PORT:  defaults to X-Forwarded-Port  (see getClientPort())
+     *  * Request::HEADER_CLIENT_PROTO: defaults to X-Forwarded-Proto (see getScheme() and isSecure())
+     *
+     * Setting an empty value allows to disable the trusted header for the given key.
+     *
+     * @param string $key   The header key
+     * @param string $value The header name
+     */
+    public static function setTrustedHeaderName($key, $value)
+    {
+        if (!array_key_exists($key, self::$trustedHeaders)) {
+            throw new \InvalidArgumentException(sprintf('Unable to set the trusted header name for key "%s".', $key));
+        }
+
+        self::$trustedHeaders[$key] = $value;
     }
 
     /**
@@ -508,7 +565,7 @@ class Request
      *
      * This method is mainly useful for libraries that want to provide some flexibility.
      *
-     * Order of precedence: GET, PATH, POST, COOKIE
+     * Order of precedence: GET, PATH, POST
      *
      * Avoid using this method in controllers:
      *
@@ -516,7 +573,7 @@ class Request
      *  * prefer to get from a "named" source
      *
      * It is better to explicitly get request parameters from the appropriate
-     * public property instead (query, request, attributes, ...).
+     * public property instead (query, attributes, request).
      *
      * @param string  $key     the key
      * @param mixed   $default the default value
@@ -545,7 +602,7 @@ class Request
      * Whether the request contains a Session which was started in one of the
      * previous requests.
      *
-     * @return boolean
+     * @return Boolean
      *
      * @api
      */
@@ -558,7 +615,11 @@ class Request
     /**
      * Whether the request contains a Session object.
      *
-     * @return boolean
+     * This method does not give any information about the state of the session object,
+     * like whether the session is started or not. It is just a way to check if this Request
+     * is associated with a Session instance.
+     *
+     * @return Boolean true when the Request contains a Session object, false otherwise
      *
      * @api
      */
@@ -582,31 +643,43 @@ class Request
     /**
      * Returns the client IP address.
      *
+     * This method can read the client IP address from the "X-Forwarded-For" header
+     * when trusted proxies were set via "setTrustedProxies()". The "X-Forwarded-For"
+     * header value is a comma+space separated list of IP addresses, the left-most
+     * being the original client, and each successive proxy that passed the request
+     * adding the IP address where it received the request from.
+     *
+     * If your reverse proxy uses a different header name than "X-Forwarded-For",
+     * ("Client-Ip" for instance), configure it via "setTrustedHeaderName()" with
+     * the "client-ip" key.
+     *
      * @return string The client IP address
+     *
+     * @see http://en.wikipedia.org/wiki/X-Forwarded-For
+     *
+     * @deprecated The proxy argument is deprecated since version 2.0 and will be removed in 2.3. Use setTrustedProxies instead.
      *
      * @api
      */
     public function getClientIp()
     {
-        if (self::$trustProxy) {
-            if ($this->server->has('HTTP_CLIENT_IP')) {
-                return $this->server->get('HTTP_CLIENT_IP');
-            } elseif ($this->server->has('HTTP_X_FORWARDED_FOR')) {
-                $clientIp = explode(',', $this->server->get('HTTP_X_FORWARDED_FOR'));
+        $ip = $this->server->get('REMOTE_ADDR');
 
-                foreach ($clientIp as $ipAddress) {
-                    $cleanIpAddress = trim($ipAddress);
-
-                    if (false !== filter_var($cleanIpAddress, FILTER_VALIDATE_IP)) {
-                        return $cleanIpAddress;
-                    }
-                }
-
-                return '';
-            }
+        if (!self::$trustProxy) {
+            return $ip;
         }
 
-        return $this->server->get('REMOTE_ADDR');
+        if (!self::$trustedHeaders[self::HEADER_CLIENT_IP] || !$this->headers->has(self::$trustedHeaders[self::HEADER_CLIENT_IP])) {
+            return $ip;
+        }
+
+        $clientIps = array_map('trim', explode(',', $this->headers->get(self::$trustedHeaders[self::HEADER_CLIENT_IP])));
+        $clientIps[] = $ip;
+
+        $trustedProxies = self::$trustProxy && !self::$trustedProxies ? array($ip) : self::$trustedProxies;
+        $clientIps = array_diff($clientIps, $trustedProxies);
+
+        return array_pop($clientIps);
     }
 
     /**
@@ -705,14 +778,22 @@ class Request
     /**
      * Returns the port on which the request is made.
      *
+     * This method can read the client port from the "X-Forwarded-Port" header
+     * when trusted proxies were set via "setTrustedProxies()".
+     *
+     * The "X-Forwarded-Port" header must contain the client port.
+     *
+     * If your reverse proxy uses a different header name than "X-Forwarded-Port",
+     * configure it via "setTrustedHeaderName()" with the "client-port" key.
+     *
      * @return string
      *
      * @api
      */
     public function getPort()
     {
-        if (self::$trustProxy && $this->headers->has('X-Forwarded-Port')) {
-            return $this->headers->get('X-Forwarded-Port');
+        if (self::$trustProxy && self::$trustedHeaders[self::HEADER_CLIENT_PORT] && $port = $this->headers->get(self::$trustedHeaders[self::HEADER_CLIENT_PORT])) {
+            return $port;
         }
 
         return $this->server->get('SERVER_PORT');
@@ -858,47 +939,68 @@ class Request
     /**
      * Checks whether the request is secure or not.
      *
+     * This method can read the client port from the "X-Forwarded-Proto" header
+     * when trusted proxies were set via "setTrustedProxies()".
+     *
+     * The "X-Forwarded-Proto" header must contain the protocol: "https" or "http".
+     *
+     * If your reverse proxy uses a different header name than "X-Forwarded-Proto"
+     * ("SSL_HTTPS" for instance), configure it via "setTrustedHeaderName()" with
+     * the "client-proto" key.
+     *
      * @return Boolean
      *
      * @api
      */
     public function isSecure()
     {
-        return (
-            (strtolower($this->server->get('HTTPS')) == 'on' || $this->server->get('HTTPS') == 1)
-            ||
-            (self::$trustProxy && strtolower($this->headers->get('SSL_HTTPS')) == 'on' || $this->headers->get('SSL_HTTPS') == 1)
-            ||
-            (self::$trustProxy && strtolower($this->headers->get('X_FORWARDED_PROTO')) == 'https')
-        );
+        if (self::$trustProxy && self::$trustedHeaders[self::HEADER_CLIENT_PROTO] && $proto = $this->headers->get(self::$trustedHeaders[self::HEADER_CLIENT_PROTO])) {
+            return in_array(strtolower($proto), array('https', 'on', '1'));
+        }
+
+        return 'on' == strtolower($this->server->get('HTTPS')) || 1 == $this->server->get('HTTPS');
     }
 
     /**
      * Returns the host name.
      *
+     * This method can read the client port from the "X-Forwarded-Host" header
+     * when trusted proxies were set via "setTrustedProxies()".
+     *
+     * The "X-Forwarded-Host" header must contain the client host name.
+     *
+     * If your reverse proxy uses a different header name than "X-Forwarded-Host",
+     * configure it via "setTrustedHeaderName()" with the "client-host" key.
+     *
      * @return string
+     *
+     * @throws \UnexpectedValueException when the host name is invalid
      *
      * @api
      */
     public function getHost()
     {
-        if (self::$trustProxy && $host = $this->headers->get('X_FORWARDED_HOST')) {
+        if (self::$trustProxy && self::$trustedHeaders[self::HEADER_CLIENT_HOST] && $host = $this->headers->get(self::$trustedHeaders[self::HEADER_CLIENT_HOST])) {
             $elements = explode(',', $host);
 
-            $host = trim($elements[count($elements) - 1]);
-        } else {
-            if (!$host = $this->headers->get('HOST')) {
-                if (!$host = $this->server->get('SERVER_NAME')) {
-                    $host = $this->server->get('SERVER_ADDR', '');
-                }
+            $host = $elements[count($elements) - 1];
+        } elseif (!$host = $this->headers->get('HOST')) {
+            if (!$host = $this->server->get('SERVER_NAME')) {
+                $host = $this->server->get('SERVER_ADDR', '');
             }
         }
 
-        // Remove port number from host
-        $host = preg_replace('/:\d+$/', '', $host);
-
+        // trim and remove port number from host
         // host is lowercase as per RFC 952/2181
-        return trim(strtolower($host));
+        $host = strtolower(preg_replace('/:\d+$/', '', trim($host)));
+
+        // as the host can come from the user (HTTP_HOST and depending on the configuration, SERVER_NAME too can come from the user)
+        // check that it does not contain forbidden characters (see RFC 952 and RFC 2181)
+        if ($host && !preg_match('/^\[?(?:[a-zA-Z0-9-:\]_]+\.?)+$/', $host)) {
+            throw new \UnexpectedValueException('Invalid Host');
+        }
+
+        return $host;
     }
 
     /**
@@ -1055,7 +1157,11 @@ class Request
      */
     public function setDefaultLocale($locale)
     {
-        $this->setPhpDefaultLocale($this->defaultLocale = $locale);
+        $this->defaultLocale = $locale;
+
+        if (null === $this->locale) {
+            $this->setPhpDefaultLocale($locale);
+        }
     }
 
     /**

@@ -8,7 +8,7 @@
             </trans-unit>
             <trans-unit id="btn_batch">
                 <source>btn_batch</source>
-                <target>Ok</target>
+                <target>OK</target>
             </trans-unit>
             <trans-unit id="btn_create">
                 <source>btn_create</source>
@@ -22,9 +22,13 @@
                 <source>btn_create_and_create_a_new_one</source>
                 <target>Elkészít és hozzáad</target>
             </trans-unit>
+            <trans-unit id="btn_create_and_return_to_list">
+                <source>btn_create_and_return_to_list</source>
+                <target>Elkészít és vissza a listára</target>
+            </trans-unit>
             <trans-unit id="btn_filter">
                 <source>btn_filter</source>
-                <target>Filter</target>
+                <target>Szűrés</target>
             </trans-unit>
             <trans-unit id="btn_update_and_edit_again">
                 <source>btn_update_and_edit_again</source>
@@ -272,7 +276,7 @@
             </trans-unit>
             <trans-unit id="label_filters">
               <source>label_filters</source>
-              <target>Filterek</target>
+              <target>Szűrők</target>
             </trans-unit>
 
             <trans-unit id="delete_or">

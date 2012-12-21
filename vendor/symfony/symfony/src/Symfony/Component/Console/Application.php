@@ -18,7 +18,6 @@ use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Command\Command;
@@ -545,7 +544,10 @@ class Application
         // name
         $commands = array();
         foreach ($this->commands as $command) {
-            if ($this->extractNamespace($command->getName()) == $namespace) {
+            $extractedNamespace = $this->extractNamespace($command->getName());
+            if ($extractedNamespace === $namespace
+               || !empty($namespace) && 0 === strpos($extractedNamespace, $namespace)
+            ) {
                 $commands[] = $command->getName();
             }
         }
@@ -565,7 +567,10 @@ class Application
         $aliases = array();
         foreach ($this->commands as $command) {
             foreach ($command->getAliases() as $alias) {
-                if ($this->extractNamespace($alias) == $namespace) {
+                $extractedNamespace = $this->extractNamespace($alias);
+                if ($extractedNamespace === $namespace
+                   || !empty($namespace) && 0 === strpos($extractedNamespace, $namespace)
+                ) {
                     $aliases[] = $alias;
                 }
             }
@@ -848,8 +853,7 @@ class Application
                 return preg_replace('{^(\d+)x.*$}', '$1', $ansicon);
             }
 
-            exec('mode CON', $execData);
-            if (preg_match('{columns:\s*(\d+)}i', $execData[4], $matches)) {
+            if (preg_match('{^(\d+)x\d+$}i', $this->getConsoleMode(), $matches)) {
                 return $matches[1];
             }
         }
@@ -871,8 +875,7 @@ class Application
                 return preg_replace('{^\d+x\d+ \(\d+x(\d+)\)$}', '$1', trim($ansicon));
             }
 
-            exec('mode CON', $execData);
-            if (preg_match('{lines:\s*(\d+)}i', $execData[3], $matches)) {
+            if (preg_match('{^\d+x(\d+)$}i', $this->getConsoleMode(), $matches)) {
                 return $matches[1];
             }
         }
@@ -957,6 +960,31 @@ class Application
             proc_close($process);
 
             return $info;
+        }
+    }
+
+    /**
+     * Runs and parses mode CON if it's available, suppressing any error output
+     *
+     * @return string <width>x<height> or null if it could not be parsed
+     */
+    private function getConsoleMode()
+    {
+        if (!function_exists('proc_open')) {
+            return;
+        }
+
+        $descriptorspec = array(1 => array('pipe', 'w'), 2 => array('pipe', 'w'));
+        $process = proc_open('mode CON', $descriptorspec, $pipes, null, null, array('suppress_errors' => true));
+        if (is_resource($process)) {
+            $info = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            proc_close($process);
+
+            if (preg_match('{--------+\r?\n.+?(\d+)\r?\n.+?(\d+)\r?\n}', $info, $matches)) {
+                return $matches[2].'x'.$matches[1];
+            }
         }
     }
 
