@@ -1,6 +1,20 @@
 Changelog
 =========
 
+### 2.0.0 (2013-XX-XX)
+
+* Removed the deprecated UserManager and GroupManager classes for the different Doctrine implementations
+* [BC break] Refactored the structure of controller to dispatch events instead of using form handlers
+* Removed all form handlers
+
+### 1.3.1 (2012-12-22)
+
+* Replaced the deprecated validation constraints by the new ones
+* Added an error message when the repeated password is invalid
+* Updated many translations
+* Made the composer requirement compatible with Symfony 2.2.*
+* Fixed the handling of the target url after the registration
+
 ### 1.3.0 (2012-10-06)
 
 * Refactored the Propel implementation to get rid of the UserProxy
