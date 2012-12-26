@@ -1,6 +1,6 @@
 <?php
 function isCacheable() {
-	return !array_key_exists('mlt', $_COOKIE);
+	return $_SERVER['REQUEST_METHOD'] == 'GET' && !array_key_exists('mlt', $_COOKIE);
 }
 class Cache {
 	private $file;
