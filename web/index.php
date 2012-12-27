@@ -105,7 +105,10 @@ $kernel->loadClassCache();
 $request = Request::createFromGlobals();
 $response = $kernel->handle($request);
 if (isCacheable() && $response->isOk()) {
-	$cache->set($response->getContent(), $response->getTtl());
+	try {
+		$cache->set($response->getContent(), $response->getTtl());
+	} catch (\RuntimeException $e) {
+	}
 }
 $response->send();
 $kernel->terminate($request, $response);
