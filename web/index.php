@@ -5,7 +5,6 @@ function isCacheable() {
 class Cache {
 	private $file;
 	private $request;
-	private $ttl = 10;
 	private $debug = false;
 
 	public function __construct($requestUri, $cacheDir) {
@@ -15,18 +14,19 @@ class Cache {
 	}
 
 	public function get() {
-		if ($this->file->exists()) {
-			$this->ttl = $this->file->getRemainingTtl();
-			if ($this->ttl > 0) {
-				$this->log("=== CACHE HIT");
-				return $this->file->read();
-			}
-			$this->purge();
+		if ( ! $this->file->exists()) {
+			return null;
 		}
-		return null;
-	}
-	public function getTtl() {
-		return $this->ttl;
+		$ttl = $this->file->getRemainingTtl();
+		if ($ttl <= 0) {
+			$this->purge();
+			return null;
+		}
+		$this->log("=== CACHE HIT");
+		return array(
+			'data' => $this->file->read(),
+			'ttl' => $ttl,
+		);
 	}
 	public function set($content, $ttl) {
 		if ( ! $ttl) {
@@ -91,8 +91,8 @@ class CacheFile {
 $cache = new Cache($_SERVER['REQUEST_URI'], __DIR__.'/../app/cache/prod/simple_http_cache');
 
 if (isCacheable() && null !== ($cachedContent = $cache->get())) {
-	header("Cache-Control: public, max-age=".$cache->getTtl());
-	echo $cachedContent;
+	header("Cache-Control: public, max-age=".$cachedContent['ttl']);
+	echo $cachedContent['data'];
 	return;
 }
 
