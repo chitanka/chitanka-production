@@ -10,15 +10,16 @@ class Cache {
 
 	public function __construct($requestUri, $cacheDir) {
 		$hash = md5($requestUri);
-		$this->file = "$cacheDir/$hash[0]/$hash[1]/$hash[2]/$hash";
+		$this->file = new CacheFile("$cacheDir/$hash[0]/$hash[1]/$hash[2]/$hash");
 		$this->request = $requestUri;
 	}
 
 	public function get() {
-		if (file_exists($this->file)) {
-			if ($this->isFresh()) {
+		if ($this->file->exists()) {
+			$this->ttl = $this->file->getRemainingTtl();
+			if ($this->ttl > 0) {
 				$this->log("=== CACHE HIT");
-				return file_get_contents($this->file);
+				return $this->file->read();
 			}
 			$this->purge();
 		}
@@ -27,27 +28,16 @@ class Cache {
 	public function getTtl() {
 		return $this->ttl;
 	}
-	private function isFresh() {
-		$origTtl = file_get_contents("$this->file.ttl") + rand(0, 30);
-		$age = time() - filemtime($this->file);
-		$this->ttl = $origTtl - $age;
-		return $this->ttl > 0;
-	}
 	public function set($content, $ttl) {
 		if ( ! $ttl) {
 			return;
 		}
-		$cacheDir = dirname($this->file);
-		if (!file_exists($cacheDir)) {
-			mkdir($cacheDir, 0777, true);
-		}
-		file_put_contents($this->file, $content);
-		file_put_contents("$this->file.ttl", $ttl);
+		$this->file->write($content);
+		$this->file->setTtl($ttl);
 		$this->log("+++ CACHE MISS ($ttl)");
 	}
 	private function purge() {
-		unlink($this->file);
-		unlink("$this->file.ttl");
+		$this->file->delete();
 		$this->log('--- CACHE PURGE');
 	}
 	private function log($msg) {
@@ -56,6 +46,44 @@ class Cache {
 		}
 	}
 }
+class CacheFile {
+	private $name;
+
+	public function __construct($name) {
+		$this->name = $name;
+	}
+	public function exists() {
+		return file_exists($this->name);
+	}
+	public function write($content) {
+		$dir = dirname($this->name);
+		if ( ! file_exists($dir)) {
+			mkdir($dir, 0777, true);
+		}
+		file_put_contents($this->name, gzdeflate($content));
+	}
+	public function read() {
+		return gzinflate(file_get_contents($this->name));
+	}
+	public function delete() {
+		unlink($this->file);
+		unlink("$this->file.ttl");
+	}
+	public function setTtl($value) {
+		file_put_contents("$this->name.ttl", $value);
+	}
+	public function getTtl() {
+		return file_get_contents("$this->name.ttl");
+	}
+	public function getRemainingTtl() {
+		$origTtl = $this->getTtl() + rand(0, 30) /* guard for race conditions */;
+		return $origTtl - $this->getAge();
+	}
+	public function getAge() {
+		return time() - filemtime($this->name);
+	}
+}
+
 $cache = new Cache($_SERVER['REQUEST_URI'], __DIR__.'/../app/cache/prod/simple_http_cache');
 
 if (isCacheable() && null !== ($cachedContent = $cache->get())) {
