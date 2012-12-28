@@ -63,7 +63,11 @@ class CacheFile {
 		file_put_contents($this->name, gzdeflate($content));
 	}
 	public function read() {
-		return gzinflate(file_get_contents($this->name));
+		$content = file_get_contents($this->name);
+		if ($content[0] == '<') { // not compressed
+			return $content;
+		}
+		return gzinflate($content);
 	}
 	public function delete() {
 		unlink($this->file);
