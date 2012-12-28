@@ -70,8 +70,8 @@ class CacheFile {
 		return gzinflate($content);
 	}
 	public function delete() {
-		unlink($this->file);
-		unlink("$this->file.ttl");
+		unlink($this->name);
+		unlink("$this->name.ttl");
 	}
 	public function setTtl($value) {
 		file_put_contents("$this->name.ttl", $value);
