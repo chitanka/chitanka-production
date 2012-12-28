@@ -64,7 +64,7 @@ class CacheFile {
 	}
 	public function read() {
 		$content = file_get_contents($this->name);
-		if ($content[0] == '<') { // not compressed
+		if (empty($content) || $content[0] == '<') { // not compressed
 			return $content;
 		}
 		return gzinflate($content);
