@@ -1354,6 +1354,8 @@ class Sfblib_SfbConverter
 		$this->fixHasNextLine(self::STYLE_E);
 
 		$this->doStyleEnd();
+		// a HACK to allow nested styles
+		$this->lcmd = '';
 	}
 
 
