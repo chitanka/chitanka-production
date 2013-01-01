@@ -120,11 +120,6 @@ register_shutdown_function(function(){
 			header('Location: /install.php');
 			exit;
 		}
-		if (strpos($error['message'], 'Out of memory') === false) {
-			file_put_contents(__DIR__.'/../app/logs/fatal-error.log',
-				"\nFATAL ERROR\nrequest = $_SERVER[REQUEST_URI]\n"
-				. print_r($error, true)."\n", FILE_APPEND);
-		}
 		ob_clean();
 		header('HTTP/1.1 503 Service Unavailable');
 		readfile(__DIR__ . '/503.html');

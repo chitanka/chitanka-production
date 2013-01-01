@@ -1125,6 +1125,11 @@ class Sfblib_SfbConverter
 	{
 		switch ($this->lcmd) {
 			case self::PARAGRAPH:       $this->doParagraph();           break;
+			case self::TITLE_1:
+			case self::TITLE_2:
+			case self::TITLE_3:
+			case self::TITLE_4:
+			case self::TITLE_5:         $this->doTitle($this->lcmd); break;
 			case self::POEM_S:          $this->doPoem();                break;
 			case self::CITE_S:          $this->doCite();                break;
 			case self::AUTHOR_OL:       $this->doAuthor();              break;
@@ -2273,8 +2278,6 @@ class Sfblib_SfbConverter
 	* binary (#PCDATA)
 	* 	content-type CDATA #REQUIRED
 	* 	id           ID    #REQUIRED
-	*
-	* Called as a callback of a preg_replace.
 	*/
 	protected function doBlockImage()
 	{
@@ -2298,6 +2301,10 @@ class Sfblib_SfbConverter
 		return $this->_inBlockImage;
 	}
 
+	/**
+	 *
+	 * Called as a callback of a preg_replace.
+	 */
 	protected function doImage($name, $modifs)
 	{
 		$alt = $name;
@@ -2483,6 +2490,11 @@ class Sfblib_SfbConverter
 			}
 		}
 		$target = $this->generateInternalId($target, false);
+		return $this->doInternalLinkElement($target, $text);
+	}
+
+	protected function doInternalLinkElement($target, $text)
+	{
 		return $this->out->xmlElement('a', $text, array(
 			'href'  => $this->internalLinkTarget . "#$target",
 		), false);

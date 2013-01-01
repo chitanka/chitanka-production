@@ -544,7 +544,7 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 
 	/**
 	*/
-	protected function canImageStartSection()
+	protected function imageIsOnSectionStart()
 	{
 		return $this->_lastSaved[$this->_curBlock] == '</epigraph>'
 			|| strpos($this->_lastSaved[$this->_curBlock], '<title>') === 0;
@@ -984,11 +984,20 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 	/*************************************************************************/
 
 
+	private $_hasExtraSectionForImage = false;
 	protected function doBlockImageStart()
 	{
 		if ( $this->acceptsBlockImage() ) {
 			$this->overwriteParagraphElement();
-			if ( ! $this->canImageStartSection() ) {
+
+			if ($this->imageHasNoteInTitle() && $this->imageIsOnSectionStart()) {
+				// we'll add a paragraph for the image title,
+				// so wrap them in a section
+				$this->openSection();
+				$this->_hasExtraSectionForImage = true;
+			}
+
+			if ( ! $this->imageIsOnSectionStart() ) {
 				$this->doEmptyLine();
 			}
 		}
@@ -998,11 +1007,16 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 	{
 		if ( $this->acceptsBlockImage() ) {
 			$this->revertParagraphElement();
-			// this breaks FB2 if after the image follows a section, i.e.
-			// > TITLE
-			// {img:MY_IMAGE}
-			// >> SUBTITLE
-			//$this->appendParagraphIfImageTitle();
+
+			if ($this->imageHasNoteInTitle()) {
+				// we cannot have a link to a footnote in the title attribute,
+				// so let the link live in a paragraph
+				$this->appendParagraphIfImageTitle();
+				if ($this->_hasExtraSectionForImage) {
+					$this->closeSection();
+					$this->_hasExtraSectionForImage = false;
+				}
+			}
 		}
 	}
 
@@ -1025,6 +1039,10 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 			&& ! $this->isInPoem();
 	}
 
+	protected function imageHasNoteInTitle()
+	{
+		return preg_match('/\*/', $this->ltext);
+	}
 
 	protected function getImage($src, $id, $alt, $title, $url, $size, $align)
 	{
@@ -1110,6 +1128,13 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 	protected function doExternLink($href)
 	{
 		return $href;
+	}
+
+	protected function doInternalLinkElement($target, $text)
+	{
+		return $this->out->xmlElement('a', $text, array(
+			'l:href'  => $this->internalLinkTarget . "#$target",
+		), false);
 	}
 
 }
