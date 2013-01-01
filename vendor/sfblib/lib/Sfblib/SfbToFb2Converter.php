@@ -55,7 +55,7 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 		/** save all binary data here */
 		$binaryText            = '',
 
-		$genre                 = 'prose_classic',
+		$genre                 = array('prose_classic'),
 		$authors               = array(),
 		$title                 = '(няма заглавие)',
 		$subtitle              = '',
@@ -65,7 +65,6 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 		$translators           = array(),
 		$sequences             = array(),
 
-		$srcGenre              = 'prose_classic',
 		$srcAuthors            = array(),
 		$srcTitle              = '',
 		$srcSubtitle           = '',
@@ -228,7 +227,7 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 	{
 		$eol = $this->getEol();
 		return $this->out->xmlElement('title-info',
-			$this->out->xmlElement('genre', $this->genre)               . $eol
+			$this->getGenre()                                           . $eol
 			.$this->getAuthors()                                        . $eol
 			.$this->out->xmlElement('book-title', $this->getTitle())    . $eol
 			.$this->getAnnotation()                                     . $eol
@@ -250,7 +249,7 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 		}
 		$eol = $this->getEol();
 		return $this->out->xmlElement('src-title-info',
-			$this->out->xmlElement('genre', $this->genre)               . $eol
+			$this->getGenre()                                           . $eol
 			.$this->getSrcAuthors()                                     . $eol
 			.$this->out->xmlElement('book-title', $this->srcTitle)      . $eol
 			.$this->out->xmlElementOrNone('date', $this->textDate)      . $eol
@@ -301,6 +300,21 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 		return $this->out->xmlElement('coverpage', $this->out->getEmptyTag(
 			'image', array('l:href' => '#'.$this->coverpage)
 		));
+	}
+
+
+	public function getGenre()
+	{
+		$elements = array();
+		foreach ($this->genre as $key => $genre) {
+			$attrs = array();
+			if (is_string($key)) {
+				$attrs['match'] = $genre;
+				$genre = $key;
+			}
+			$elements[] = $this->out->xmlElement('genre', $genre, $attrs);
+		}
+		return implode($this->getEol(), $elements);
 	}
 
 
@@ -358,9 +372,18 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 	/*************************************************************************/
 
 
+	/**
+	 * @param mixed $genre  Allowed values:
+	 *     - string
+	 *     - array, e.g.
+	 *         array(
+	 *           "nonfiction",
+	 *           "sci_history" => 50 // used for the match attribute
+	 *         )
+	 */
 	public function setGenre($genre)
 	{
-		$this->genre = $genre;
+		$this->genre = (array) $genre;
 	}
 	public function addAuthor($name, $raw = true)
 	{
