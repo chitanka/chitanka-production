@@ -447,6 +447,10 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 	}
 
 
+	public function setDocAuthor($name)
+	{
+		$this->docAuthors = (array) $name;
+	}
 	public function addDocAuthor($name, $raw = true)
 	{
 		$this->docAuthors[] = $raw ? $this->preparePersonName($name) : $name;
