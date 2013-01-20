@@ -25,7 +25,7 @@ class AutoUpdateCommand extends CommonDbCommand
 			->addOption('skip-db', null, InputOption::VALUE_NONE, 'Skip database update')
 			->addOption('skip-src', null, InputOption::VALUE_NONE, 'Skip software update')
 			->setHelp(<<<EOT
-The <info>auto-update</info> auto-update the whole system - software, database, and content.
+The <info>auto-update</info> updates the whole system - software, database, and content.
 EOT
 		);
 	}
