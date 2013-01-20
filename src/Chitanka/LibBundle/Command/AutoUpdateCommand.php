@@ -125,6 +125,8 @@ EOT
 		$commandName = 'cache:warmup';
 		$command = $this->getApplication()->find($commandName);
 		$arguments = array('command' => $commandName);
+		// allow generated files to be world-writable
+		umask(0000);
 		return $command->run(new ArrayInput($arguments), $this->output);
 	}
 
