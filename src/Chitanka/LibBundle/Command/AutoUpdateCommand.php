@@ -113,20 +113,17 @@ EOT
 		$updater = new SourceUpdater($rootDir, $updateDir);
 		$updater->lockFrontController();
 		$updater->extractArchive($zip);
-		$updater->clearCache();
 		// update app/config/parameters.yml if needed
-		$this->warmupCache();
+		$this->clearCache();
 		$updater->unlockFrontController();
 		return true;
 	}
 
-	private function warmupCache()
+	private function clearCache()
 	{
-		$commandName = 'cache:warmup';
+		$commandName = 'cache:clear';
 		$command = $this->getApplication()->find($commandName);
 		$arguments = array('command' => $commandName);
-		// allow generated files to be world-writable
-		umask(0000);
 		return $command->run(new ArrayInput($arguments), $this->output);
 	}
 
