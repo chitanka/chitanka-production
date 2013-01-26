@@ -120,7 +120,6 @@ class User /*extends BaseUser*/ implements UserInterface
 	*/
 	private $token;
 
-
 	/** FIXME doctrine:schema:create does not allow this relation
 	* @var array
 	* @ORM\ManyToMany(targetEntity="Text", mappedBy="readers")
