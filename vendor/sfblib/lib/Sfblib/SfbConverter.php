@@ -2166,15 +2166,14 @@ class Sfblib_SfbConverter
 		$cc = -1; // curent column index
 		$row = array(); // contents of the cells
 
-		$re = '!{img:[^}|]+\|[^}]+}!';
-		$placeholder = 'IMG_PLACEHOLDER';
-		if ( preg_match_all($re, $this->ltext, $imgs) ) {
-			$imgs = $imgs[0];
+		$re = '!({img:[^}|]+\|[^}]+}|\[\[[^]|]+\|[^]|]+\]\])!';
+		$placeholder = 'IN_TABLE_PLACEHOLDER';
+		if (preg_match_all($re, $this->ltext, $savedContent)) {
+			$savedContent = $savedContent[0];
 			$this->ltext = preg_replace($re, $placeholder, $this->ltext);
 		}
 
-		$len = strlen($this->ltext);
-		for ($i = 0; $i < $len; $i++) {
+		for ($i = 0, $len = strlen($this->ltext); $i < $len; $i++) {
 			$ch = $this->ltext[$i];
 			if ( $expectModif ) {
 				switch ( $ch ) {
@@ -2244,7 +2243,7 @@ class Sfblib_SfbConverter
 		foreach ($row as $i => $cdata) {
 			$cell = trim($cdata[1], ' ');
 			while ( strpos($cell, $placeholder) !== false ) {
-				$cell = preg_replace("!$placeholder!", array_shift($imgs), $cell, 1);
+				$cell = preg_replace("!$placeholder!", array_shift($savedContent), $cell, 1);
 			}
 			$row[$i][1] = $this->doInlineElements($cell);
 		}
