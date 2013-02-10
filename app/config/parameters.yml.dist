@@ -27,10 +27,10 @@ parameters:
     use_http_cache: true
 
     # Следните променливи се ползват при пращането на електронна поща
-    admin:        Администратор
-    admin_email:  { admin@localhost: Администратор }
-    site_email:   admin@localhost
-    work_email:   admin@localhost
+    admin:              Администратор
+    admin_email:        { admin@localhost: Администратор }
+    site_email:         admin@localhost
+    work_email:         admin@localhost
 
     # Път до библиотеката jQuery. По подразбиране false.
     # При false, се ползва локалното копие
