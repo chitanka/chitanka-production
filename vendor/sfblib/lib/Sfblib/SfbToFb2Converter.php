@@ -620,14 +620,18 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 
 	protected function doAnnotationStart()
 	{
-		$this->enterContentBlock('annotation');
+		if ( ! $this->isSectionOpened()) {
+			$this->enterContentBlock('annotation');
+		}
 		parent::doAnnotationStart();
 	}
 
 	protected function doAnnotationEnd()
 	{
 		parent::doAnnotationEnd();
-		$this->leaveContentBlock('annotation');
+		if ( ! $this->isSectionOpened()) {
+			$this->leaveContentBlock('annotation');
+		}
 	}
 
 
