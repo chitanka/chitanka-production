@@ -2368,8 +2368,16 @@ class Sfblib_SfbConverter
 	protected function doUnknownContent()
 	{
 		if ($this->hasJumpId()) {
+			if ($this->ltext != '') {
+				$this->doParagraph();
+			}
 			return;
 		}
+		$this->saveUnknownContent();
+	}
+
+	protected function saveUnknownContent()
+	{
 		echo "doUnknownContent(): $this->linecnt: $this->line\n";
 		$this->saveContent($this->line);
 	}
@@ -2391,7 +2399,7 @@ class Sfblib_SfbConverter
 		if ( ! empty($elm) ) {
 			if ($this->_curJumpId !== null) {
 				if ( !isset($attrs['id'])) {
-					$attrs['id'] = $this->_curJumpId;
+					$attrs['id'] = $this->generateInternalId($this->_curJumpId);
 				}
 				$this->_curJumpId = null;
 			}

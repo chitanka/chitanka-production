@@ -385,11 +385,8 @@ class Sfblib_SfbToHtmlConverter extends Sfblib_SfbConverter
 	}
 
 
-	protected function doUnknownContent()
+	protected function saveUnknownContent()
 	{
-		if ($this->hasJumpId()) {
-			return;
-		}
 		$this->saveContent("doUnknownContent(): $this->linecnt: $this->line\n");
 	}
 
