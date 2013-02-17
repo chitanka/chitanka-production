@@ -14,3 +14,5 @@ web/todo/*
 update/*/*
 app/spool/*
 .DS_Store
+.exclude
+.include
