@@ -34,7 +34,7 @@ class Mutex
 
 	private function hasValidLockFile($expirationTime)
 	{
-		return file_exists($this->getLockFile()) && (time() - filemtime($this->getLockFile) < $expirationTime);
+		return file_exists($this->getLockFile()) && (time() - filemtime($this->getLockFile()) < $expirationTime);
 	}
 
 	private function getLockFile()
