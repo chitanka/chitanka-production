@@ -52,9 +52,6 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 			self::TABLE_CELL_BOTTOM => array('valign' => 'bottom'),
 		),
 
-		/** save all binary data here */
-		$binaryText            = '',
-
 		$genre                 = array('prose_classic'),
 		$authors               = array(),
 		$title                 = '(няма заглавие)',
@@ -80,6 +77,9 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 		$history               = array();
 
 	private
+		/** save all binary data here */
+		$binaryTextFileName,
+
 		$_inStanza             = false,
 
 		// process subheaders as they were titles
@@ -130,29 +130,30 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 
 	public function getContent()
 	{
-		$eol = $this->getEol();
 		$trepl = array(
 			'<v>' . self::EOL  => '<v>',
 			self::EOL . '</v>' => '</v>',
 			'<p>' . self::EOL  => '<p>',
 			self::EOL . '</p>' => '</p>',
 		);
+		$clearNewLines = function($str) use ($trepl) {
+			return strtr($str, $trepl);
+		};
 
-		return strtr('<?xml version="1.0" encoding="UTF-8"?>'
-			. self::EOL
-			. $this->out->getStartTag($this->rootElement, array(
+		return implode($this->getEol(), array(
+			'<?xml version="1.0" encoding="UTF-8"?>',
+			$this->out->getStartTag($this->rootElement, array(
 				'xmlns'   => 'http://www.gribuser.ru/xml/fictionbook/2.0',
 				'xmlns:l' => 'http://www.w3.org/1999/xlink',
-			))                                . $eol
-			. $this->getStylesheet()          . $eol
-			. $this->getDescription()         . $eol
-			. $this->getText()                . $eol
-			. $this->getInfoblock()           . $eol
-			. $this->getNotes(1)              . $eol
-			. $this->getBinary()              . $eol
-			. $this->out->getEndTag($this->rootElement)
-			. self::EOL
-			, $trepl);
+			)),
+			$this->getStylesheet(),
+			$this->getDescription(),
+			$clearNewLines($this->getText()),
+			$clearNewLines($this->getInfoblock()),
+			$clearNewLines($this->getNotes(1)),
+			$this->getBinary(),
+			$this->out->getEndTag($this->rootElement)
+		)) . self::EOL;
 	}
 
 
@@ -208,7 +209,7 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 
 	public function getBinary()
 	{
-		return $this->binaryText;
+		return $this->binaryTextFileName ? file_get_contents($this->binaryTextFileName) : null;
 	}
 
 
@@ -1105,17 +1106,19 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 			return $this->_binaryIds[$hash];
 		}
 
-		$this->binaryText .= $this->out->xmlElement($this->binaryElement,
+		if ($this->binaryTextFileName === null) {
+			$this->binaryTextFileName = sys_get_temp_dir() .'/fb2bin-'.md5(time().uniqid());
+		}
+		file_put_contents($this->binaryTextFileName, $this->out->xmlElement($this->binaryElement,
 			$this->encodeImage($content),
 			array(
 				'content-type' => Sfblib_Util::guessMimeType($src),
 				'id'           => $id,
 			)
-		);
+		), FILE_APPEND);
 
 		return $this->_binaryIds[$hash] = $id;
 	}
-
 
 	protected function encodeImage($data)
 	{
