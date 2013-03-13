@@ -853,7 +853,7 @@ EOS;
 		}
 		$user = $this->controller->getRepository('User')->find($this->scanuser);
 		$threadUrl = $this->controller->generateUrl('fos_comment_post_threads');
-		$commentJs = $this->container->getParameter('assets_base_urls') . '/js/comments.js';
+		$commentJs = $this->container->getParameter('assets_base_urls') . '/bundles/lib/js/comments.js';
 		return <<<JS
 var fos_comment_thread_id = 'WorkEntry:$entry';
 
@@ -879,7 +879,20 @@ $(document)
 	.on('fos_comment_show_form', '#fos_comment_thread', function (data) {
 		var button = $(data.target);
 		button.next().find('input[name="fos_comment_comment[cc]"]').val(button.data("name"));
-	});
+	})
+	.on('fos_comment_submitting_form', '#fos_comment_thread', function (event, data) {
+		var form = $(event.target);
+		if (form.is(".loading")) {
+			event.preventDefault();
+			return;
+		}
+		form.addClass("loading").find(":submit").attr("disabled", true);
+	})
+	.on('fos_comment_submitted_form', '#fos_comment_thread', function (event, data) {
+		var form = $(event.target);
+		form.removeClass("loading").find(":submit").removeAttr("disabled");
+	})
+;
 JS;
 	}
 
@@ -1211,7 +1224,7 @@ EOS;
 <p>Тук може да разгледате списък на произведенията, които се подготвят за добавяне в библиотеката.</p>
 <p>За да започнете подготовката на нов текст, $ext последвайте връзката „Подготовка на ново произведение“. В случай че нямате възможност сами да сканирате текстове, може да се присъедините към коригирането на заглавията, отбелязани ето така: $umarker (може и да няма такива). Те са достъпни и чрез връзката „{$this->viewTypes['waiting']}“.</p>
 <p>Бързината на добавянето на нови текстове в библиотеката зависи както от броя на грешките, останали след сканирането и разпознаването, така и от форма&#768;та на текста. Най-бързо ще бъдат добавяни отлично коригирани текстове, правилно преобразувани във <a href="http://wiki.chitanka.info/SFB">формат SFB</a>.</p>
-<p class="error">Не се добавят книги, издадени на български след декември 2010 г., освен ако са пратени от авторите си.</p>
+<p class="error">Добавят се само книги, издадени на български пред 2011 г. Изключение се прави само за тези, пратени от авторите си.</p>
 EOS;
 	}
 
