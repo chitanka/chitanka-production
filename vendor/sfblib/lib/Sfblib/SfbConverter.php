@@ -270,7 +270,8 @@ class Sfblib_SfbConverter
 
 		$this->replPairs = array(
 			"\t"     => '        ', // eight nbspaces
-			'`'      => '&#768;', // ударение
+			'`'      => '&#768;', // ударение, гравис (тежко, твърдо)
+			'´'      => '&#769;', // ударение, акут (остро, меко)
 
 			'{sup}'  => "<$this->superscriptElement>",
 			'{/sup}' => "</$this->superscriptElement>",
