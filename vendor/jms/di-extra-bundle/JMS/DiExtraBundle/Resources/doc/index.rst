@@ -27,6 +27,7 @@ Documentation
 - :doc:`Usage <usage>`
 - :doc:`Doctrine Integration <doctrine>`
 - :doc:`Annotations <annotations>`
+- :doc:`Lazy Service Collections <lazy_service_collections>`
 
 License
 -------

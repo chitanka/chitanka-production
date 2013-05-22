@@ -3,7 +3,7 @@
 /*
  * This file is part of the Assetic package, an OpenSky project.
  *
- * (c) 2010-2012 OpenSky Project Inc
+ * (c) 2010-2013 OpenSky Project Inc
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,8 +11,8 @@
 
 namespace Assetic\Asset;
 
-use Assetic\Util\PathUtils;
 use Assetic\Filter\FilterInterface;
+use Assetic\Util\VarUtils;
 
 /**
  * Represents an asset loaded from a file.
@@ -56,7 +56,7 @@ class FileAsset extends BaseAsset
 
     public function load(FilterInterface $additionalFilter = null)
     {
-        $source = PathUtils::resolvePath($this->source, $this->getVars(), $this->getValues());
+        $source = VarUtils::resolve($this->source, $this->getVars(), $this->getValues());
 
         if (!is_file($source)) {
             throw new \RuntimeException(sprintf('The source file "%s" does not exist.', $source));
@@ -67,7 +67,7 @@ class FileAsset extends BaseAsset
 
     public function getLastModified()
     {
-        $source = PathUtils::resolvePath($this->source, $this->getVars(), $this->getValues());
+        $source = VarUtils::resolve($this->source, $this->getVars(), $this->getValues());
 
         if (!is_file($source)) {
             throw new \RuntimeException(sprintf('The source file "%s" does not exist.', $source));

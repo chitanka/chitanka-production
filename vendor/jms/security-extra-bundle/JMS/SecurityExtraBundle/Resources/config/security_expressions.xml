@@ -17,6 +17,8 @@
         <parameter key="security.expressions.variable_compiler.class">JMS\SecurityExtraBundle\Security\Authorization\Expression\Compiler\ContainerAwareVariableCompiler</parameter>
         <parameter key="security.expressions.parameter_compiler.class">JMS\SecurityExtraBundle\Security\Authorization\Expression\Compiler\ParameterExpressionCompiler</parameter>
         
+        <parameter key="security.expressions.reverse_interpreter.class">JMS\SecurityExtraBundle\Security\Authorization\Expression\ReverseInterpreter</parameter>
+        
         <parameter key="security.extra.config_driver.class">JMS\SecurityExtraBundle\Metadata\Driver\ConfigDriver</parameter>
         
         <parameter key="security.extra.twig_extension.class">JMS\SecurityExtraBundle\Twig\SecurityExtension</parameter>
@@ -46,9 +48,15 @@
             <tag name="security.expressions.variable" variable="role_hierarchy"
                  service="security.role_hierarchy" />
         </service>
+        
+        <service id="security.expressions.reverse_interpreter" class="%security.expressions.reverse_interpreter.class%">
+            <argument type="service" id="security.expressions.compiler" />
+            <argument type="service" id="security.expressions.handler" />
+        </service>
     
         <service id="security.expressions.voter" class="%security.expressions.voter.class%" public="false">
             <argument type="service" id="security.expressions.handler" />
+            <argument type="service" id="logger" on-invalid="null" />
             
             <call method="setLazyCompiler">
                 <argument type="service" id="service_container" />
@@ -56,6 +64,7 @@
             </call>
             
             <tag name="security.voter" priority="230" />
+            <tag name="monolog.logger" channel="security" />
         </service>
         
         <service id="security.expressions.handler" class="%security.expressions.handler.class%" public="false">

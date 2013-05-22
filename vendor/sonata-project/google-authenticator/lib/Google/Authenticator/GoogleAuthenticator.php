@@ -53,7 +53,7 @@ class GoogleAuthenticator
 
     /**
      * @param $secret
-     * @param null $time
+     * @param  null   $time
      * @return string
      */
     public function getCode($secret, $time = null)
@@ -92,9 +92,9 @@ class GoogleAuthenticator
     }
 
     /**
-     * @param string $user
-     * @param string $hostname
-     * @param string $secret
+     * @param  string $user
+     * @param  string $hostname
+     * @param  string $secret
      * @return string
      */
     public function getUrl($user, $hostname, $secret)
@@ -121,4 +121,3 @@ class GoogleAuthenticator
         return $base32->encode($secret);
     }
 }
-

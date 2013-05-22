@@ -2,9 +2,16 @@ Step 2: The view layer
 ======================
 ### Introduction
 
-The view layer makes it possible to write format agnostic controllers, by
-placing a layer between the Controller and the generation of the final output
-via the templating or serializer.
+The view layer makes it possible to write `format` (html, json, xml, etc) agnostic
+controllers, by placing a layer between the Controller and the generation of the
+final output via the templating or a serializer.
+
+The Bundle works with both the Symfony2 core serializer:
+http://symfony.com/doc/2.0/components/serializer.html
+
+But also with the more sophisticated serializer by Johannes Schmitt:
+https://github.com/schmittjoh/serializer
+https://github.com/schmittjoh/JMSSerializerBundle
 
 In your controller action you will then need to create a ``View`` instance that
 is then passed to the ``fos_rest.view_handler`` service for processing. The

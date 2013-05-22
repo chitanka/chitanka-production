@@ -22,6 +22,10 @@ https://github.com/liip/LiipHelloBundle/blob/master/Controller/RestController.ph
 Single RESTful controller routes
 ================================
 
+In this section we are looking at controllers for resources without sub-resources.
+Handling of sub-resources requires some additional considerations which
+are explained in the next section.
+
 ```yaml
 # app/config/routing.yml
 users:
@@ -31,8 +35,11 @@ users:
 
 This will tell Symfony2 to automatically generate proper REST routes from your ``UsersController`` action names.
 Notice ``type: rest`` option. It's required so that the RestBundle can find which routes are supported.
-Notice ``name_prefix: my_bundle_`` option. It's useful to prefix the generated controller routes. Take care that
-you can use ``name_prefix`` on an import only when the file is imported itself with the type ``rest``.
+
+Notice the ``name_prefix: my_bundle_`` option. It's useful to prefix the generated controller routes to organize
+your several resources paths. Take care that you can use ``name_prefix`` on an import only when the file is imported
+itself with the type ``rest``. The parent option is used in sub-resources as we will see in the next section for
+multiple RESTful controller routes.
 
 ## Define resource actions
 
@@ -70,7 +77,7 @@ class UsersController
     public function lockUserAction($slug)
     {} // "lock_user"     [PATCH] /users/{slug}/lock
 
-    public function banUserAction($slug, $id)
+    public function banUserAction($slug)
     {} // "ban_user"      [PATCH] /users/{slug}/ban
 
     public function removeUserAction($slug)
@@ -105,6 +112,12 @@ class UsersController
 
     public function deleteUserCommentAction($slug, $id)
     {} // "delete_user_comment"  [DELETE] /users/{slug}/comments/{id}
+    
+    public function linkUserAction($slug)
+    {} // "link_user_friend"     [LINK] /users/{slug}
+    
+    public function unlinkUserAction($slug)
+    {} // "link_user_friend"     [UNLINK] /users/{slug}
 }
 ```
 
@@ -199,6 +212,19 @@ This action also accepts *PATCH* requests to the url */resources/{id}* and is su
 Shown as ``UsersController::patchUserAction()`` above.
 * **option** - this action accepts *OPTION* requests to the url */resources* and is supposed to return a list of REST
 resources that the user has access to.  Shown as ``UsersController::userAction()`` above.
+* **link** - this action accepts *LINK* requests to the url */resources/{id}* and is supposed to return nothing but a
+status code indicating that the specified resources were linked. It is used to declare a resource as related to an other one.
+When calling a LINK url you must provide in your header at least one link header formatted as follow : 
+``<http://example.com/resources/{id}\>; rel="kind_of_relation"``
+* **unlink** - this action accepts *UNLINK* requests to the url */resources/{id}* and is supposed to return nothing but
+a status code indicating that the specified resources were unlinked. It is used to declare that some resources are not
+related anymore. When calling a UNLINK url you must provide in your header at least one link header formatted as follow : 
+``<http://example.com/resources/{id}\>; rel="kind_of_relation"``
+
+Important note about **link** and **unlink**: The implementation of the request listener extracting the resources as entities is not provided
+by this bundle. A good implementation can be found here : http://williamdurand.fr/2012/08/02/rest-apis-with-symfony2-the-right-way/
+It also contains some examples on how to use it. **link** and **unlink** were obsoleted by RFC 2616, RFC 5988 aims to define
+it in a more clear way. Using these methods is not risky, but remains unclear (cf. issues 323 and 325).
 
 ### Conventional Actions
 
@@ -227,7 +253,19 @@ the standard *PATCH* or *PUT* endpoint.
 Of course it's possible and common to have sub or child resources. They are easily defined within the same controller by
 following the naming convention ``ResourceController::actionResourceSubResource()`` - as seen in the example above with
 ``UsersController::getUserCommentsAction()``. This is a good strategy to follow when the child resource needs the parent
-resource's ID in order to look up itself. 
+resource's ID in order to look up itself.
+
+### Optional {_format} in route
+
+By default, routes are generated with {_format} string. If you want to get clean urls (``/orders`` instead ``/orders.{_format}``)
+then all you have to do is add some configuration:
+
+```yml
+# app/config/config.yml
+fos_rest:
+    routing_loader:
+        include_format:       false
+```
 
 ## That was it!
 [Return to the index](index.md) or continue reading about [Automatic route generation: multiple RESTful controllers](6-automatic-route-generation_multiple-restful-controllers.md).

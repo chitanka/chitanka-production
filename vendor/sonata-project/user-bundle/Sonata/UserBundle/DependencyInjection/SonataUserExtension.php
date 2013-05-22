@@ -8,13 +8,11 @@
  * file that was distributed with this source code.
  */
 
-
 namespace Sonata\UserBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\Config\FileLocator;
 
@@ -229,11 +227,13 @@ class SonataUserExtension extends Extension
                     array(
                         'name' => 'user_id',
                         'referencedColumnName' => 'id',
+                        'onDelete' => 'CASCADE'
                     ),
                 ),
                 'inverseJoinColumns' => array( array(
                     'name' => 'group_id',
                     'referencedColumnName' => 'id',
+                    'onDelete' => 'CASCADE'
                 )),
             )
         ));
@@ -244,7 +244,8 @@ class SonataUserExtension extends Extension
      */
     public function configureShortcut(ContainerBuilder $container)
     {
-        $container->setAlias('sonata_user_authentication_form_factory', 'fos_user.profile.form.factory');
+        $container->setAlias('sonata_user_authentication_form', 'fos_user.profile.form');
+        $container->setAlias('sonata_user_authentication_form_handler', 'fos_user.profile.form.handler');
     }
 
     /**

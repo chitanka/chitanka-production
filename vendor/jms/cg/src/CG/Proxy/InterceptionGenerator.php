@@ -19,9 +19,7 @@
 namespace CG\Proxy;
 
 use CG\Core\ClassUtils;
-
 use CG\Core\ReflectionUtils;
-
 use CG\Generator\PhpParameter;
 use CG\Generator\PhpProperty;
 use CG\Generator\PhpMethod;
@@ -46,6 +44,9 @@ class InterceptionGenerator implements GeneratorInterface
         $this->requiredFile = $file;
     }
 
+    /**
+     * @param string $prefix
+     */
     public function setPrefix($prefix)
     {
         $this->prefix = $prefix;
@@ -96,7 +97,7 @@ class InterceptionGenerator implements GeneratorInterface
         $interceptorCode =
              '$ref = new \ReflectionMethod(%s, %s);'."\n"
             .'$interceptors = $this->'.$this->prefix.'loader->loadInterceptors($ref, $this, array(%s));'."\n"
-        	.'$invocation = new \CG\Proxy\MethodInvocation($ref, $this, array(%s), $interceptors);'."\n\n"
+            .'$invocation = new \CG\Proxy\MethodInvocation($ref, $this, array(%s), $interceptors);'."\n\n"
             .'return $invocation->proceed();'
         ;
 

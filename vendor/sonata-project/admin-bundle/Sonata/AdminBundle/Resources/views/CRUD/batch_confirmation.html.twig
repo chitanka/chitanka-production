@@ -12,13 +12,9 @@ file that was distributed with this source code.
 {% extends base_template %}
 
 {% block actions %}
-    <div class="sonata-actions">
-        {% if admin.hasRoute('list') and admin.isGranted('LIST')%}
-            <a class="btn sonata-action-element" href="{{ admin.generateUrl('list') }}">{{ 'link_action_list'|trans({}, 'SonataAdminBundle') }}</a>
-        {% endif %}
-        {% if admin.hasRoute('create') and admin.isGranted('CREATE')%}
-            <a class="btn sonata-action-element" href="{{ admin.generateUrl('create') }}">{{ 'link_action_create'|trans({}, 'SonataAdminBundle') }}</a>
-        {% endif %}
+    <div class="sonata-actions btn-group">
+        {% include 'SonataAdminBundle:Button:list_button.html.twig' %}
+        {% include 'SonataAdminBundle:Button:create_button.html.twig' %}
     </div>
 {% endblock %}
 
@@ -26,7 +22,6 @@ file that was distributed with this source code.
 
 {% block content %}
     <div class="sonata-ba-delete">
-
         <h1>{{ 'title_batch_confirmation'|trans({}, 'SonataAdminBundle') }}</h1>
 
         {% if data.all_elements %}
@@ -36,7 +31,7 @@ file that was distributed with this source code.
         {% endif %}
 
         <div class="well form-actions">
-            <form action="{{ admin.generateUrl('batch', admin.filterParameters) }}" method="POST" >
+            <form action="{{ admin.generateUrl('batch', {'filter': admin.filterParameters}) }}" method="POST" >
                 <input type="hidden" name="confirmation" value="ok" />
                 <input type="hidden" name="data" value="{{ data|json_encode }}" />
 

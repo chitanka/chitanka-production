@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 /**
  * MonologExtension is an extension for the Monolog library.
@@ -81,6 +82,8 @@ class MonologExtension extends Extension
                 'Monolog\\Logger',
                 'Symfony\\Bridge\\Monolog\\Logger',
                 'Symfony\\Bridge\\Monolog\\Handler\\DebugHandler',
+                'Monolog\\Handler\\FingersCrossed\\ActivationStrategyInterface',
+                'Monolog\\Handler\\FingersCrossed\\ErrorLevelActivationStrategy',
             ));
         }
     }
@@ -238,12 +241,17 @@ class MonologExtension extends Extension
                 $message->addMethodCall('setFrom', array($handler['from_email']));
                 $message->addMethodCall('setTo', array($handler['to_email']));
                 $message->addMethodCall('setSubject', array($handler['subject']));
+
+                if (isset($handler['content_type'])) {
+                    $message->addMethodCall('setContentType', array($handler['content_type']));
+                }
+
                 $messageId = sprintf('%s.mail_prototype', $handlerId);
                 $container->setDefinition($messageId, $message);
                 $prototype = new Reference($messageId);
             }
             $definition->setArguments(array(
-                new Reference('mailer'),
+                new Reference($handler['mailer']),
                 $prototype,
                 $handler['level'],
                 $handler['bubble'],
@@ -275,6 +283,32 @@ class MonologExtension extends Extension
             if (isset($handler['persistent'])) {
                 $definition->addMethodCall('setPersistent', array($handler['persistent']));
             }
+            break;
+
+        case 'pushover':
+            $definition->setArguments(array(
+                $handler['token'],
+                $handler['user'],
+                $handler['title'],
+                $handler['level'],
+                $handler['bubble'],
+            ));
+            break;
+
+        case 'raven':
+            $clientId = 'monolog.raven.client.' . sha1($handler['dsn']);
+            if (!$container->hasDefinition($clientId)) {
+                $client = new Definition("Raven_Client", array(
+                    $handler['dsn']
+                ));
+                $client->setPublic(false);
+                $container->setDefinition($clientId, $client);
+            }
+            $definition->setArguments(array(
+                new Reference($clientId),
+                $handler['level'],
+                $handler['bubble'],
+            ));
             break;
 
         // Handlers using the constructor of AbstractHandler without adding their own arguments

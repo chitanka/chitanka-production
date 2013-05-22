@@ -15,7 +15,6 @@ use Sonata\BlockBundle\Model\BlockInterface;
 
 use Sonata\AdminBundle\Validator\ErrorElement;
 
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -30,6 +29,8 @@ class BlockServiceManager implements BlockServiceManagerInterface
      * @var ContainerInterface
      */
     protected $container;
+
+    protected $inValidate;
 
     /**
      * @param ContainerInterface $container
@@ -149,6 +150,17 @@ class BlockServiceManager implements BlockServiceManagerInterface
             return;
         }
 
-        $this->get($block)->validateBlock($errorElement, $block);
+        if ($this->inValidate) {
+            return;
+        }
+
+        // As block can be nested, we only need to validate the main block, no the children
+        try {
+            $this->inValidate = true;
+            $this->get($block)->validateBlock($errorElement, $block);
+            $this->inValidate = false;
+        } catch (\Exception $e) {
+            $this->inValidate = false;
+        }
     }
 }

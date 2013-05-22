@@ -4,7 +4,7 @@ ob_start(); //i'm too lazy to check when is sent what ;)
 ini_set("session.cookie_httponly", 1);
 
 include_once(__DIR__."/../../lib/Google/Authenticator/GoogleAuthenticator.php");
-include_once("Users.php");
+include_once 'Users.php';
 
 ?>
 <!DOCTYPE HTML>

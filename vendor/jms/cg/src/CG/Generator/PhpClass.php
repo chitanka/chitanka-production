@@ -19,7 +19,6 @@
 namespace CG\Generator;
 
 use Doctrine\Common\Annotations\PhpParser;
-
 use CG\Core\ReflectionUtils;
 
 /**
@@ -27,7 +26,7 @@ use CG\Core\ReflectionUtils;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class PhpClass
+class PhpClass extends AbstractBuilder
 {
     private static $phpParser;
 
@@ -85,11 +84,17 @@ class PhpClass
         return $class;
     }
 
+    /**
+     * @return PhpMethod
+     */
     protected static function createMethod(\ReflectionMethod $method)
     {
         return PhpMethod::fromReflection($method);
     }
 
+    /**
+     * @return PhpProperty
+     */
     protected static function createProperty(\ReflectionProperty $property)
     {
         return PhpProperty::fromReflection($property);
@@ -100,6 +105,9 @@ class PhpClass
         $this->name = $name;
     }
 
+    /**
+     * @param string $name
+     */
     public function setName($name)
     {
         $this->name = $name;
@@ -107,6 +115,9 @@ class PhpClass
         return $this;
     }
 
+    /**
+     * @param string|null $name
+     */
     public function setParentClassName($name)
     {
         $this->parentClassName = $name;
@@ -121,6 +132,9 @@ class PhpClass
         return $this;
     }
 
+    /**
+     * @param string $name
+     */
     public function addInterfaceName($name)
     {
         $this->interfaceNames[] = $name;
@@ -135,6 +149,9 @@ class PhpClass
         return $this;
     }
 
+    /**
+     * @param string $file
+     */
     public function addRequiredFile($file)
     {
         $this->requiredFiles[] = $file;
@@ -149,6 +166,10 @@ class PhpClass
         return $this;
     }
 
+    /**
+     * @param string      $namespace
+     * @param string|null $alias
+     */
     public function addUseStatement($namespace, $alias = null)
     {
         if (null === $alias) {
@@ -162,23 +183,75 @@ class PhpClass
 
     public function setConstants(array $constants)
     {
-        $this->constants = $constants;
+        $normalizedConstants = array();
+        foreach ($constants as $name => $value) {
+            if ( ! $value instanceof PhpConstant) {
+                $constValue = $value;
+                $value = new PhpConstant($name);
+                $value->setValue($constValue);
+            }
+
+            $normalizedConstants[$name] = $value;
+        }
+
+        $this->constants = $normalizedConstants;
 
         return $this;
     }
 
-    public function setConstant($name, $value)
+    /**
+     * @param string|PhpConstant $name
+     * @param string $value
+     */
+    public function setConstant($nameOrConstant, $value = null)
     {
-        $this->constants[$name] = $value;
+        if ($nameOrConstant instanceof PhpConstant) {
+            if (null !== $value) {
+                throw new \InvalidArgumentException('If a PhpConstant object is passed, $value must be null.');
+            }
+
+            $name = $nameOrConstant->getName();
+            $constant = $nameOrConstant;
+        } else {
+            $name = $nameOrConstant;
+            $constant = new PhpConstant($nameOrConstant);
+            $constant->setValue($value);
+        }
+
+        $this->constants[$name] = $constant;
 
         return $this;
     }
 
+    /**
+     * @param string $name
+     * 
+     * @return boolean
+     */
     public function hasConstant($name)
     {
-        return array_key_exists($this->constants, $name);
+        return array_key_exists($name, $this->constants);
     }
 
+    /**
+     * Returns a constant.
+     *
+     * @param string $name
+     *
+     * @return PhpConstant
+     */
+    public function getConstant($name)
+    {
+        if ( ! isset($this->constants[$name])) {
+            throw new \InvalidArgumentException(sprintf('The constant "%s" does not exist.'));
+        }
+
+        return $this->constants[$name];
+    }
+
+    /**
+     * @param string $name
+     */
     public function removeConstant($name)
     {
         if (!array_key_exists($name, $this->constants)) {
@@ -204,6 +277,9 @@ class PhpClass
         return $this;
     }
 
+    /**
+     * @param string $property
+     */
     public function hasProperty($property)
     {
         if ($property instanceof PhpProperty) {
@@ -213,6 +289,9 @@ class PhpClass
         return isset($this->properties[$property]);
     }
 
+    /**
+     * @param string $property
+     */
     public function removeProperty($property)
     {
         if ($property instanceof PhpProperty) {
@@ -241,6 +320,18 @@ class PhpClass
         return $this;
     }
 
+    public function getMethod($method)
+    {
+        if ( ! isset($this->methods[$method])) {
+            throw new \InvalidArgumentException(sprintf('The method "%s" does not exist.', $method));
+        }
+
+        return $this->methods[$method];
+    }
+
+    /**
+     * @param string|PhpMethod $method
+     */
     public function hasMethod($method)
     {
         if ($method instanceof PhpMethod) {
@@ -250,6 +341,9 @@ class PhpClass
         return isset($this->methods[$method]);
     }
 
+    /**
+     * @param string|PhpMethod $method
+     */
     public function removeMethod($method)
     {
         if ($method instanceof PhpMethod) {
@@ -264,6 +358,9 @@ class PhpClass
         return $this;
     }
 
+    /**
+     * @param boolean $bool
+     */
     public function setAbstract($bool)
     {
         $this->abstract = (Boolean) $bool;
@@ -271,6 +368,9 @@ class PhpClass
         return $this;
     }
 
+    /**
+     * @param boolean $bool
+     */
     public function setFinal($bool)
     {
         $this->final = (Boolean) $bool;
@@ -278,6 +378,9 @@ class PhpClass
         return $this;
     }
 
+    /**
+     * @param string $block
+     */
     public function setDocblock($block)
     {
         $this->docblock = $block;
@@ -328,9 +431,15 @@ class PhpClass
         return substr($this->name, $pos+1);
     }
 
-    public function getConstants()
+    public function getConstants($asObjects = false)
     {
-        return $this->constants;
+        if ($asObjects) {
+            return $this->constants;
+        }
+
+        return array_map(function(PhpConstant $constant) {
+            return $constant->getValue();
+        }, $this->constants);
     }
 
     public function getProperties()

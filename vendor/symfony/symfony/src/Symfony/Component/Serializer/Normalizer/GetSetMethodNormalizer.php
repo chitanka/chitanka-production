@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Serializer\Normalizer;
 
+use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Exception\RuntimeException;
 
 /**
@@ -42,12 +43,14 @@ class GetSetMethodNormalizer extends SerializerAwareNormalizer implements Normal
      * Set normalization callbacks
      *
      * @param array $callbacks help normalize the result
+     *
+     * @throws InvalidArgumentException if a non-callable callback is set
      */
     public function setCallbacks(array $callbacks)
     {
         foreach ($callbacks as $attribute => $callback) {
             if (!is_callable($callback)) {
-                throw new \InvalidArgumentException(sprintf('The given callback for attribute "%s" is not callable.', $attribute));
+                throw new InvalidArgumentException(sprintf('The given callback for attribute "%s" is not callable.', $attribute));
             }
         }
         $this->callbacks = $callbacks;
@@ -66,7 +69,7 @@ class GetSetMethodNormalizer extends SerializerAwareNormalizer implements Normal
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null)
+    public function normalize($object, $format = null, array $context = array())
     {
         $reflectionObject = new \ReflectionObject($object);
         $reflectionMethods = $reflectionObject->getMethods(\ReflectionMethod::IS_PUBLIC);
@@ -98,7 +101,7 @@ class GetSetMethodNormalizer extends SerializerAwareNormalizer implements Normal
     /**
      * {@inheritdoc}
      */
-    public function denormalize($data, $class, $format = null)
+    public function denormalize($data, $class, $format = null, array $context = array())
     {
         $reflectionClass = new \ReflectionClass($class);
         $constructor = $reflectionClass->getConstructor();
@@ -158,6 +161,7 @@ class GetSetMethodNormalizer extends SerializerAwareNormalizer implements Normal
      * Checks if the given class has any get{Property} method.
      *
      * @param string $class
+     *
      * @return Boolean
      */
     private function supports($class)

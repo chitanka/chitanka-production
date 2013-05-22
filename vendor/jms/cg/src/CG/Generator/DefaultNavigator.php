@@ -38,7 +38,7 @@ class DefaultNavigator
     /**
      * Sets a custom constant sorting function.
      *
-     * @param \Closure $func
+     * @param null|\Closure $func
      */
     public function setConstantSortFunc(\Closure $func = null)
     {
@@ -48,7 +48,7 @@ class DefaultNavigator
     /**
      * Sets a custom property sorting function.
      *
-     * @param \Closure $func
+     * @param null|\Closure $func
      */
     public function setPropertySortFunc(\Closure $func = null)
     {
@@ -58,7 +58,7 @@ class DefaultNavigator
     /**
      * Sets a custom method sorting function.
      *
-     * @param \Closure $func
+     * @param null|\Closure $func
      */
     public function setMethodSortFunc(\Closure $func = null)
     {
@@ -69,15 +69,15 @@ class DefaultNavigator
     {
         $visitor->startVisitingClass($class);
 
-        $constants = $class->getConstants();
+        $constants = $class->getConstants(true);
         if (!empty($constants)) {
             uksort($constants, $this->getConstantSortFunc());
 
-            $visitor->startVisitingConstants();
-            foreach ($constants as $name => $value) {
-                $visitor->visitConstant($name, $value);
+            $visitor->startVisitingClassConstants();
+            foreach ($constants as $constant) {
+                $visitor->visitClassConstant($constant);
             }
-            $visitor->endVisitingConstants();
+            $visitor->endVisitingClassConstants();
         }
 
         $properties = $class->getProperties();

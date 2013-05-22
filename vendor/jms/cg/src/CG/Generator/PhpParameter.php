@@ -23,7 +23,7 @@ namespace CG\Generator;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class PhpParameter
+class PhpParameter extends AbstractBuilder
 {
     private $name;
     private $defaultValue;
@@ -31,6 +31,9 @@ class PhpParameter
     private $passedByReference = false;
     private $type;
 
+    /**
+     * @param string|null $name
+     */
     public static function create($name = null)
     {
         return new static($name);
@@ -50,8 +53,10 @@ class PhpParameter
 
         if ($ref->isArray()) {
             $parameter->setType('array');
-        } else if ($class = $ref->getClass()) {
+        } elseif ($class = $ref->getClass()) {
             $parameter->setType($class->name);
+        } elseif (method_exists($ref, 'isCallable') && $ref->isCallable()) {
+            $parameter->setType('callable');
         }
 
         return $parameter;
@@ -62,6 +67,9 @@ class PhpParameter
         $this->name = $name;
     }
 
+    /**
+     * @param string $name
+     */
     public function setName($name)
     {
         $this->name = $name;
@@ -85,6 +93,9 @@ class PhpParameter
         return $this;
     }
 
+    /**
+     * @param boolean $bool
+     */
     public function setPassedByReference($bool)
     {
         $this->passedByReference = (Boolean) $bool;
@@ -92,6 +103,9 @@ class PhpParameter
         return $this;
     }
 
+    /**
+     * @param string $type
+     */
     public function setType($type)
     {
         $this->type = $type;

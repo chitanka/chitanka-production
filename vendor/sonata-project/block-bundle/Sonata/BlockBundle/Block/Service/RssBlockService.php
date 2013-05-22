@@ -12,12 +12,13 @@
 namespace Sonata\BlockBundle\Block\Service;
 
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Form\Form;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Validator\ErrorElement;
 
 use Sonata\BlockBundle\Model\BlockInterface;
+use Sonata\BlockBundle\Block\BlockContextInterface;
 use Sonata\BlockBundle\Block\BaseBlockService;
 
 /**
@@ -37,12 +38,13 @@ class RssBlockService extends BaseBlockService
     /**
      * {@inheritdoc}
      */
-    public function getDefaultSettings()
+    public function setDefaultSettings(OptionsResolverInterface $resolver)
     {
-        return array(
-            'url'     => false,
-            'title'   => 'Insert the rss title'
-        );
+        $resolver->setDefaults(array(
+            'url'      => false,
+            'title'    => 'Insert the rss title',
+            'template' => 'SonataBlockBundle:Block:block_core_rss.html.twig',
+        ));
     }
 
     /**
@@ -61,7 +63,7 @@ class RssBlockService extends BaseBlockService
     /**
      * {@inheritdoc}
      */
-    function validateBlock(ErrorElement $errorElement, BlockInterface $block)
+    public function validateBlock(ErrorElement $errorElement, BlockInterface $block)
     {
         $errorElement
             ->with('settings[url]')
@@ -78,10 +80,10 @@ class RssBlockService extends BaseBlockService
     /**
      * {@inheritdoc}
      */
-    public function execute(BlockInterface $block, Response $response = null)
+    public function execute(BlockContextInterface $blockContext, Response $response = null)
     {
         // merge settings
-        $settings = array_merge($this->getDefaultSettings(), $block->getSettings());
+        $settings = $blockContext->getSettings();
 
         $feeds = false;
         if ($settings['url']) {
@@ -100,15 +102,15 @@ class RssBlockService extends BaseBlockService
                 try {
                     $feeds = new \SimpleXMLElement($content);
                     $feeds = $feeds->channel->item;
-                } catch(\Exception $e) {
+                } catch (\Exception $e) {
                     // silently fail error
                 }
             }
         }
 
-        return $this->renderResponse('SonataBlockBundle:Block:block_core_rss.html.twig', array(
+        return $this->renderResponse($blockContext->getTemplate(), array(
             'feeds'     => $feeds,
-            'block'     => $block,
+            'block'     => $blockContext->getBlock(),
             'settings'  => $settings
         ), $response);
     }

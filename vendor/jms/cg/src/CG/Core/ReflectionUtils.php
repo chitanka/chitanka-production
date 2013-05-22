@@ -20,6 +20,9 @@ namespace CG\Core;
 
 abstract class ReflectionUtils
 {
+    /**
+     * @param boolean $publicOnly
+     */
     public static function getOverrideableMethods(\ReflectionClass $class, $publicOnly = false)
     {
         $filter = \ReflectionMethod::IS_PUBLIC;
@@ -34,6 +37,9 @@ abstract class ReflectionUtils
         );
     }
 
+    /**
+     * @param string $docComment
+     */
     public static function getUnindentedDocComment($docComment)
     {
         $lines = explode("\n", $docComment);
@@ -53,5 +59,5 @@ abstract class ReflectionUtils
         return $docBlock;
     }
 
-    private final function __construct() { }
+    final private function __construct() { }
 }

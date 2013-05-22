@@ -24,7 +24,7 @@ use JMS\SecurityExtraBundle\Exception\InvalidArgumentException;
  * Represents a @SecureParam annotation.
  *
  * @Annotation
- * @Target("METHOD")
+ * @Target({"CLASS", "METHOD"})
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
 final class SecureParam
@@ -43,6 +43,6 @@ final class SecureParam
 
         $this->name = $values['name'];
 
-        $this->permissions = array_map('trim', explode(',', $values['permissions']));
+        $this->permissions = is_array($values['permissions']) ? $values['permissions'] : array_map('trim', explode(',', $values['permissions']));
     }
 }

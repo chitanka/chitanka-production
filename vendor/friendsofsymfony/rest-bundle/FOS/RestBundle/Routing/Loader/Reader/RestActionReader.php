@@ -15,7 +15,7 @@ use Doctrine\Common\Annotations\Reader;
 
 use Symfony\Component\Routing\Route;
 
-use FOS\RestBundle\Util\Pluralization;
+use FOS\RestBundle\Util\Inflector\InflectorInterface;
 use FOS\RestBundle\Routing\RestRouteCollection;
 use FOS\RestBundle\Request\ParamReader;
 
@@ -28,12 +28,16 @@ class RestActionReader
 {
     private $annotationReader;
     private $paramReader;
+    private $inflector;
+    private $formats;
+
+    private $includeFormat;
 
     private $routePrefix;
     private $namePrefix;
     private $parents = array();
 
-    private $availableHTTPMethods = array('get', 'post', 'put', 'patch', 'delete', 'head', 'options');
+    private $availableHTTPMethods = array('get', 'post', 'put', 'patch', 'delete', 'link', 'unlink', 'head', 'options');
     private $availableConventionalActions = array('new', 'edit', 'remove');
 
     /**
@@ -41,11 +45,16 @@ class RestActionReader
      *
      * @param Reader           $annotationReader annotation reader
      * @param queryParamReader $queryParamReader query param reader
+     * @param InflectorInterface $inflector
+     * @param boolean $includeFormat
      */
-    public function __construct(Reader $annotationReader, ParamReader $paramReader)
+    public function __construct(Reader $annotationReader, ParamReader $paramReader, InflectorInterface $inflector, $includeFormat, array $formats = array())
     {
         $this->annotationReader = $annotationReader;
         $this->paramReader = $paramReader;
+        $this->inflector = $inflector;
+        $this->includeFormat = $includeFormat;
+        $this->formats = $formats;
     }
 
     /**
@@ -184,15 +193,23 @@ class RestActionReader
                 $annoRequirements['_method'] = $requirements['_method'];
             }
 
-            $pattern      = $annotation->getPattern() ?: $pattern;
+            $pattern      = $annotation->getPattern() !== null ? $this->routePrefix . $annotation->getPattern() : $pattern;
             $requirements = array_merge($requirements, $annoRequirements);
             $options      = array_merge($options, $annotation->getOptions());
             $defaults     = array_merge($defaults, $annotation->getDefaults());
         }
 
+        if ($this->includeFormat === true) {
+            $pattern .= '.{_format}';
+
+            if (!empty($this->formats)) {
+                $requirements['_format'] = implode('|', array_keys($this->formats));
+            }
+        }
+
         // add route to collection
         $collection->add($routeName, new Route(
-            $pattern.'.{_format}', $defaults, $requirements, $options
+            $pattern, $defaults, $requirements, $options
         ));
     }
 
@@ -243,7 +260,7 @@ class RestActionReader
         ) {
             $httpMethod = substr($httpMethod, 1);
             if (!empty($resource)) {
-                $resource[count($resource)-1] = Pluralization::pluralize(end($resource));
+                $resource[count($resource)-1] = $this->inflector->pluralize(end($resource));
             }
         }
 
@@ -336,7 +353,7 @@ class RestActionReader
             if (isset($arguments[$i])) {
                 if (null !== $resource) {
                     $urlParts[] =
-                        strtolower(Pluralization::pluralize($resource))
+                        strtolower($this->inflector->pluralize($resource))
                         .'/{'.$arguments[$i]->getName().'}';
                 } else {
                     $urlParts[] = '{'.$arguments[$i]->getName().'}';
@@ -345,7 +362,7 @@ class RestActionReader
                 if ((0 === count($arguments) && !in_array($httpMethod, $this->availableHTTPMethods))
                     || 'new' === $httpMethod
                 ) {
-                    $urlParts[] = Pluralization::pluralize(strtolower($resource));
+                    $urlParts[] = $this->inflector->pluralize(strtolower($resource));
                 } else {
                     $urlParts[] = strtolower($resource);
                 }

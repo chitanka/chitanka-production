@@ -8,13 +8,13 @@ The controllers provided by the bundle use the configured user manager instead
 of interacting directly with the storage layer.
 
 If you configure the `db_driver` option to `orm`, this service is an instance
-of `FOS\UserBundle\Doctrine\UserManager`.
+of `FOS\UserBundle\Entity\UserManager`.
 
 If you configure the `db_driver` option to `mongodb`, this service is an
-instance of `FOS\UserBundle\Doctrine\UserManager`.
+instance of `FOS\UserBundle\Document\UserManager`.
 
 If you configure the `db_driver` option to `couchdb`, this service is an
-instance of `FOS\UserBundle\Doctrine\UserManager`.
+instance of `FOS\UserBundle\CouchDocument\UserManager`.
 
 If you configure the `db_driver` option to `propel`, this service is an instance
 of `FOS\UserBundle\Propel\UserManager`.

@@ -79,14 +79,18 @@ abstract class AbstractMessage implements MessageInterface
     /**
      * Returns the current message as a DOMDocument.
      *
-     * @return DOMDocument
+     * @return \DOMDocument
      */
     public function toDomDocument()
     {
         $revert = libxml_use_internal_errors(true);
 
         $document = new \DOMDocument('1.0', $this->getHeaderAttribute('Content-Type', 'charset') ?: 'UTF-8');
-        $document->loadHTML($this->getContent());
+        if (0 === strpos($this->getHeader('Content-Type'), 'text/xml')) {
+            $document->loadXML($this->getContent());
+        } else {
+            $document->loadHTML($this->getContent());
+        }
 
         libxml_use_internal_errors($revert);
 

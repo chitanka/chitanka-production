@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-
 namespace Sonata\BlockBundle\Block;
 
 use Sonata\AdminBundle\Form\FormMapper;
@@ -17,6 +16,7 @@ use Sonata\BlockBundle\Model\BlockInterface;
 use Sonata\AdminBundle\Validator\ErrorElement;
 
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 interface BlockServiceInterface
 {
@@ -26,7 +26,7 @@ interface BlockServiceInterface
      *
      * @return void
      */
-    function buildEditForm(FormMapper $form, BlockInterface $block);
+    public function buildEditForm(FormMapper $form, BlockInterface $block);
 
     /**
      * @param FormMapper     $form
@@ -34,15 +34,15 @@ interface BlockServiceInterface
      *
      * @return void
      */
-    function buildCreateForm(FormMapper $form, BlockInterface $block);
+    public function buildCreateForm(FormMapper $form, BlockInterface $block);
 
     /**
-     * @param BlockInterface $block
-     * @param null|Response  $response
+     * @param BlockContextInterface $blockContext
+     * @param Response              $response
      *
      * @return Response
      */
-    function execute(BlockInterface $block, Response $response = null);
+    public function execute(BlockContextInterface $blockContext, Response $response = null);
 
     /**
      * @param ErrorElement   $errorElement
@@ -50,45 +50,45 @@ interface BlockServiceInterface
      *
      * @return void
      */
-    function validateBlock(ErrorElement $errorElement, BlockInterface $block);
+    public function validateBlock(ErrorElement $errorElement, BlockInterface $block);
 
     /**
      * @return string
      */
-    function getName();
+    public function getName();
 
     /**
-     * Returns the default settings link to the service
+     * Define the default options for the block
      *
-     * @return array
+     * @param OptionsResolverInterface $resolver
      */
-    function getDefaultSettings();
+    public function setDefaultSettings(OptionsResolverInterface $resolver);
 
     /**
      * @param BlockInterface $block
      *
      * @return void
      */
-    function load(BlockInterface $block);
+    public function load(BlockInterface $block);
 
     /**
      * @param $media
      *
      * @return array
      */
-    function getJavascripts($media);
+    public function getJavascripts($media);
 
     /**
      * @param $media
      *
      * @return array
      */
-    function getStylesheets($media);
+    public function getStylesheets($media);
 
     /**
      * @param BlockInterface $block
      *
      * @return array
      */
-    function getCacheKeys(BlockInterface $block);
+    public function getCacheKeys(BlockInterface $block);
 }

@@ -33,6 +33,9 @@ class PhpMethod extends AbstractPhpMember
     private $referenceReturned = false;
     private $body = '';
 
+    /**
+     * @param string|null $name
+     */
     public static function create($name = null)
     {
         return new static($name);
@@ -59,15 +62,20 @@ class PhpMethod extends AbstractPhpMember
         }
 
         // FIXME: Extract body?
-
         return $method;
     }
 
+    /**
+     * @return PhpParameter
+     */
     protected static function createParameter(\ReflectionParameter $parameter)
     {
         return PhpParameter::fromReflection($parameter);
     }
 
+    /**
+     * @param boolean $bool
+     */
     public function setFinal($bool)
     {
         $this->final = (Boolean) $bool;
@@ -75,6 +83,9 @@ class PhpMethod extends AbstractPhpMember
         return $this;
     }
 
+    /**
+     * @param boolean $bool
+     */
     public function setAbstract($bool)
     {
         $this->abstract = $bool;
@@ -82,6 +93,9 @@ class PhpMethod extends AbstractPhpMember
         return $this;
     }
 
+    /**
+     * @param boolean $bool
+     */
     public function setReferenceReturned($bool)
     {
         $this->referenceReturned = (Boolean) $bool;
@@ -89,6 +103,9 @@ class PhpMethod extends AbstractPhpMember
         return $this;
     }
 
+    /**
+     * @param string $body
+     */
     public function setBody($body)
     {
         $this->body = $body;
@@ -110,6 +127,32 @@ class PhpMethod extends AbstractPhpMember
         return $this;
     }
 
+    /**
+     * @param string|integer $nameOrIndex
+     *
+     * @return PhpParameter
+     */
+    public function getParameter($nameOrIndex)
+    {
+        if (is_int($nameOrIndex)) {
+            if ( ! isset($this->parameters[$nameOrIndex])) {
+                throw new \InvalidArgumentException(sprintf('There is no parameter at position %d (0-based).', $nameOrIndex));
+            }
+
+            return $this->parameters[$nameOrIndex];
+        }
+
+        foreach ($this->parameters as $param) {
+            assert($param instanceof PhpParameter);
+
+            if ($param->getName() === $nameOrIndex) {
+                return $param;
+            }
+        }
+
+        throw new \InvalidArgumentException(sprintf('There is no parameter named "%s".', $nameOrIndex));
+    }
+
     public function replaceParameter($position, PhpParameter $parameter)
     {
         if ($position < 0 || $position > strlen($this->parameters)) {
@@ -120,6 +163,9 @@ class PhpMethod extends AbstractPhpMember
         return $this;
     }
 
+    /**
+     * @param integer $position
+     */
     public function removeParameter($position)
     {
         if (!isset($this->parameters[$position])) {

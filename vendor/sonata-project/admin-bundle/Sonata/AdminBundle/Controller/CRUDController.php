@@ -43,7 +43,7 @@ class CRUDController extends Controller
         // response is rendered through an iframe (used by the jquery.form.js plugin)
         //  => don't know yet if it is the best solution
         if ($this->get('request')->get('_xml_http_request')
-           && strpos($this->get('request')->headers->get('Content-Type'), 'multipart/form-data') === 0) {
+            && strpos($this->get('request')->headers->get('Content-Type'), 'multipart/form-data') === 0) {
             $headers['Content-Type'] = 'text/plain';
         } else {
             $headers['Content-Type'] = 'application/json';
@@ -59,6 +59,22 @@ class CRUDController extends Controller
     public function isXmlHttpRequest()
     {
         return $this->get('request')->isXmlHttpRequest() || $this->get('request')->get('_xml_http_request');
+    }
+
+    /**
+     * Returns the correct RESTful verb, given either by the request itself or
+     * via the "_method" parameter.
+     *
+     * @return string HTTP method, either
+     */
+    protected function getRestMethod()
+    {
+        $request = $this->getRequest();
+        if (Request::getHttpMethodParameterOverride() || !$request->request->has('_method')) {
+            return $request->getMethod();
+        }
+
+        return $request->request->get('_method');
     }
 
     /**
@@ -183,12 +199,12 @@ class CRUDController extends Controller
         $modelManager = $this->admin->getModelManager();
         try {
             $modelManager->batchDelete($this->admin->getClass(), $query);
-            $this->get('session')->setFlash('sonata_flash_success', 'flash_batch_delete_success');
+            $this->addFlash('sonata_flash_success', 'flash_batch_delete_success');
         } catch ( ModelManagerException $e ) {
-            $this->get('session')->setFlash('sonata_flash_error', 'flash_batch_delete_error');
+            $this->addFlash('sonata_flash_error', 'flash_batch_delete_error');
         }
 
-        return new RedirectResponse($this->admin->generateUrl('list', $this->admin->getFilterParameters()));
+        return new RedirectResponse($this->admin->generateUrl('list', array('filter' => $this->admin->getFilterParameters())));
     }
 
     /**
@@ -211,12 +227,23 @@ class CRUDController extends Controller
             throw new AccessDeniedException();
         }
 
-        if ($this->getRequest()->getMethod() == 'DELETE') {
+        if ($this->getRestMethod() == 'DELETE') {
             try {
                 $this->admin->delete($object);
-                $this->get('session')->setFlash('sonata_flash_success', 'flash_delete_success');
+
+                if ($this->isXmlHttpRequest()) {
+                    return $this->renderJson(array('result' => 'ok'));
+                }
+
+                $this->addFlash('sonata_flash_success', 'flash_delete_success');
+
             } catch (ModelManagerException $e) {
-                $this->get('session')->setFlash('sonata_flash_error', 'flash_delete_error');
+
+                if ($this->isXmlHttpRequest()) {
+                    return $this->renderJson(array('result' => 'error'));
+                }
+
+                $this->addFlash('sonata_flash_error', 'flash_delete_error');
             }
 
             return new RedirectResponse($this->admin->generateUrl('list'));
@@ -262,15 +289,15 @@ class CRUDController extends Controller
         $form = $this->admin->getForm();
         $form->setData($object);
 
-        if ($this->get('request')->getMethod() == 'POST') {
+        if ($this->getRestMethod() == 'POST') {
             $form->bind($this->get('request'));
 
             $isFormValid = $form->isValid();
 
-             // persist if the form was valid and if in preview mode the preview was approved
+            // persist if the form was valid and if in preview mode the preview was approved
             if ($isFormValid && (!$this->isInPreviewMode() || $this->isPreviewApproved())) {
                 $this->admin->update($object);
-                $this->get('session')->setFlash('sonata_flash_success', 'flash_edit_success');
+                $this->addFlash('sonata_flash_success', 'flash_edit_success');
 
                 if ($this->isXmlHttpRequest()) {
                     return $this->renderJson(array(
@@ -285,7 +312,9 @@ class CRUDController extends Controller
 
             // show an error message if the form failed validation
             if (!$isFormValid) {
-                $this->get('session')->setFlash('sonata_flash_error', 'flash_edit_error');
+                if (!$this->isXmlHttpRequest()) {
+                    $this->addFlash('sonata_flash_error', 'flash_edit_error');
+                }
             } elseif ($this->isPreviewRequested()) {
                 // enable the preview template if the form was valid and preview was requested
                 $templateKey = 'preview';
@@ -345,7 +374,7 @@ class CRUDController extends Controller
      */
     public function batchAction()
     {
-        if ($this->get('request')->getMethod() != 'POST') {
+        if ($this->getRestMethod() != 'POST') {
             throw new \RuntimeException('invalid request type, POST expected');
         }
 
@@ -384,19 +413,21 @@ class CRUDController extends Controller
             $nonRelevantMessage = 'flash_batch_empty';
         }
 
-        if (true !== $nonRelevantMessage) {
-            $this->get('session')->setFlash('sonata_flash_info', $nonRelevantMessage);
+        $datagrid = $this->admin->getDatagrid();
+        $datagrid->buildPager();
 
-            return new RedirectResponse($this->admin->generateUrl('list', $this->admin->getFilterParameters()));
+        if (true !== $nonRelevantMessage) {
+            $this->addFlash('sonata_flash_info', $nonRelevantMessage);
+
+            return new RedirectResponse($this->admin->generateUrl('list', array('filter' => $this->admin->getFilterParameters())));
         }
 
         $askConfirmation = isset($batchActions[$action]['ask_confirmation']) ? $batchActions[$action]['ask_confirmation'] : true;
 
         if ($askConfirmation && $confirmation != 'ok') {
-            $datagrid = $this->admin->getDatagrid();
             $formView = $datagrid->getForm()->createView();
 
-            return $this->render('SonataAdminBundle:CRUD:batch_confirmation.html.twig', array(
+            return $this->render($this->admin->getTemplate('batch_confirmation'), array(
                 'action'   => 'list',
                 'datagrid' => $datagrid,
                 'form'     => $formView,
@@ -410,8 +441,6 @@ class CRUDController extends Controller
             throw new \RuntimeException(sprintf('A `%s::%s` method must be created', get_class($this), $final_action));
         }
 
-        $datagrid = $this->admin->getDatagrid();
-        $datagrid->buildPager();
         $query = $datagrid->getQuery();
 
         $query->setFirstResult(null);
@@ -419,7 +448,7 @@ class CRUDController extends Controller
 
         if (count($idx) > 0) {
             $this->admin->getModelManager()->addIdentifiersToQuery($this->admin->getClass(), $query, $idx);
-        } else if (!$all_elements) {
+        } elseif (!$all_elements) {
             $query = null;
         }
 
@@ -449,7 +478,7 @@ class CRUDController extends Controller
         $form = $this->admin->getForm();
         $form->setData($object);
 
-        if ($this->get('request')->getMethod() == 'POST') {
+        if ($this->getRestMethod()== 'POST') {
             $form->bind($this->get('request'));
 
             $isFormValid = $form->isValid();
@@ -465,14 +494,16 @@ class CRUDController extends Controller
                     ));
                 }
 
-                $this->get('session')->setFlash('sonata_flash_success','flash_create_success');
+                $this->addFlash('sonata_flash_success','flash_create_success');
                 // redirect to edit mode
                 return $this->redirectTo($object);
             }
 
             // show an error message if the form failed validation
             if (!$isFormValid) {
-                $this->get('session')->setFlash('sonata_flash_error', 'flash_create_error');
+                if (!$this->isXmlHttpRequest()) {
+                    $this->addFlash('sonata_flash_error', 'flash_create_error');
+                }
             } elseif ($this->isPreviewRequested()) {
                 // pick the preview template if the form was valid and preview was requested
                 $templateKey = 'preview';
@@ -609,8 +640,8 @@ class CRUDController extends Controller
     }
 
     /**
-     * @param null    $id
-     * @param string  $revision
+     * @param null   $id
+     * @param string $revision
      *
      * @throws \Symfony\Component\Security\Core\Exception\AccessDeniedException
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
@@ -673,7 +704,7 @@ class CRUDController extends Controller
 
         $allowedExportFormats = (array) $this->admin->getExportFormats();
 
-        if(!in_array($format, $allowedExportFormats) ) {
+        if (!in_array($format, $allowedExportFormats) ) {
             throw new \RuntimeException(sprintf('Export in format `%s` is not allowed for class: `%s`. Allowed formats are: `%s`', $format, $this->admin->getClass(), implode(', ', $allowedExportFormats)));
         }
 
@@ -684,5 +715,18 @@ class CRUDController extends Controller
         );
 
         return $this->get('sonata.admin.exporter')->getResponse($format, $filename, $this->admin->getDataSourceIterator());
+    }
+
+    /**
+     * Adds a flash message for type.
+     *
+     * @param string $type
+     * @param string $message
+     */
+    public function addFlash($type, $message)
+    {
+        $this->get('session')
+             ->getFlashBag()
+             ->add($type, $message);
     }
 }

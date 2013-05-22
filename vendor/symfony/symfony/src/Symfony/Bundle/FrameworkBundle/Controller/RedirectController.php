@@ -12,8 +12,9 @@
 namespace Symfony\Bundle\FrameworkBundle\Controller;
 
 use Symfony\Component\DependencyInjection\ContainerAware;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Redirects a request to another URL.
@@ -25,8 +26,8 @@ class RedirectController extends ContainerAware
     /**
      * Redirects to another route with the given name.
      *
-     * The response status code is 301 if the permanent parameter is false (default),
-     * and 302 if the redirection is permanent.
+     * The response status code is 302 if the permanent parameter is false (default),
+     * and 301 if the redirection is permanent.
      *
      * In case the route name is empty, the status code will be 404 when permanent is false
      * and 410 otherwise.
@@ -45,14 +46,14 @@ class RedirectController extends ContainerAware
         $attributes = $this->container->get('request')->attributes->get('_route_params');
         unset($attributes['route'], $attributes['permanent']);
 
-        return new RedirectResponse($this->container->get('router')->generate($route, $attributes, true), $permanent ? 301 : 302);
+        return new RedirectResponse($this->container->get('router')->generate($route, $attributes, UrlGeneratorInterface::ABSOLUTE_URL), $permanent ? 301 : 302);
     }
 
     /**
      * Redirects to a URL.
      *
-     * The response status code is 301 if the permanent parameter is false (default),
-     * and 302 if the redirection is permanent.
+     * The response status code is 302 if the permanent parameter is false (default),
+     * and 301 if the redirection is permanent.
      *
      * In case the path is empty, the status code will be 404 when permanent is false
      * and 410 otherwise.

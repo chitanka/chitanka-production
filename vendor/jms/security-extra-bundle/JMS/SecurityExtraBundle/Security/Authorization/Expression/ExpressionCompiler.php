@@ -43,7 +43,6 @@ class ExpressionCompiler
     private $reservedNames = array('context' => true);
 
     private $itemExists = array();
-    private $itemType = array();
     private $rolesName;
 
     private $code;
@@ -96,7 +95,7 @@ class ExpressionCompiler
     {
         $this->nameCount  = 0;
         $this->code       = '';
-        $this->itemExists = $this->itemType = $this->attributes = array();
+        $this->itemExists = $this->attributes = array();
         $this->rolesName  = null;
 
         if ($raw) {
@@ -106,10 +105,10 @@ class ExpressionCompiler
         $this
             ->writeln('return function(array $context) {')
             ->indent()
-            ->compilePreconditions($expr)
-            ->write('return ')
-            ->compileInternal($expr)
-            ->writeln(';')
+                ->compilePreconditions($expr)
+                ->write('return ')
+                ->compileInternal($expr)
+                ->writeln(';')
             ->outdent()
             ->writeln('};')
         ;
@@ -129,7 +128,7 @@ class ExpressionCompiler
         $this->indentationLevel -= 1;
 
         if ($this->indentationLevel < 0) {
-            throw new RuntimeException('The identation level cannot be less than zero.');
+            throw new RuntimeException('The indentation level cannot be less than zero.');
         }
 
         return $this;
@@ -189,16 +188,6 @@ class ExpressionCompiler
         }
 
         if (null !== $expectedType) {
-            if (isset($this->itemType[$key])) {
-                if ($this->itemType[$key] !== $expectedType) {
-                    throw new RuntimeException(sprintf('Cannot verify that item "%s" is of type "%s" because it is already expected to be of type "%s".',
-                        $key, $expectedType, $this->itemType[$key]
-                    ));
-                }
-
-                return $this;
-            }
-
             $this
                 ->writeln("if (!\$context['$key'] instanceof $expectedType) {")
                 ->indent()
@@ -266,17 +255,11 @@ class ExpressionCompiler
         }
 
         if ($expr instanceof FunctionExpression) {
-            $this->getFunctionCompiler($expr->name)->compilePreconditions($this, $expr);
-
             foreach ($expr->args as $arg) {
                 $this->compilePreconditions($arg);
             }
 
-            return $this;
-        }
-
-        if ($expr instanceof VariableExpression) {
-            $this->getVariableCompiler($expr->name)->compilePreconditions($this, $expr);
+            $this->getFunctionCompiler($expr->name)->compilePreconditions($this, $expr);
 
             return $this;
         }

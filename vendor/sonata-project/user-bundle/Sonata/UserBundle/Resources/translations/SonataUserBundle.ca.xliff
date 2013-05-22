@@ -2,7 +2,7 @@
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
     <file source-language="en" datatype="plaintext" original="" >
         <body>
-        	<trans-unit id="title_user_account">
+            <trans-unit id="title_user_account">
                 <source>title_user_account</source>
                 <target>User Profile</target>
             </trans-unit>
@@ -14,7 +14,7 @@
                 <source>sonata_user_submit</source>
                 <target>Submit</target>
             </trans-unit>
-          <trans-unit id="breadcrumb.link_user_list">
+            <trans-unit id="breadcrumb.link_user_list">
                 <source>breadcrumb.link_user_list</source>
                 <target>Usuaris</target>
             </trans-unit>
@@ -126,6 +126,14 @@
                 <source>filter.label_groups</source>
                 <target>Grups</target>
             </trans-unit>
+            <trans-unit id="filter.label_firstname">
+                <source>filter.label_firstname</source>
+                <target>Nom</target>
+            </trans-unit>
+            <trans-unit id="filter.label_lastname">
+                <source>filter.label_lastname</source>
+                <target>Cognom</target>
+            </trans-unit>
             <trans-unit id="list.label_username">
                 <source>list.label_username</source>
                 <target>Nom d'usuari</target>
@@ -161,6 +169,14 @@
             <trans-unit id="list.label_roles">
                 <source>list.label_roles</source>
                 <target>Perfils</target>
+            </trans-unit>
+            <trans-unit id="list.label_firstname">
+                <source>list.label_firstname</source>
+                <target>Nom</target>
+            </trans-unit>
+            <trans-unit id="list.label_lastname">
+                <source>list.label_lastname</source>
+                <target>Cognom</target>
             </trans-unit>
             <trans-unit id="label_two_step_code">
                 <source>label_two_step_code</source>
@@ -342,7 +358,18 @@
                 <source>show.label_two_step_verification_code</source>
                 <target>Codi de verificación de dos pasos</target>
             </trans-unit>
-
+            <trans-unit id="gender_unknown">
+                <source>gender_unknown</source>
+                <target>gender_unknown</target>
+            </trans-unit>
+            <trans-unit id="gender_female">
+                <source>gender_female</source>
+                <target>gender_female</target>
+            </trans-unit>
+            <trans-unit id="gender_male">
+                <source>gender_male</source>
+                <target>gender_male</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

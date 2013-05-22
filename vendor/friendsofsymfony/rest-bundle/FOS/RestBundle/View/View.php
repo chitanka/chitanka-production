@@ -14,6 +14,8 @@ namespace FOS\RestBundle\View;
 use Symfony\Bundle\FrameworkBundle\Templating\TemplateReference;
 use Symfony\Component\HttpFoundation\Response;
 
+use JMS\Serializer\SerializationContext;
+
 /**
  * Default View implementation.
  *
@@ -26,11 +28,6 @@ class View
      * @var mixed
      */
     private $data;
-
-    /**
-     * @var int
-     */
-    private $statusCode;
 
     /**
      * @var string|TemplateReference
@@ -63,21 +60,9 @@ class View
     private $route;
 
     /**
-     * @var string
+     * @var SerializationContext
      */
-    private $serializerVersion;
-
-    /**
-     *
-     * @var array
-     */
-    private $serializerGroups;
-
-    /**
-     *
-     * @var array
-     */
-    private $serializerCallback;
+    private $serializationContext;
 
     /**
      * @var Response
@@ -90,6 +75,7 @@ class View
      * @param mixed   $data
      * @param integer $statusCode
      * @param array   $headers
+     * @return \FOS\RestBundle\View\View
      */
     public static function create($data = null, $statusCode = null, array $headers = array())
     {
@@ -105,10 +91,12 @@ class View
      */
     public function __construct($data = null, $statusCode = null, array $headers = array())
     {
-        $this->data = $data;
-        $this->statusCode = $statusCode;
-        $this->templateVar = 'data';
-        $this->getResponse()->headers->replace($headers);
+        $this->setData($data);
+        $this->setStatusCode($statusCode ?: 200);
+        $this->setTemplateVar('data');
+        if (!empty($headers)) {
+            $this->getResponse()->headers->replace($headers);
+        }
     }
 
     /**
@@ -160,47 +148,19 @@ class View
      */
     public function setStatusCode($code)
     {
-        $this->statusCode = $code;
+        $this->getResponse()->setStatusCode($code);
 
         return $this;
     }
 
     /**
-     * set the serializer objects version
-     *
-     * @param  string $serializerVersion
+     * set the serialization context
+     * @param  SerializationContext $serializationContext
      * @return View
      */
-    public function setSerializerVersion($serializerVersion)
+    public function setSerializationContext(SerializationContext $serializationContext)
     {
-        $this->serializerVersion = $serializerVersion;
-
-        return $this;
-    }
-
-    /**
-     * set the serializer objects groups
-     * @param  array $serializerGroups
-     * @return View
-     */
-    public function setSerializerGroups($serializerGroups)
-    {
-        $this->serializerGroups = $serializerGroups;
-
-        return $this;
-    }
-
-    /**
-     * set the serializer callback
-     *
-     * function (\FOS\RestBundle\View\ViewHandler $viewHandler, \JMS\SerializerBundle\Serializer\SerializerInterface $serializer) { .. }
-     *
-     * @param  callable $serializerCallback
-     * @return View
-     */
-    public function setSerializerCallback($serializerCallback)
-    {
-        $this->serializerCallback = $serializerCallback;
+        $this->serializationContext = $serializationContext;
 
         return $this;
     }
@@ -318,7 +278,7 @@ class View
      */
     public function getStatusCode()
     {
-        return $this->statusCode;
+        return $this->getResponse()->getStatusCode();
     }
 
     /**
@@ -406,32 +366,12 @@ class View
     }
 
     /**
-     * get the serializer version
+     * get the serialization context
      *
-     * @return string|null serializer version
+     * @return SerializationContext|null serialization context
      */
-    public function getSerializerVersion()
+    public function getSerializationContext()
     {
-        return $this->serializerVersion;
-    }
-
-    /**
-     * get the serializer groups
-     *
-     * @return array|null serializer groups
-     */
-    public function getSerializerGroups()
-    {
-        return $this->serializerGroups;
-    }
-
-    /**
-     * get the serializer callback
-     *
-     * @return callable|null serializer callback
-     */
-    public function getSerializerCallback()
-    {
-        return $this->serializerCallback;
+        return $this->serializationContext;
     }
 }

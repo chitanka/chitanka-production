@@ -4,6 +4,10 @@ php:
   - 5.3
   - 5.4
 
-before_script:
-    - curl -s http://getcomposer.org/installer | php
-    - php composer.phar install --dev
+before_script: composer install --dev
+
+script: phpunit --coverage-clover clover
+
+after_success:
+    - curl -sL https://bit.ly/artifact-uploader | php
+

@@ -1,12 +1,6 @@
 Changelog
 =========
 
-### 2.0.0 (2013-XX-XX)
-
-* Removed the deprecated UserManager and GroupManager classes for the different Doctrine implementations
-* [BC break] Refactored the structure of controller to dispatch events instead of using form handlers
-* Removed all form handlers
-
 ### 1.3.1 (2012-12-22)
 
 * Replaced the deprecated validation constraints by the new ones

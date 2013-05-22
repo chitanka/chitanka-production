@@ -72,6 +72,17 @@ class LineFormatter extends NormalizerFormatter
             return var_export($data, true);
         }
 
+        if ($data instanceof \Exception) {
+            $previousText = '';
+            if ($previous = $data->getPrevious()) {
+                do {
+                    $previousText .= ', '.get_class($previous).': '.$previous->getMessage().' at '.$previous->getFile().':'.$previous->getLine();
+                } while ($previous = $previous->getPrevious());
+            }
+
+            return '[object] ('.get_class($data).': '.$data->getMessage().' at '.$data->getFile().':'.$data->getLine().$previousText.')';
+        }
+
         return parent::normalize($data);
     }
 
@@ -81,10 +92,11 @@ class LineFormatter extends NormalizerFormatter
             return (string) $data;
         }
 
+        $data = $this->normalize($data);
         if (version_compare(PHP_VERSION, '5.4.0', '>=')) {
-            return json_encode($this->normalize($data), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            return $this->toJson($data);
         }
 
-        return str_replace('\\/', '/', json_encode($this->normalize($data)));
+        return str_replace('\\/', '/', json_encode($data));
     }
 }

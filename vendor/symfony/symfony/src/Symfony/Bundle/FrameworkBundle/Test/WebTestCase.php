@@ -55,6 +55,8 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
      * If not, override this method in your test classes.
      *
      * @return string The directory where phpunit.xml(.dist) is stored
+     *
+     * @throws \RuntimeException
      */
     protected static function getPhpUnitXmlDir()
     {
@@ -82,19 +84,19 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Finds the value of configuration flag from cli
+     * Finds the value of the CLI configuration option.
      *
      * PHPUnit will use the last configuration argument on the command line, so this only returns
-     * the last configuration argument
+     * the last configuration argument.
      *
-     * @return string The value of the phpunit cli configuration option
+     * @return string The value of the PHPUnit cli configuration option
      */
     private static function getPhpUnitCliConfigArgument()
     {
         $dir = null;
         $reversedArgs = array_reverse($_SERVER['argv']);
         foreach ($reversedArgs as $argIndex => $testArg) {
-            if ($testArg === '-c' || $testArg === '--configuration') {
+            if (preg_match('/^-[^ \-]*c$/', $testArg) || $testArg === '--configuration') {
                 $dir = realpath($reversedArgs[$argIndex - 1]);
                 break;
             } elseif (strpos($testArg, '--configuration=') === 0) {
@@ -113,6 +115,8 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
      * When the Kernel is located, the file is required.
      *
      * @return string The Kernel class name
+     *
+     * @throws \RuntimeException
      */
     protected static function getKernelClass()
     {

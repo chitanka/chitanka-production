@@ -23,6 +23,9 @@ To install JMSSerializerBundle with Composer just add the following to your
     Please replace `dev-master` in the snippet above with the latest stable
     branch, for example ``1.0.*``.
     
+If you're using the Symfony Standard Edition, also make sure that you increase the
+versions for ``jms/di-extra-bundle`` to ``1.3.*``, and ``jms/security-extra-bundle`` to ``1.4.*``.
+
 Then, you can install the new dependencies by running Composer's ``update``
 command from the directory where your ``composer.json`` file is located:
 
@@ -41,7 +44,7 @@ register the new bundle:
     // in AppKernel::registerBundles()
     $bundles = array(
         // ...
-        new JMS\SerializerBundle\JMSSerializerBundle($this),
+        new JMS\Serializer\JMSSerializerBundle(),
         // ...
     );
     
@@ -66,7 +69,7 @@ Then register the bundle with your kernel:
     // in AppKernel::registerBundles()
     $bundles = array(
         // ...
-        new JMS\SerializerBundle\JMSSerializerBundle($this),
+        new JMS\Serializer\JMSSerializerBundle($this),
         // ...
     );
 

@@ -45,6 +45,9 @@ class LazyInitializerGenerator implements GeneratorInterface
         $this->writer = new Writer();
     }
 
+    /**
+     * @param string $prefix
+     */
     public function setPrefix($prefix)
     {
         $this->prefix = $prefix;
@@ -64,8 +67,8 @@ class LazyInitializerGenerator implements GeneratorInterface
     /**
      * Generates the necessary methods in the class.
      *
-     * @param \ReflectionClass $originalClass
-     * @param PhpClass $class
+     * @param  \ReflectionClass $originalClass
+     * @param  PhpClass         $class
      * @return void
      */
     public function generate(\ReflectionClass $originalClass, PhpClass $class)

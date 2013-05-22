@@ -19,11 +19,12 @@
         <parameter key="router.options.matcher_base_class">Symfony\Bundle\FrameworkBundle\Routing\RedirectableUrlMatcher</parameter>
         <parameter key="router.options.matcher_dumper_class">Symfony\Component\Routing\Matcher\Dumper\PhpMatcherDumper</parameter>
         <parameter key="router.cache_warmer.class">Symfony\Bundle\FrameworkBundle\CacheWarmer\RouterCacheWarmer</parameter>
-        <parameter key="router.options.matcher.cache_class">%kernel.name%%kernel.environment%UrlMatcher</parameter>
-        <parameter key="router.options.generator.cache_class">%kernel.name%%kernel.environment%UrlGenerator</parameter>
+        <parameter key="router.options.matcher.cache_class">%router.cache_class_prefix%UrlMatcher</parameter>
+        <parameter key="router.options.generator.cache_class">%router.cache_class_prefix%UrlGenerator</parameter>
         <parameter key="router_listener.class">Symfony\Component\HttpKernel\EventListener\RouterListener</parameter>
         <parameter key="router.request_context.host">localhost</parameter>
         <parameter key="router.request_context.scheme">http</parameter>
+        <parameter key="router.request_context.base_url"></parameter>
     </parameters>
 
     <services>
@@ -74,7 +75,7 @@
         <service id="router" alias="router.default" />
 
         <service id="router.request_context" class="%router.request_context.class%" public="false">
-            <argument></argument>
+            <argument>%router.request_context.base_url%</argument>
             <argument>GET</argument>
             <argument>%router.request_context.host%</argument>
             <argument>%router.request_context.scheme%</argument>

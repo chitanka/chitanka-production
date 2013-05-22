@@ -18,8 +18,7 @@
  * @see http://www.engr.mun.ca/~theo/Misc/exp_parsing.htm
  * @see http://en.wikipedia.org/wiki/Operator-precedence_parser
  *
- * @package    twig
- * @author     Fabien Potencier <fabien@symfony.com>
+ * @author Fabien Potencier <fabien@symfony.com>
  */
 class Twig_ExpressionParser
 {
@@ -366,7 +365,7 @@ class Twig_ExpressionParser
                 throw new Twig_Error_Syntax('Expected name or number', $lineno, $this->parser->getFilename());
             }
 
-            if ($node instanceof Twig_Node_Expression_Name && null !== $alias = $this->parser->getImportedSymbol('template', $node->getAttribute('name'))) {
+            if ($node instanceof Twig_Node_Expression_Name && null !== $this->parser->getImportedSymbol('template', $node->getAttribute('name'))) {
                 if (!$arg instanceof Twig_Node_Expression_Constant) {
                     throw new Twig_Error_Syntax(sprintf('Dynamic macro names are not supported (called on "%s")', $node->getAttribute('name')), $token->getLine(), $this->parser->getFilename());
                 }
@@ -379,12 +378,21 @@ class Twig_ExpressionParser
         } else {
             $type = Twig_TemplateInterface::ARRAY_CALL;
 
-            $arg = $this->parseExpression();
-
             // slice?
+            $slice = false;
             if ($stream->test(Twig_Token::PUNCTUATION_TYPE, ':')) {
-                $stream->next();
+                $slice = true;
+                $arg = new Twig_Node_Expression_Constant(0, $token->getLine());
+            } else {
+                $arg = $this->parseExpression();
+            }
 
+            if ($stream->test(Twig_Token::PUNCTUATION_TYPE, ':')) {
+                $slice = true;
+                $stream->next();
+            }
+
+            if ($slice) {
                 if ($stream->test(Twig_Token::PUNCTUATION_TYPE, ']')) {
                     $length = new Twig_Node_Expression_Constant(null, $token->getLine());
                 } else {

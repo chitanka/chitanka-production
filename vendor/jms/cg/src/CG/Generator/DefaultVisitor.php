@@ -25,7 +25,8 @@ namespace CG\Generator;
  */
 class DefaultVisitor implements DefaultVisitorInterface
 {
-    private $writer;
+    protected $writer;
+    private $isInterface;
 
     public function __construct()
     {
@@ -69,10 +70,23 @@ class DefaultVisitor implements DefaultVisitorInterface
             $this->writer->write($docblock);
         }
 
-        $this->writer->write('class '.$class->getShortName());
+        if ($class->isAbstract()) {
+            $this->writer->write('abstract ');
+        }
 
-        if ($parentClassName = $class->getParentClassName()) {
-            $this->writer->write(' extends '.('\\' === $parentClassName[0] ? $parentClassName : '\\'.$parentClassName));
+        if ($class->isFinal()) {
+            $this->writer->write('final ');
+        }
+
+        // TODO: Interfaces should be modeled as separate classes.
+        $this->isInterface = $class->getAttributeOrElse('interface', false);
+        $this->writer->write($this->isInterface ? 'interface ' : 'class ');
+        $this->writer->write($class->getShortName());
+
+        if ( ! $this->isInterface) {
+            if ($parentClassName = $class->getParentClassName()) {
+                $this->writer->write(' extends '.('\\' === $parentClassName[0] ? $parentClassName : '\\'.$parentClassName));
+            }
         }
 
         $interfaceNames = $class->getInterfaceNames();
@@ -87,7 +101,8 @@ class DefaultVisitor implements DefaultVisitorInterface
                 return '\\'.$name;
             }, $interfaceNames);
 
-            $this->writer->write(' implements '.implode(', ', $interfaceNames));
+            $this->writer->write($this->isInterface ? ' extends ' : ' implements ');
+            $this->writer->write(implode(', ', $interfaceNames));
         }
 
         $this->writer
@@ -96,16 +111,16 @@ class DefaultVisitor implements DefaultVisitorInterface
         ;
     }
 
-    public function startVisitingConstants()
+    public function startVisitingClassConstants()
     {
     }
 
-    public function visitConstant($name, $value)
+    public function visitClassConstant(PhpConstant $constant)
     {
-        $this->writer->writeln('const '.$name.' = '.var_export($value, true).';');
+        $this->writer->writeln('const '.$constant->getName().' = '.var_export($constant->getValue(), true).';');
     }
 
-    public function endVisitingConstants()
+    public function endVisitingClassConstants()
     {
         $this->writer->write("\n");
     }
@@ -116,6 +131,10 @@ class DefaultVisitor implements DefaultVisitorInterface
 
     public function visitProperty(PhpProperty $property)
     {
+        if ($docblock = $property->getDocblock()) {
+            $this->writer->write($docblock)->rtrim();
+        }
+
         $this->writer->write($property->getVisibility().' '.($property->isStatic()? 'static ' : '').'$'.$property->getName());
 
         if ($property->hasDefaultValue()) {
@@ -150,11 +169,17 @@ class DefaultVisitor implements DefaultVisitorInterface
             $this->writer->write('static ');
         }
 
-        $this->writer->write('function '.$method->getName().'(');
+        $this->writer->write('function ');
+
+        if ($method->isReferenceReturned()) {
+            $this->writer->write('& ');
+        }
+
+        $this->writer->write($method->getName().'(');
 
         $this->writeParameters($method->getParameters());
 
-        if ($method->isAbstract()) {
+        if ($method->isAbstract() || $this->isInterface) {
             $this->writer->write(");\n\n");
 
             return;
@@ -190,6 +215,10 @@ class DefaultVisitor implements DefaultVisitorInterface
             $this->writer->write("namespace $namespace;\n\n");
         }
 
+        if ($docblock = $function->getDocblock()) {
+            $this->writer->write($docblock)->rtrim();
+        }
+
         $this->writer->write("function {$function->getName()}(");
         $this->writeParameters($function->getParameters());
         $this->writer
@@ -217,10 +246,11 @@ class DefaultVisitor implements DefaultVisitorInterface
             $first = false;
 
             if ($type = $parameter->getType()) {
-                $this->writer->write(
-                ('array' === $type ? 'array' : ('\\' === $type[0] ? $type : '\\'. $type))
-                .' '
-                );
+                if ('array' === $type || 'callable' === $type) {
+                    $this->writer->write($type . ' ');
+                } else {
+                    $this->writer->write(('\\' === $type[0] ? $type : '\\'. $type) . ' ');
+                }
             }
 
             if ($parameter->isPassedByReference()) {
@@ -230,7 +260,14 @@ class DefaultVisitor implements DefaultVisitorInterface
             $this->writer->write('$'.$parameter->getName());
 
             if ($parameter->hasDefaultValue()) {
-                $this->writer->write(' = '.var_export($parameter->getDefaultValue(), true));
+                $this->writer->write(' = ');
+                $defaultValue = $parameter->getDefaultValue();
+
+                if (is_array($defaultValue) && empty($defaultValue)) {
+                    $this->writer->write('array()');
+                } else {
+                    $this->writer->write(var_export($defaultValue, true));
+                }
             }
         }
     }

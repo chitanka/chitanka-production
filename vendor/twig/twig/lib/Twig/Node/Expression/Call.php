@@ -21,7 +21,8 @@ abstract class Twig_Node_Expression_Call extends Twig_Node_Expression
             } elseif (is_array($callable) && $callable[0] instanceof Twig_ExtensionInterface) {
                 $compiler->raw(sprintf('$this->env->getExtension(\'%s\')->%s', $callable[0]->getName(), $callable[1]));
             } else {
-                $compiler->raw(sprintf('call_user_func($this->env->getFilter(\'%s\')->getCallable(), ', $this->getAttribute('name')));
+                $type = ucfirst($this->getAttribute('type'));
+                $compiler->raw(sprintf('call_user_func_array($this->env->get%s(\'%s\')->getCallable(), array', $type, $this->getAttribute('name')));
                 $closingParenthesis = true;
             }
         } else {
@@ -97,7 +98,10 @@ abstract class Twig_Node_Expression_Call extends Twig_Node_Expression
             if (!is_int($name)) {
                 $named = true;
                 $name = $this->normalizeName($name);
+            } elseif ($named) {
+                throw new Twig_Error_Syntax(sprintf('Positional arguments cannot be used after named arguments for %s "%s".', $this->getAttribute('type'), $this->getAttribute('name')));
             }
+
             $parameters[$name] = $node;
         }
 
@@ -141,6 +145,10 @@ abstract class Twig_Node_Expression_Call extends Twig_Node_Expression
             $name = $this->normalizeName($param->name);
 
             if (array_key_exists($name, $parameters)) {
+                if (array_key_exists($pos, $parameters)) {
+                    throw new Twig_Error_Syntax(sprintf('Arguments "%s" is defined twice for %s "%s".', $name, $this->getAttribute('type'), $this->getAttribute('name')));
+                }
+
                 $arguments[] = $parameters[$name];
                 unset($parameters[$name]);
             } elseif (array_key_exists($pos, $parameters)) {

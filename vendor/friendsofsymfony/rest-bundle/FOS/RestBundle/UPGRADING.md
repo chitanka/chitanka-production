@@ -4,6 +4,16 @@ Upgrading
 Note as FOSRestBundle is not yet declared stable, this document will be updated to
 list important BC breaks.
 
+### upgrading from 0.11.0
+
+* now requires JMSSerializerBundle 0.12
+* refactored the View class to drop the serializer specific methods in favor of setSerializationContext()
+* default version/groups will now only be applied if no SerializationContext was explicitly set on the View
+
+### upgrading from 0.10.0
+
+* now requires JMSSerializerBundle 1.0 (later renamed to 0.11) which is not compatible with Symfony2.0
+
 ### upgrading from 0.9.0
 
  * the view response listener is now disabled by default. See [enable view listener](https://github.com/FriendsOfSymfony/FOSRestBundle/blob/master/Resources/doc/3-listener-support.md#view-response-listener) for how to enable it.

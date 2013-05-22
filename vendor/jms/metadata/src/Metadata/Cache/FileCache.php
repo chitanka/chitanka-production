@@ -20,9 +20,12 @@ class FileCache implements CacheInterface
         $this->dir = rtrim($dir, '\\/');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function loadClassMetadataFromCache(\ReflectionClass $class)
     {
-        $path = $this->dir.'/'.strtr($class->getName(), '\\', '-').'.cache.php';
+        $path = $this->dir.'/'.strtr($class->name, '\\', '-').'.cache.php';
         if (!file_exists($path)) {
             return null;
         }
@@ -30,15 +33,21 @@ class FileCache implements CacheInterface
         return include $path;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function putClassMetadataInCache(ClassMetadata $metadata)
     {
         $path = $this->dir.'/'.strtr($metadata->name, '\\', '-').'.cache.php';
         file_put_contents($path, '<?php return unserialize('.var_export(serialize($metadata), true).');');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function evictClassMetadataFromCache(\ReflectionClass $class)
     {
-        $path = $this->dir.'/'.strtr($class->getName(), '\\', '-').'.cache.php';
+        $path = $this->dir.'/'.strtr($class->name, '\\', '-').'.cache.php';
         if (file_exists($path)) {
             unlink($path);
         }

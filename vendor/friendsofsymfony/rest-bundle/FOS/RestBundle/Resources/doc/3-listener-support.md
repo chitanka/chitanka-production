@@ -1,6 +1,16 @@
 Step 3: Listener support
 ========================
 
+[Listeners](http://symfony.com/doc/master/cookbook/service_container/event_listener.html)
+are a way to hook into the request handling. This Bundle provides various events
+from decoding the request content in the request (body listener), determining the
+correct response format (format listener), reading parameters from the request
+(parameter fetcher listener), to formatting the response either with a template engine
+like twig or to f.e. xml or json using a serializer (view response listener)) as well
+as automatically setting the accepted http methods in the response (accept listener).
+
+With this in mind we now turn to explain each one of them.
+
 All listeners except the ``mime_type`` one are disabled by default.  You can
 enable one or more of these listeners.  For example, below you can see how to
 enable all listeners:
@@ -159,6 +169,8 @@ fos_rest:
 Your custom decoder service must use a class that implements the
 ``FOS\Rest\Decoder\DecoderInterface``.
 
+If you want to be able to use form with checkbox and have true and false value (without any issue) you have to use : fos_rest.decoder.jsontoform (available since fosrest 0.8.0)
+
 ### Format listener
 
 The Request format listener attempts to determine the best format for the
@@ -244,6 +256,7 @@ fos_rest:
 
 use FOS\RestBundle\Request\ParamFetcher;
 use FOS\RestBundle\Controller\Annotations\RequestParam;
+use FOS\RestBundle\Controller\Annotations\QueryParam;
 
 class FooController extends Controller
 {
@@ -358,9 +371,11 @@ fos_rest:
 
 By default it is the responsibility of firewall access points to deal with AccessDeniedExceptions.
 For example the ``form`` entry point will redirect to the login page. However for a RESTful application
-the proper thing to happen is to return a 403 HTTP status code. This listener is triggered before
-the normal exception listener and firewall entry points and forces returning a 403 for any of the
-formats configured.
+proper response HTTP status codes should be provided. This listener is triggered before the normal exception listener
+and firewall entry points and forces returning either a 403 or 401 status code for any of the formats configured.
+
+It will return 401 for `Symfony\Component\Security\Core\Exception\AuthenticationException` or 403 for
+`Symfony\Component\Security\Core\Exception\AccessDeniedException`.
 
 You need to enable this listener like this as it is disabled by default:
 

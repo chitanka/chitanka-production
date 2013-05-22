@@ -18,23 +18,17 @@
 
 namespace JMS\DiExtraBundle\Annotation;
 
+use JMS\DiExtraBundle\Annotation\AbstractDoctrineListener;
 use JMS\DiExtraBundle\Exception\InvalidTypeException;
 
 /**
  * @Annotation
  * @Target("CLASS")
  */
-class DoctrineListener
+class DoctrineListener extends AbstractDoctrineListener
 {
-    /** @var array<string> @Required */
-    public $events;
-
-    /** @var string */
-    public $connection;
-
-    /** @var boolean */
-    public $lazy = true;
-
-    /** @var integer */
-    public $priority = 0;
+    public function getTag()
+    {
+        return 'doctrine.event_listener';
+    }
 }

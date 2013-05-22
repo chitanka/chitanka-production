@@ -23,7 +23,9 @@ namespace CG\Generator;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class PhpFunction
+use CG\Core\ReflectionUtils;
+
+class PhpFunction extends AbstractBuilder
 {
     private $name;
     private $namespace;
@@ -31,6 +33,30 @@ class PhpFunction
     private $body = '';
     private $referenceReturned = false;
     private $docblock;
+
+    public static function fromReflection(\ReflectionFunction $ref)
+    {
+        $function = new static();
+
+        if (false === $pos = strrpos($ref->name, '\\')) {
+            $function->setName(substr($ref->name, $pos + 1));
+            $function->setNamespace(substr($ref->name, $pos));
+        } else {
+            $function->setName($ref->name);
+        }
+
+        $function->referenceReturned = $ref->returnsReference();
+        $function->docblock = ReflectionUtils::getUnindentedDocComment($ref->getDocComment());
+
+        foreach ($ref->getParameters() as $refParam) {
+            assert($refParam instanceof \ReflectionParameter);
+
+            $param = PhpParameter::fromReflection($refParam);
+            $function->addParameter($param);
+        }
+
+        return $function;
+    }
 
     public static function create($name = null)
     {
@@ -42,6 +68,9 @@ class PhpFunction
         $this->name = $name;
     }
 
+    /**
+     * @param string $name
+     */
     public function setName($name)
     {
         $this->name = $name;
@@ -49,9 +78,33 @@ class PhpFunction
         return $this;
     }
 
+    /**
+     * @param string $namespace
+     */
     public function setNamespace($namespace)
     {
         $this->namespace = $namespace;
+
+        return $this;
+    }
+
+    /**
+     * In contrast to getName(), this method accepts the fully qualified name
+     * including the namespace.
+     *
+     * @param string $name
+     */
+    public function setQualifiedName($name)
+    {
+        if (false !== $pos = strrpos($name, '\\')) {
+            $this->namespace = substr($name, 0, $pos);
+            $this->name = substr($name, $pos + 1);
+
+            return $this;
+        }
+
+        $this->namespace = null;
+        $this->name = $name;
 
         return $this;
     }
@@ -63,6 +116,9 @@ class PhpFunction
         return $this;
     }
 
+    /**
+     * @param boolean $bool
+     */
     public function setReferenceReturned($bool)
     {
         $this->referenceReturned = (Boolean) $bool;
@@ -70,6 +126,9 @@ class PhpFunction
         return $this;
     }
 
+    /**
+     * @param integer $position
+     */
     public function replaceParameter($position, PhpParameter $parameter)
     {
         if ($position < 0 || $position > count($this->parameters)) {
@@ -88,6 +147,35 @@ class PhpFunction
         return $this;
     }
 
+    /**
+     * @param string|integer $nameOrIndex
+     *
+     * @return PhpParameter
+     */
+    public function getParameter($nameOrIndex)
+    {
+        if (is_int($nameOrIndex)) {
+            if ( ! isset($this->parameters[$nameOrIndex])) {
+                throw new \InvalidArgumentException(sprintf('There is no parameter at position %d (0-based).', $nameOrIndex));
+            }
+
+            return $this->parameters[$nameOrIndex];
+        }
+
+        foreach ($this->parameters as $param) {
+            assert($param instanceof PhpParameter);
+
+            if ($param->getName() === $nameOrIndex) {
+                return $param;
+            }
+        }
+
+        throw new \InvalidArgumentException(sprintf('There is no parameter named "%s".', $nameOrIndex));
+    }
+
+    /**
+     * @param integer $position
+     */
     public function removeParameter($position)
     {
         if (!isset($this->parameters[$position])) {
@@ -100,6 +188,9 @@ class PhpFunction
         return $this;
     }
 
+    /**
+     * @param string $body
+     */
     public function setBody($body)
     {
         $this->body = $body;
@@ -107,6 +198,9 @@ class PhpFunction
         return $this;
     }
 
+    /**
+     * @param string $docBlock
+     */
     public function setDocblock($docBlock)
     {
         $this->docblock = $docBlock;
@@ -122,6 +216,15 @@ class PhpFunction
     public function getNamespace()
     {
         return $this->namespace;
+    }
+
+    public function getQualifiedName()
+    {
+        if ($this->namespace) {
+            return $this->namespace.'\\'.$this->name;
+        }
+
+        return $this->name;
     }
 
     public function getParameters()

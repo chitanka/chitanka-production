@@ -2,7 +2,7 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
     <file source-language="en" datatype="plaintext" original="" target-language="pl">
         <body>
-        	<trans-unit id="title_user_account">
+            <trans-unit id="title_user_account">
                 <source>title_user_account</source>
                 <target>User Profile</target>
             </trans-unit>
@@ -126,6 +126,14 @@
                 <source>filter.label_groups</source>
                 <target equiv-trans="yes" state="final">Grupy</target>
             </trans-unit>
+            <trans-unit id="filter.label_firstname">
+                <source>filter.label_firstname</source>
+                <target>Imię</target>
+            </trans-unit>
+            <trans-unit id="filter.label_lastname">
+                <source>filter.label_lastname</source>
+                <target>Nazwisko</target>
+            </trans-unit>
             <trans-unit id="list.label_username">
                 <source>list.label_username</source>
                 <target equiv-trans="yes" state="final">Nazwa konta</target>
@@ -157,6 +165,14 @@
             <trans-unit id="list.label_roles">
                 <source>list.label_roles</source>
                 <target equiv-trans="yes" state="final">Role</target>
+            </trans-unit>
+            <trans-unit id="list.label_firstname">
+                <source>list.label_firstname</source>
+                <target>Imię</target>
+            </trans-unit>
+            <trans-unit id="list.label_lastname">
+                <source>list.label_lastname</source>
+                <target>Nazwisko</target>
             </trans-unit>
             <trans-unit id="label_two_step_code">
                 <source>label_two_step_code</source>
@@ -341,6 +357,18 @@
             <trans-unit id="form.label_date_of_birth">
                 <source>form.label_date_of_birth</source>
                 <target>Data urodzin</target>
+            </trans-unit>
+            <trans-unit id="gender_unknown">
+                <source>gender_unknown</source>
+                <target>gender_unknown</target>
+            </trans-unit>
+            <trans-unit id="gender_female">
+                <source>gender_female</source>
+                <target>gender_female</target>
+            </trans-unit>
+            <trans-unit id="gender_male">
+                <source>gender_male</source>
+                <target>gender_male</target>
             </trans-unit>
         </body>
     </file>

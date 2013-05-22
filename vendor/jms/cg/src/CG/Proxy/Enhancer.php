@@ -19,10 +19,8 @@
 namespace CG\Proxy;
 
 use CG\Core\NamingStrategyInterface;
-
 use CG\Generator\Writer;
 use CG\Generator\PhpMethod;
-use CG\Generator\PhpDocblock;
 use CG\Generator\PhpClass;
 use CG\Core\AbstractClassGenerator;
 
@@ -58,7 +56,7 @@ class Enhancer extends AbstractClassGenerator
     /**
      * Creates a new instance  of the enhanced class.
      *
-     * @param array $args
+     * @param  array  $args
      * @return object
      */
     public function createInstance(array $args = array())
@@ -94,7 +92,7 @@ class Enhancer extends AbstractClassGenerator
      *
      * @return string
      */
-    public final function generateClass()
+    final public function generateClass()
     {
         static $docBlock;
         if (empty($docBlock)) {

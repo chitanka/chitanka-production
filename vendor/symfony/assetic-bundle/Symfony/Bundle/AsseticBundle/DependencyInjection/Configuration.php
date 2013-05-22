@@ -11,9 +11,9 @@
 
 namespace Symfony\Bundle\AsseticBundle\DependencyInjection;
 
-use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
+use Symfony\Component\Process\ExecutableFinder;
 
 /**
  * This class contains the configuration information for the bundle
@@ -64,6 +64,9 @@ class Configuration implements ConfigurationInterface
                 ->scalarNode('write_to')->defaultValue('%assetic.read_from%')->end()
                 ->scalarNode('java')->defaultValue(function() use($finder) { return $finder->find('java', '/usr/bin/java'); })->end()
                 ->scalarNode('node')->defaultValue(function() use($finder) { return $finder->find('node', '/usr/bin/node'); })->end()
+                ->arrayNode('node_paths')
+                    ->prototype('scalar')->end()
+                ->end()
                 ->scalarNode('ruby')->defaultValue(function() use($finder) { return $finder->find('ruby', '/usr/bin/ruby'); })->end()
                 ->scalarNode('sass')->defaultValue(function() use($finder) { return $finder->find('sass', '/usr/bin/sass'); })->end()
             ->end()

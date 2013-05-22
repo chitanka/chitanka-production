@@ -13,12 +13,11 @@ namespace Sonata\AdminBundle\Builder;
 
 use Sonata\AdminBundle\Admin\FieldDescriptionInterface;
 use Sonata\AdminBundle\Admin\AdminInterface;
-use Sonata\AdminBundle\Model\ModelManagerInterface;
 
 use Symfony\Component\Form\FormBuilder;
 use Symfony\Component\Form\FormFactoryInterface;
 
-interface FormContractorInterface
+interface FormContractorInterface extends BuilderInterface
 {
 
     /**
@@ -26,17 +25,7 @@ interface FormContractorInterface
      *
      * @param \Symfony\Component\Form\FormFactoryInterface $formFactory
      */
-    function __construct(FormFactoryInterface $formFactory);
-
-    /**
-     * @abstract
-     *
-     * @param \Sonata\AdminBundle\Admin\AdminInterface            $admin
-     * @param \Sonata\AdminBundle\Admin\FieldDescriptionInterface $fieldDescription
-     *
-     * @return void
-     */
-    function fixFieldDescription(AdminInterface $admin, FieldDescriptionInterface $fieldDescription);
+    public function __construct(FormFactoryInterface $formFactory);
 
     /**
      * @abstract
@@ -46,7 +35,7 @@ interface FormContractorInterface
      *
      * @return FormBuilder
      */
-    function getFormBuilder($name, array $options = array());
+    public function getFormBuilder($name, array $options = array());
 
     /**
      * @abstract
@@ -56,5 +45,5 @@ interface FormContractorInterface
      *
      * @return array
      */
-    function getDefaultOptions($type, FieldDescriptionInterface $fieldDescription);
+    public function getDefaultOptions($type, FieldDescriptionInterface $fieldDescription);
 }

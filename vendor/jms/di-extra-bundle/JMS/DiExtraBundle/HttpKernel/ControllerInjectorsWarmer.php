@@ -3,7 +3,7 @@
 namespace JMS\DiExtraBundle\HttpKernel;
 
 use Symfony\Component\Finder\Finder;
-use Symfony\Component\HttpKernel\Bundle\BundleInterface;
+use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerAggregate;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface;
 
@@ -11,18 +11,24 @@ class ControllerInjectorsWarmer implements CacheWarmerInterface
 {
     private $kernel;
     private $controllerResolver;
+    private $blackListedControllerFiles;
 
-    public function __construct(KernelInterface $kernel, ControllerResolver $resolver)
+    public function __construct(KernelInterface $kernel, ControllerResolver $resolver, array $blackListedControllerFiles)
     {
         $this->kernel = $kernel;
         $this->controllerResolver = $resolver;
+        $this->blackListedControllerFiles = $blackListedControllerFiles;
     }
 
     public function warmUp($cacheDir)
     {
         // This avoids class-being-declared twice errors when the cache:clear
         // command is called. The controllers are not pre-generated in that case.
-        if (basename($cacheDir) === $this->kernel->getEnvironment().'_new') {
+        $suffix = defined('Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerAggregate::NEW_CACHE_FOLDER_SUFFIX')
+            ? CacheWarmerAggregate::NEW_CACHE_FOLDER_SUFFIX
+            : '_new';
+
+        if (basename($cacheDir) === $this->kernel->getEnvironment().$suffix) {
             return;
         }
 
@@ -49,7 +55,10 @@ class ControllerInjectorsWarmer implements CacheWarmerInterface
         }
 
         foreach (Finder::create()->name('*Controller.php')->in($dirs)->files() as $file) {
-            require_once $file->getRealPath();
+            $filename = $file->getRealPath();
+            if (!in_array($filename, $this->blackListedControllerFiles)) {
+                require_once $filename;
+            }
         }
 
         // It is not so important if these controllers never can be reached with

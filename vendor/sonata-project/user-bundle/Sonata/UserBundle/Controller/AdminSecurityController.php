@@ -13,19 +13,18 @@ namespace Sonata\UserBundle\Controller;
 
 use FOS\UserBundle\Controller\SecurityController;
 
-use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\Security\Core\SecurityContext;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 class AdminSecurityController extends SecurityController
 {
     /**
      * {@inheritdoc}
      */
-    public function loginAction(Request $request)
+    public function loginAction()
     {
+        $request = $this->container->get('request');
+        /* @var $request \Symfony\Component\HttpFoundation\Request */
         $session = $request->getSession();
         /* @var $session \Symfony\Component\HttpFoundation\Session */
 

@@ -11,7 +11,6 @@
 namespace Sonata\BlockBundle\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
-use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\Definition;
@@ -30,7 +29,7 @@ class SonataBlockExtension extends Extension
     /**
      * Loads the url shortener configuration.
      *
-     * @param array            $configs    An array of configuration settings
+     * @param array            $configs   An array of configuration settings
      * @param ContainerBuilder $container A ContainerBuilder instance
      */
     public function load(array $configs, ContainerBuilder $container)
@@ -45,11 +44,13 @@ class SonataBlockExtension extends Extension
         $loader->load('core.xml');
         $loader->load('exception.xml');
 
+        $this->configureContext($container, $config);
         $this->configureLoaderChain($container, $config);
         $this->configureCache($container, $config);
         $this->configureForm($container, $config);
         $this->configureProfiler($container, $config);
         $this->configureException($container, $config);
+        $this->configureClassesToCompile();
 
         $bundles = $container->getParameter('kernel.bundles');
         if ($config['templates']['block_base'] === null) {
@@ -66,7 +67,16 @@ class SonataBlockExtension extends Extension
 
     /**
      * @param ContainerBuilder $container
-     * @param array $config
+     * @param array            $config
+     */
+    public function configureContext(ContainerBuilder $container, array $config)
+    {
+        $container->setAlias('sonata.block.context_manager', $config['context_manager']);
+    }
+
+    /**
+     * @param ContainerBuilder $container
+     * @param array            $config
      *
      * @return void
      */
@@ -82,7 +92,7 @@ class SonataBlockExtension extends Extension
 
     /**
      * @param ContainerBuilder $container
-     * @param array $config
+     * @param array            $config
      *
      * @return void
      */
@@ -98,7 +108,7 @@ class SonataBlockExtension extends Extension
 
     /**
      * @param ContainerBuilder $container
-     * @param array $config
+     * @param array            $config
      *
      * @return void
      */
@@ -138,6 +148,7 @@ class SonataBlockExtension extends Extension
             $container->setAlias('sonata.block.renderer', 'sonata.block.renderer.default');
 
             $container->removeDefinition('sonata.block.renderer.traceable');
+
             return;
         }
 
@@ -200,5 +211,48 @@ class SonataBlockExtension extends Extension
         $defaultRenderer = $config['exception']['default']['renderer'];
         $definition->addMethodCall('setDefaultFilter', array($defaultFilter));
         $definition->addMethodCall('setDefaultRenderer', array($defaultRenderer));
+    }
+
+
+    /**
+     * Add class to compile
+     */
+    public function configureClassesToCompile()
+    {
+        $this->addClassesToCompile(array(
+            "Sonata\\BlockBundle\\Block\\BaseBlockService",
+            "Sonata\\BlockBundle\\Block\\BlockLoaderChain",
+            "Sonata\\BlockBundle\\Block\\BlockLoaderInterface",
+            "Sonata\\BlockBundle\\Block\\BlockRenderer",
+            "Sonata\\BlockBundle\\Block\\BlockRendererInterface",
+            "Sonata\\BlockBundle\\Block\\BlockServiceInterface",
+            "Sonata\\BlockBundle\\Block\\BlockServiceManager",
+            "Sonata\\BlockBundle\\Block\\BlockServiceManagerInterface",
+            "Sonata\\BlockBundle\\Block\\Loader\\ServiceLoader",
+            "Sonata\\BlockBundle\\Block\\Service\\EmptyBlockService",
+            "Sonata\\BlockBundle\\Block\\Service\\RssBlockService",
+            "Sonata\\BlockBundle\\Block\\Service\\TextBlockService",
+            "Sonata\\BlockBundle\\Exception\\BlockExceptionInterface",
+            "Sonata\\BlockBundle\\Exception\\BlockNotFoundException",
+            "Sonata\\BlockBundle\\Exception\\Filter\\DebugOnlyFilter",
+            "Sonata\\BlockBundle\\Exception\\Filter\\FilterInterface",
+            "Sonata\\BlockBundle\\Exception\\Filter\\IgnoreClassFilter",
+            "Sonata\\BlockBundle\\Exception\\Filter\\KeepAllFilter",
+            "Sonata\\BlockBundle\\Exception\\Filter\\KeepNoneFilter",
+            "Sonata\\BlockBundle\\Exception\\Renderer\\InlineDebugRenderer",
+            "Sonata\\BlockBundle\\Exception\\Renderer\\InlineRenderer",
+            "Sonata\\BlockBundle\\Exception\\Renderer\\MonkeyThrowRenderer",
+            "Sonata\\BlockBundle\\Exception\\Renderer\\RendererInterface",
+            "Sonata\\BlockBundle\\Exception\\Strategy\\StrategyManager",
+            "Sonata\\BlockBundle\\Exception\\Strategy\\StrategyManagerInterface",
+            "Sonata\\BlockBundle\\Form\\Type\\ServiceListType",
+            "Sonata\\BlockBundle\\Model\\BaseBlock",
+            "Sonata\\BlockBundle\\Model\\Block",
+            "Sonata\\BlockBundle\\Model\\BlockInterface",
+            "Sonata\\BlockBundle\\Model\\BlockManagerInterface",
+            "Sonata\\BlockBundle\\Model\\EmptyBlock",
+            "Sonata\\BlockBundle\\Twig\\Extension\\BlockExtension",
+            "Sonata\\BlockBundle\\Twig\\GlobalVariables",
+        ));
     }
 }

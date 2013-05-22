@@ -8,7 +8,7 @@
 <?php } ?>
 
 otp: <input name="otp"
-value="<?php 
+value="<?php
 if ($debug) {
 $g = new GoogleAuthenticator();
 echo $g->getCode($user->getSecret());

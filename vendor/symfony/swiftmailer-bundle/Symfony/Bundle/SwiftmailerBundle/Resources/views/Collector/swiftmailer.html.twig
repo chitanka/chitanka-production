@@ -47,13 +47,25 @@
 
             <p>
                 <pre>
-                    {%- if message.charset %}
+                    {%- if messagePart.charset is defined and message.charset %}
                         {{- message.body|e('html', message.charset)|convert_encoding('UTF-8', message.charset) }}
                     {%- else %}
                         {{- message.body|e('html') }}
                     {%- endif -%}
                 </pre>
             </p>
+            {% for messagePart in message.children if messagePart.contentType == 'text/plain' or messagePart.contentType == 'text/html' %}
+                <h4>Alternative part</h4>
+                <p>
+                    <pre>
+                        {%- if messagePart.charset %}
+                            {{- messagePart.body|e('html', messagePart.charset)|convert_encoding('UTF-8', messagePart.charset) }}
+                        {%- else %}
+                            {{- messagePart.body|e('html') }}
+                        {%- endif -%}
+                    </pre>
+                </p>
+            {% endfor %}
         {% endfor %}
     {% endif %}
 {% endblock %}

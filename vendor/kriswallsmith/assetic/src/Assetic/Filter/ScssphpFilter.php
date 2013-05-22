@@ -3,7 +3,7 @@
 /*
  * This file is part of the Assetic package, an OpenSky project.
  *
- * (c) 2010-2012 OpenSky Project Inc
+ * (c) 2010-2013 OpenSky Project Inc
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -12,6 +12,7 @@
 namespace Assetic\Filter;
 
 use Assetic\Asset\AssetInterface;
+use Assetic\Factory\AssetFactory;
 
 /**
  * Loads SCSS files using the PHP implementation of scss, scssphp.
@@ -22,7 +23,7 @@ use Assetic\Asset\AssetInterface;
  *
  * @author Bart van den Burg <bart@samson-it.nl>
  */
-class ScssphpFilter implements FilterInterface
+class ScssphpFilter implements DependencyExtractorInterface
 {
     private $compass = false;
 
@@ -69,5 +70,11 @@ class ScssphpFilter implements FilterInterface
 
     public function filterDump(AssetInterface $asset)
     {
+    }
+
+    public function getChildren(AssetFactory $factory, $content, $loadPath = null)
+    {
+        // todo
+        return array();
     }
 }

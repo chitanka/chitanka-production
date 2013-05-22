@@ -301,8 +301,7 @@ class MainConfiguration implements ConfigurationInterface
             ->children()
                 ->arrayNode('providers')
                     ->example(array(
-                        'memory' => array(
-                            'name' => 'memory',
+                        'my_memory_provider' => array(
                             'memory' => array(
                                 'users' => array(
                                     'foo' => array('password' => 'foo', 'roles' => 'ROLE_USER'),
@@ -310,7 +309,7 @@ class MainConfiguration implements ConfigurationInterface
                                 ),
                             )
                         ),
-                        'entity' => array('entity' => array('class' => 'SecurityBundle:User', 'property' => 'username'))
+                        'my_entity_provider' => array('entity' => array('class' => 'SecurityBundle:User', 'property' => 'username'))
                     ))
                     ->disallowNewKeysInSubsequentConfigs()
                     ->isRequired()
@@ -378,9 +377,16 @@ class MainConfiguration implements ConfigurationInterface
                         ->beforeNormalization()->ifString()->then(function($v) { return array('algorithm' => $v); })->end()
                         ->children()
                             ->scalarNode('algorithm')->cannotBeEmpty()->end()
+                            ->scalarNode('hash_algorithm')->info('Name of hashing algorithm for PBKDF2 (i.e. sha256, sha512, etc..) See hash_algos() for a list of supported algorithms.')->defaultValue('sha512')->end()
+                            ->scalarNode('key_length')->defaultValue(40)->end()
                             ->booleanNode('ignore_case')->defaultFalse()->end()
                             ->booleanNode('encode_as_base64')->defaultTrue()->end()
                             ->scalarNode('iterations')->defaultValue(5000)->end()
+                            ->integerNode('cost')
+                                ->min(4)
+                                ->max(31)
+                                ->defaultValue(13)
+                            ->end()
                             ->scalarNode('id')->end()
                         ->end()
                     ->end()

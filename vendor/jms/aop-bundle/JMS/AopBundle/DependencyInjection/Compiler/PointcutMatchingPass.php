@@ -19,7 +19,6 @@
 namespace JMS\AopBundle\DependencyInjection\Compiler;
 
 use CG\Core\ClassUtils;
-
 use JMS\AopBundle\Exception\RuntimeException;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\DependencyInjection\Reference;
@@ -28,6 +27,8 @@ use CG\Proxy\InterceptionGenerator;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use JMS\AopBundle\Aop\PointcutInterface;
+use CG\Core\ReflectionUtils;
 
 /**
  * Matches pointcuts against service methods.
@@ -43,6 +44,9 @@ class PointcutMatchingPass implements CompilerPassInterface
     private $cacheDir;
     private $container;
 
+    /**
+     * @param array<PointcutInterface> $pointcuts
+     */
     public function __construct(array $pointcuts = null)
     {
         $this->pointcuts = $pointcuts;
@@ -69,16 +73,25 @@ class PointcutMatchingPass implements CompilerPassInterface
         ;
     }
 
-    private function processInlineDefinitions($pointcuts, &$interceptors, array $a) {
+    /**
+     * @param array<PointcutInterface> $pointcuts
+     * @param array<string,string> $interceptors
+     */
+    private function processInlineDefinitions($pointcuts, &$interceptors, array $a)
+    {
         foreach ($a as $k => $v) {
             if ($v instanceof Definition) {
                 $this->processDefinition($v, $pointcuts, $interceptors);
-            } else if (is_array($v)) {
+            } elseif (is_array($v)) {
                 $this->processInlineDefinitions($pointcuts, $interceptors, $v);
             }
         }
     }
 
+    /**
+     * @param array<PointcutInterface> $pointcuts
+     * @param array<string,string> $interceptors
+     */
     private function processDefinition(Definition $definition, $pointcuts, &$interceptors)
     {
         if ($definition->isSynthetic()) {
@@ -118,8 +131,9 @@ class PointcutMatchingPass implements CompilerPassInterface
         }
 
         $classAdvices = array();
-        foreach ($class->getMethods(\ReflectionMethod::IS_PROTECTED | \ReflectionMethod::IS_PUBLIC) as $method) {
-            if ($method->isFinal()) {
+        foreach (ReflectionUtils::getOverrideableMethods($class) as $method) {
+
+            if ('__construct' === $method->name) {
                 continue;
             }
 

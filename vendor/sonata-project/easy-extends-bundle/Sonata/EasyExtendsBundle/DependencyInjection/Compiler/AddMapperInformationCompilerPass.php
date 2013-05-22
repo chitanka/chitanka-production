@@ -11,11 +11,8 @@
 
 namespace Sonata\EasyExtendsBundle\DependencyInjection\Compiler;
 
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
-use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Sonata\EasyExtendsBundle\Mapper\DoctrineCollector;
 
 /*
@@ -31,6 +28,7 @@ class AddMapperInformationCompilerPass implements CompilerPassInterface
     {
         if (!$container->hasDefinition('doctrine')) {
             $container->removeDefinition('sonata.easy_extends.doctrine.mapper');
+
             return;
         }
 
@@ -40,6 +38,20 @@ class AddMapperInformationCompilerPass implements CompilerPassInterface
             foreach ($associations as $field => $options) {
                 $mapper->addMethodCall('addAssociation', array($class, $field, $options));
             }
+        }
+
+        foreach (DoctrineCollector::getInstance()->getDiscriminatorColumns() as $class => $columnDefinition) {
+                $mapper->addMethodCall('addDiscriminatorColumn', array($class, $columnDefinition));
+        }
+
+        foreach (DoctrineCollector::getInstance()->getDiscriminators() as $class => $discriminators) {
+            foreach ($discriminators as $key => $discriminatorClass) {
+                $mapper->addMethodCall('addDiscriminator', array($class, $key, $discriminatorClass));
+            }
+        }
+
+        foreach (DoctrineCollector::getInstance()->getInheritanceTypes() as $class => $type) {
+            $mapper->addMethodCall('addInheritanceType', array($class, $type));
         }
 
         foreach (DoctrineCollector::getInstance()->getIndexes() as $class => $indexes) {

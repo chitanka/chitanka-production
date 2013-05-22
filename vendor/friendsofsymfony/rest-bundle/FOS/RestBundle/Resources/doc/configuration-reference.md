@@ -12,6 +12,7 @@ fos_rest:
     allowed_methods_listener:  false
     routing_loader:
         default_format:       ~
+        include_format:       ~
     service:
         router:               router
         templating:           templating
@@ -39,7 +40,9 @@ fos_rest:
             # Prototype
             name:                 []
         view_response_listener:  false
-        failed_validation:    400
+        failed_validation:       400
+        empty_content:           204
+        serialize_null:          false
     exception:
         codes:
 

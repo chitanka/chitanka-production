@@ -119,8 +119,8 @@ If you want to match an entity using multiple fields use ``mapping``::
 
     /**
      * @Route("/blog/{date}/{slug}/comments/{comment_slug}")
-     * @ParamConverter("post", options={"mapping": {"date": "date", "slug": "slug"})
-     * @ParamConverter("comment", options={"mapping": {"comment_slug": "slug"})
+     * @ParamConverter("post", options={"mapping": {"date": "date", "slug": "slug"}})
+     * @ParamConverter("comment", options={"mapping": {"comment_slug": "slug"}})
      */
     public function showAction(Post $post, Comment $comment)
     {
@@ -134,6 +134,17 @@ route parameter from being part of the criteria::
      * @ParamConverter("post", options={"exclude": ["date"]})
      */
     public function showAction(Post $post, \DateTime $date)
+    {
+    }
+
+If you want to specify the repository method to use to find the entity (for example,
+to add joins to the query), you can add the ``repository_method`` option::
+
+    /**
+     * @Route("/blog/{id}")
+     * @ParamConverter("post", class="SensioBlogBundle:Post", options={"repository_method" = "findWithJoins"})
+     */
+    public function showAction(Post $post)
     {
     }
 
@@ -200,6 +211,15 @@ on the request attributes, it should set an attribute named
 To register your converter service you must add a tag to your service
 
 .. configuration-block::
+
+    .. code-block:: yaml
+
+        # app/config/config.yml
+        services:
+            my_converter:
+                class:        MyBundle/Request/ParamConverter/MyConverter
+                tags:
+                    - { name: request.param_converter, priority: -2, converter: my_converter }
 
     .. code-block:: xml
 

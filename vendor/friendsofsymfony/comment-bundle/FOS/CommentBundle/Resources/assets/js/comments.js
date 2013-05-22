@@ -60,7 +60,9 @@
                 }
             };
             var wrappedCompleteCallback = function(response){
-                complete(response.responseText, response.status);
+                if('undefined' !== typeof complete) {
+                    complete(response.responseText, response.status);
+                }
             };
             $.post(url, data, success).error(wrappedErrorCallback).complete(wrappedCompleteCallback);
         },
@@ -118,10 +120,20 @@
                 'form.fos_comment_comment_new_form',
                 function(e) {
                     var that = $(this);
+                    var serializedData = FOS_COMMENT.serializeObject(this);
+
+                    e.preventDefault();
+
+                    var event = $.Event('fos_comment_submitting_form');
+                    that.trigger(event);
+
+                    if (event.isDefaultPrevented()) {
+                        return;
+                    }
 
                     FOS_COMMENT.post(
                         this.action,
-                        FOS_COMMENT.serializeObject(this),
+                        serializedData,
                         // success
                         function(data, statusCode) {
                             FOS_COMMENT.appendComment(data, that);
@@ -138,9 +150,6 @@
                             that.trigger('fos_comment_submitted_form', statusCode);
                         }
                     );
-                    that.trigger('fos_comment_submitting_form');
-
-                    e.preventDefault();
                 }
             );
 
@@ -170,9 +179,16 @@
                 '.fos_comment_comment_reply_cancel',
                 function(e) {
                     var form_holder = $(this).closest('.fos_comment_comment_form_holder');
+
+                    var event = $.Event('fos_comment_cancel_form');
+                    form_holder.trigger(event);
+
+                    if (event.isDefaultPrevented()) {
+                        return;
+                    }
+
                     form_holder.closest('.fos_comment_comment_reply').removeClass('fos_comment_replying');
                     form_holder.remove();
-                    form_holder.trigger('fos_comment_cancel_form');
                 }
             );
 
@@ -180,19 +196,21 @@
                 '.fos_comment_comment_edit_show_form',
                 function(e) {
                     var form_data = $(this).data();
-                    var that = this;
+                    var that = $(this);
 
                     FOS_COMMENT.get(
                         form_data.url,
                         {},
                         function(data) {
-                            var commentBody = $(that).parent().next();
+                            var commentBody = $(form_data.container);
 
                             // save the old comment for the cancel function
                             commentBody.data('original', commentBody.html());
 
                             // show the edit form
                             commentBody.html(data);
+
+                            that.trigger('fos_comment_show_edit_form', data);
                         }
                     );
                 }
@@ -234,7 +252,8 @@
             FOS_COMMENT.thread_container.on('click',
                 '.fos_comment_comment_vote',
                 function(e) {
-                    var form_data = $(this).data();
+                    var that = $(this);
+                    var form_data = that.data();
 
                     // Get the form
                     FOS_COMMENT.get(
@@ -242,7 +261,7 @@
                         {},
                         function(data) {
                             // Post it
-                            var form = $(data).children('form')[0];
+                            var form = $($.trim(data)).children('form')[0];
                             var form_data = $(form).data();
 
                             FOS_COMMENT.post(
@@ -250,7 +269,7 @@
                                 FOS_COMMENT.serializeObject(form),
                                 function(data) {
                                     $('#' + form_data.scoreHolder).html(data);
-                                    form.trigger('fos_comment_vote_comment', data);
+                                    that.trigger('fos_comment_vote_comment', data, form);
                                 }
                             );
                         }
@@ -263,19 +282,26 @@
                 function(e) {
                     var form_data = $(this).data();
 
+                    var event = $.Event('fos_comment_removing_comment');
+                    $(this).trigger(event);
+
+                    if (event.isDefaultPrevented()) {
+                        return
+                    }
+
                     // Get the form
                     FOS_COMMENT.get(
                         form_data.url,
                         {},
                         function(data) {
                             // Post it
-                            var form = $(data).children('form')[0];
+                            var form = $($.trim(data)).children('form')[0];
 
                             FOS_COMMENT.post(
                                 form.action,
                                 FOS_COMMENT.serializeObject(form),
                                 function(data) {
-                                    var commentHtml = $(data);
+                                    var commentHtml = $($.trim(data));
 
                                     var originalComment = $('#' + commentHtml.attr('id'));
 
@@ -349,7 +375,7 @@
         },
 
         editComment: function(commentHtml) {
-            var commentHtml = $(commentHtml);
+            var commentHtml = $($.trim(commentHtml));
             var originalCommentBody = $('#' + commentHtml.attr('id')).children('.fos_comment_comment_body');
 
             originalCommentBody.html(commentHtml.children('.fos_comment_comment_body').html());

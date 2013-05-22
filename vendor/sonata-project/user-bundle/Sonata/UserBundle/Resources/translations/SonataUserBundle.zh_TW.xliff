@@ -2,7 +2,7 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
     <file source-language="en" datatype="plaintext" original="SonataUserBundle.en.xliff">
         <body>
-        	<trans-unit id="title_user_account">
+            <trans-unit id="title_user_account">
                 <source>title_user_account</source>
                 <target>User Profile</target>
             </trans-unit>
@@ -205,6 +205,18 @@
             <trans-unit id="form.label_date_of_birth">
                 <source>form.label_date_of_birth</source>
                 <target>Date of birth</target>
+            </trans-unit>
+            <trans-unit id="gender_unknown">
+                <source>gender_unknown</source>
+                <target>gender_unknown</target>
+            </trans-unit>
+            <trans-unit id="gender_female">
+                <source>gender_female</source>
+                <target>gender_female</target>
+            </trans-unit>
+            <trans-unit id="gender_male">
+                <source>gender_male</source>
+                <target>gender_male</target>
             </trans-unit>
         </body>
     </file>

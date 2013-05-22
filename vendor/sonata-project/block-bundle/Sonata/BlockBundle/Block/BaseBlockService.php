@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Templating\EngineInterface;
 use Sonata\BlockBundle\Model\BlockInterface;
 use Sonata\AdminBundle\Form\FormMapper;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
  * BaseBlockService
@@ -29,8 +30,8 @@ abstract class BaseBlockService implements BlockServiceInterface
     protected $templating;
 
     /**
-     * @param string $name
-     * @param \Symfony\Component\Templating\EngineInterface $templating
+     * @param string                                                     $name
+     * @param \Symfony\Bundle\FrameworkBundle\Templating\EngineInterface $templating
      */
     public function __construct($name, EngineInterface $templating)
     {
@@ -149,8 +150,19 @@ abstract class BaseBlockService implements BlockServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function getDefaultSettings()
+    public function setDefaultSettings(OptionsResolverInterface $resolver)
     {
-        return array();
+
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function execute(BlockContextInterface $blockContext, Response $response = null)
+    {
+        return $this->renderResponse($blockContext->getTemplate(), array(
+            'block_context'  => $blockContext,
+            'block'          => $blockContext->getBlock(),
+        ), $response);
     }
 }

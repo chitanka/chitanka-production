@@ -15,6 +15,7 @@ class Users
         if (isset($_SESSION['username'])) {
             return $_SESSION['username'];
         }
+
         return false;
     }
 
@@ -82,9 +83,9 @@ class User
         if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] == true &&
             isset($_SESSION['ua']) && $_SESSION['ua'] == $_SERVER['HTTP_USER_AGENT']
         ) {
-
             return $_SESSION['username'];
         }
+
         return false;
 
     }
@@ -130,7 +131,7 @@ class User
     {
         // 0 = tomorrow it is invalid
         $daysUntilInvalid = 0;
-        $time = (string)floor((time() / (3600 * 24))); // get day number
+        $time = (string) floor((time() / (3600 * 24))); // get day number
         if (isset($_COOKIE['otp'])) {
             list($otpday, $hash) = explode(":", $_COOKIE['otp']);
 

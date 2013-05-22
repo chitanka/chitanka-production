@@ -11,9 +11,9 @@
 
 namespace Sonata\BlockBundle\Twig\Extension;
 
+use Sonata\BlockBundle\Block\BlockContextManagerInterface;
 use Sonata\BlockBundle\Block\BlockServiceManagerInterface;
 use Sonata\BlockBundle\Model\BlockInterface;
-use Sonata\BlockBundle\Block\BlockLoaderInterface;
 use Sonata\BlockBundle\Block\BlockRendererInterface;
 
 use Sonata\CacheBundle\Cache\CacheManagerInterface;
@@ -29,24 +29,24 @@ class BlockExtension extends \Twig_Extension
 
     private $cacheBlocks;
 
-    private $blockLoader;
-
     private $blockRenderer;
+
+    private $blockContextManager;
 
     /**
      * @param BlockServiceManagerInterface $blockServiceManager
-     * @param CacheManagerInterface $cacheManager
-     * @param array $cacheBlocks
-     * @param BlockLoaderInterface $blockLoader
-     * @param BlockRendererInterface $blockRenderer
+     * @param array                        $cacheBlocks
+     * @param BlockRendererInterface       $blockRenderer
+     * @param BlockContextManagerInterface $blockContextManager
+     * @param CacheManagerInterface        $cacheManager
      */
-    public function __construct(BlockServiceManagerInterface $blockServiceManager, array $cacheBlocks, BlockLoaderInterface $blockLoader, BlockRendererInterface $blockRenderer, CacheManagerInterface $cacheManager = null)
+    public function __construct(BlockServiceManagerInterface $blockServiceManager, array $cacheBlocks, BlockRendererInterface $blockRenderer, BlockContextManagerInterface $blockContextManager, CacheManagerInterface $cacheManager = null)
     {
         $this->blockServiceManager = $blockServiceManager;
         $this->cacheBlocks         = $cacheBlocks;
-        $this->blockLoader         = $blockLoader;
         $this->blockRenderer       = $blockRenderer;
         $this->cacheManager        = $cacheManager;
+        $this->blockContextManager = $blockContextManager;
     }
 
     /**
@@ -136,29 +136,27 @@ class BlockExtension extends \Twig_Extension
     /**
      * @throws \RuntimeException
      *
-     * @param $block
-     * @param bool $useCache
-     * @param array $extraCacheKeys
+     * @param mixed $block
+     * @param array $options
      *
      * @return string
      */
-    public function renderBlock($block, $useCache = true, array $extraCacheKeys = array())
+    public function renderBlock($block, array $options = array())
     {
-        if (!$block instanceof BlockInterface) {
-            $block = $this->blockLoader->load($block);
+        $blockContext = $this->blockContextManager->get($block, $options);
 
-            // The loader match the block, but cannot find it
-            if (!$block instanceof BlockInterface) {
-                return '';
-            }
+        if (!$blockContext) {
+            return '';
         }
 
+        $useCache = $blockContext->getSetting('use_cache');
+
         $cacheKeys = false;
-        $cacheService = $useCache ? $this->getCacheService($block) : false;
+        $cacheService = $useCache ? $this->getCacheService($blockContext->getBlock()) : false;
         if ($cacheService) {
             $cacheKeys = array_merge(
-                $extraCacheKeys,
-                $this->blockServiceManager->get($block)->getCacheKeys($block)
+                $this->blockServiceManager->get($blockContext->getBlock())->getCacheKeys($blockContext->getBlock()),
+                $blockContext->getSetting('extra_cache_keys')
             );
 
             if ($cacheService->has($cacheKeys)) {
@@ -174,14 +172,15 @@ class BlockExtension extends \Twig_Extension
             $recorder = $this->cacheManager->getRecorder();
 
             if ($recorder) {
+                $recorder->add($blockContext->getBlock());
                 $recorder->push();
             }
         }
 
-        $response = $this->blockRenderer->render($block);
+        $response = $this->blockRenderer->render($blockContext);
         $contextualKeys = $recorder ? $recorder->pop() : array();
         if ($response->isCacheable() && $cacheKeys && $cacheService) {
-            $cacheService->set($cacheKeys, $response, $block->getTtl(), $contextualKeys);
+            $cacheService->set($cacheKeys, $response, $response->getTtl(), $contextualKeys);
         }
 
         return $response->getContent();
@@ -207,4 +206,3 @@ class BlockExtension extends \Twig_Extension
         return $this->cacheManager->getCacheService($type);
     }
 }
-

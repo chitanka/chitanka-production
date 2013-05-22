@@ -11,9 +11,9 @@
 namespace Sonata\AdminBundle\Validator;
 
 use Symfony\Bundle\FrameworkBundle\Validator\ConstraintValidatorFactory;
-use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\ExecutionContext;
-use Symfony\Component\Form\Util\PropertyPath;
+use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Component\PropertyAccess\PropertyPath;
 use Symfony\Component\Validator\Constraint;
 
 class ErrorElement
@@ -73,6 +73,18 @@ class ErrorElement
     }
 
     /**
+     * @param Constraint $constraint
+     *
+     * @return ErrorElement
+     */
+    public function addConstraint(Constraint $constraint)
+    {
+        $this->validate($constraint);
+
+        return $this;
+    }
+
+    /**
      * @param string $name
      * @param bool   $key
      *
@@ -106,26 +118,14 @@ class ErrorElement
 
     /**
      * @param \Symfony\Component\Validator\Constraint $constraint
-     * @param null                                    $messageTemplate
-     * @param array                                   $messageParameters
      *
      * @return void
      */
-    protected function validate(Constraint $constraint, $messageTemplate = null, $messageParameters = array())
+    protected function validate(Constraint $constraint)
     {
-        $validator = $this->constraintValidatorFactory->getInstance($constraint);
-        $value     = $this->getValue();
+        $subPath = (string) $this->getCurrentPropertyPath();
 
-        $validator->initialize($this->context);
-        $validator->validate($value, $constraint);
-
-        if (count($this->context->getViolations())) {
-            $this->context->addViolation(
-                $messageTemplate ?: $validator->getMessageTemplate(),
-                array_merge($validator->getMessageParameters(), $messageParameters),
-                $value
-            );
-        }
+        $this->context->validateValue($this->getValue(), $constraint, $subPath, $this->group);
     }
 
     /**
@@ -147,7 +147,8 @@ class ErrorElement
      */
     protected function getValue()
     {
-        return $this->getCurrentPropertyPath()->getValue($this->subject);
+        $propertyAccessor = PropertyAccess::getPropertyAccessor();
+        return $propertyAccessor->getValue($this->subject, $this->getCurrentPropertyPath());
     }
 
     /**
@@ -167,7 +168,7 @@ class ErrorElement
     protected function newConstraint($name, array $options = array())
     {
         if (strpos($name, '\\') !== false && class_exists($name)) {
-            $className = (string)$name;
+            $className = (string) $name;
         } else {
             $className = 'Symfony\\Component\\Validator\\Constraints\\' . $name;
         }
@@ -198,11 +199,13 @@ class ErrorElement
     {
         if (is_array($message)) {
             $value      = isset($message[2]) ? $message[2] : $value;
-            $parameters = isset($message[1]) ? (array)$message[1] : array();
+            $parameters = isset($message[1]) ? (array) $message[1] : array();
             $message    = isset($message[0]) ? $message[0] : 'error';
         }
 
-        $this->context->addViolationAtPath($this->getFullPropertyPath(), $message, $parameters, $value);
+        $subPath = (string) $this->getCurrentPropertyPath();
+
+        $this->context->addViolationAt($subPath, $message, $parameters, $value);
 
         $this->errors[] = array($message, $parameters, $value);
 

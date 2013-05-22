@@ -31,6 +31,23 @@ class AddExpressionCompilersPass implements CompilerPassInterface
             return;
         }
 
+        $count = 0;
+        foreach ($container->findTaggedServiceIds('security.expressions.function_evaluator') as $id => $tags) {
+            foreach ($tags as $attributes) {
+                if ( ! isset($attributes['function'])) {
+                    throw new RuntimeException(sprintf('"function" must be given for tag "security.expressions.function_evaluator" of service "%s".', $id));
+                }
+
+                $container
+                    ->register('security.expressions.service_callback_compiler.'.($count++),
+                                   'JMS\SecurityExtraBundle\Security\Authorization\Expression\Compiler\Func\ServiceCallbackFunctionCompiler')
+                    ->addArgument($attributes['function'])
+                    ->addArgument($id)
+                    ->addArgument(isset($attributes['method']) ? $attributes['method'] : $attributes['function'])
+                    ->addTag('security.expressions.function_compiler');
+            }
+        }
+
         $compilerDef = $container->getDefinition('security.expressions.compiler');
         foreach ($container->findTaggedServiceIds('security.expressions.function_compiler')
             as $id => $attr) {

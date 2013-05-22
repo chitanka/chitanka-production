@@ -62,7 +62,7 @@ abstract class User extends AbstractedUser implements UserInterface
     /**
      * @var string
      */
-    protected $gender;
+    protected $gender = UserInterface::GENDER_UNKNOWN; // set the default to unknown
 
     /**
      * @var string
@@ -551,5 +551,21 @@ abstract class User extends AbstractedUser implements UserInterface
     public function getFullname()
     {
         return sprintf("%s %s", $this->getFirstname(), $this->getLastname());
+    }
+
+    /**
+     * @return array
+     */
+    public function getRealRoles()
+    {
+        return $this->roles;
+    }
+
+    /**
+     * @param array $roles
+     */
+    public function setRealRoles(array $roles)
+    {
+        $this->setRoles($roles);
     }
 }

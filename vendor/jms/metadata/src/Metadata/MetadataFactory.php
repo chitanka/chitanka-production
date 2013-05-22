@@ -18,10 +18,11 @@
 
 namespace Metadata;
 
+use Metadata\Driver\AdvancedDriverInterface;
 use Metadata\Driver\DriverInterface;
 use Metadata\Cache\CacheInterface;
 
-final class MetadataFactory implements MetadataFactoryInterface
+final class MetadataFactory implements AdvancedMetadataFactoryInterface
 {
     private $driver;
     private $cache;
@@ -31,16 +32,24 @@ final class MetadataFactory implements MetadataFactoryInterface
     private $includeInterfaces = false;
     private $debug;
 
+    /**
+     * @param DriverInterface $driver
+     * @param string          $hierarchyMetadataClass
+     * @param boolean         $debug
+     */
     public function __construct(DriverInterface $driver, $hierarchyMetadataClass = 'Metadata\ClassHierarchyMetadata', $debug = false)
     {
         $this->driver = $driver;
         $this->hierarchyMetadataClass = $hierarchyMetadataClass;
-        $this->debug = $debug;
+        $this->debug = (Boolean) $debug;
     }
 
-    public function setIncludeInterfaces($bool)
+    /**
+     * @param boolean $bool
+     */
+    public function setIncludeInterfaces($include)
     {
-        $this->includeInterfaces = (Boolean) $bool;
+        $this->includeInterfaces = (Boolean) $include;
     }
 
     public function setCache(CacheInterface $cache)
@@ -48,6 +57,11 @@ final class MetadataFactory implements MetadataFactoryInterface
         $this->cache = $cache;
     }
 
+    /**
+     * @param string $className
+     *
+     * @return ClassMetaData
+     */
     public function getMetadataForClass($className)
     {
         if (isset($this->loadedMetadata[$className])) {
@@ -89,6 +103,24 @@ final class MetadataFactory implements MetadataFactoryInterface
         return $this->loadedMetadata[$className] = $metadata;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function getAllClassNames()
+    {
+        if (!$this->driver instanceof AdvancedDriverInterface) {
+            throw new \RuntimeException(
+                sprintf('Driver "%s" must be an instance of "AdvancedDriverInterface".', get_class($this->driver))
+            );
+        }
+
+        return $this->driver->getAllClassNames();
+    }
+
+    /**
+     * @param ClassMetadata|null $metadata
+     * @param ClassMetadata      $toAdd
+     */
     private function addClassMetadata(&$metadata, $toAdd)
     {
         if ($toAdd instanceof MergeableInterface) {
@@ -113,7 +145,8 @@ final class MetadataFactory implements MetadataFactoryInterface
 
         do {
             $classes[] = $refl;
-        } while (false !== $refl = $refl->getParentClass());
+            $refl = $refl->getParentClass();
+        } while (false !== $refl);
 
         $classes = array_reverse($classes, false);
 

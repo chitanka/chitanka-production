@@ -12,13 +12,9 @@ file that was distributed with this source code.
 {% extends base_template %}
 
 {% block actions %}
-    <div class="sonata-actions">
-        {% if admin.hasRoute('edit') and admin.isGranted('EDIT', object)%}
-            <a class="btn sonata-action-element" href="{{ admin.generateObjectUrl('edit', object) }}">{{ 'link_action_edit'|trans({}, 'SonataAdminBundle') }}</a>
-        {% endif %}
-        {% if admin.hasRoute('create') and admin.isGranted('CREATE')%}
-            <a class="btn sonata-action-element" href="{{ admin.generateUrl('create') }}">{{ 'link_action_create'|trans({}, 'SonataAdminBundle') }}</a>
-        {% endif %}
+    <div class="sonata-actions btn-group">
+        {% include 'SonataAdminBundle:Button:edit_button.html.twig' %}
+        {% include 'SonataAdminBundle:Button:create_button.html.twig' %}
     </div>
 {% endblock %}
 
@@ -29,7 +25,7 @@ file that was distributed with this source code.
 
         <h1>{{ 'title_delete'|trans({}, 'SonataAdminBundle') }}</h1>
 
-        {{ 'message_delete_confirmation'|trans({'%object%': object}, 'SonataAdminBundle') }}
+        {{ 'message_delete_confirmation'|trans({'%object%': admin.toString(object)}, 'SonataAdminBundle') }}
 
         <div class="well form-actions">
             <form method="POST" action="{{ admin.generateObjectUrl('delete', object) }}">
@@ -40,7 +36,9 @@ file that was distributed with this source code.
                 {% if admin.hasRoute('edit') and admin.isGranted('EDIT', object) %}
                     {{ 'delete_or'|trans({}, 'SonataAdminBundle') }}
 
-                    <a class="btn btn-success" href="{{ admin.generateObjectUrl('edit', object) }}">{{ 'link_action_edit'|trans({}, 'SonataAdminBundle') }}</a>
+                    <a class="btn btn-success" href="{{ admin.generateObjectUrl('edit', object) }}">
+                        <i class="icon-edit"></i>
+                        {{ 'link_action_edit'|trans({}, 'SonataAdminBundle') }}</a>
                 {% endif %}
             </form>
         </div>

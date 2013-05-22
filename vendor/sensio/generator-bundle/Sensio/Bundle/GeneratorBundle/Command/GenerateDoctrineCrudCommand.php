@@ -42,6 +42,7 @@ class GenerateDoctrineCrudCommand extends GenerateDoctrineCommand
                 new InputOption('route-prefix', '', InputOption::VALUE_REQUIRED, 'The route prefix'),
                 new InputOption('with-write', '', InputOption::VALUE_NONE, 'Whether or not to generate create, new and delete actions'),
                 new InputOption('format', '', InputOption::VALUE_REQUIRED, 'Use the format for configuration files (php, xml, yml, or annotation)', 'annotation'),
+                new InputOption('overwrite', '', InputOption::VALUE_NONE, 'Do not stop the generation if crud controller already exist, thus overwriting all generated files'),
             ))
             ->setDescription('Generates a CRUD based on a Doctrine entity')
             ->setHelp(<<<EOT
@@ -82,6 +83,7 @@ EOT
         $format = Validators::validateFormat($input->getOption('format'));
         $prefix = $this->getRoutePrefix($input, $entity);
         $withWrite = $input->getOption('with-write');
+        $forceOverwrite = $input->getOption('overwrite');
 
         $dialog->writeSection($output, 'CRUD generation');
 
@@ -90,7 +92,7 @@ EOT
         $bundle      = $this->getContainer()->get('kernel')->getBundle($bundle);
 
         $generator = $this->getGenerator();
-        $generator->generate($bundle, $entity, $metadata[0], $format, $prefix, $withWrite);
+        $generator->generate($bundle, $entity, $metadata[0], $format, $prefix, $withWrite, $forceOverwrite);
 
         $output->writeln('Generating the CRUD code: <info>OK</info>');
 
@@ -183,7 +185,7 @@ EOT
     /**
      * Tries to generate forms if they don't exist yet and if we need write operations on entities.
      */
-    private function generateForm($bundle, $entity, $metadata)
+    protected function generateForm($bundle, $entity, $metadata)
     {
         try {
             $this->getFormGenerator()->generate($bundle, $entity, $metadata[0]);
@@ -192,7 +194,7 @@ EOT
         }
     }
 
-    private function updateRouting($dialog, InputInterface $input, OutputInterface $output, $bundle, $format, $entity, $prefix)
+    protected function updateRouting($dialog, InputInterface $input, OutputInterface $output, $bundle, $format, $entity, $prefix)
     {
         $auto = true;
         if ($input->isInteractive()) {
