@@ -13,6 +13,7 @@ use Chitanka\LibBundle\Util\Language;
 use Chitanka\LibBundle\Util\String;
 use Chitanka\LibBundle\Legacy\Legacy;
 use Chitanka\LibBundle\Legacy\Setup;
+use Chitanka\LibBundle\Legacy\SfbParserSimple;
 use Sfblib_SfbConverter as SfbConverter;
 use Sfblib_SfbToHtmlConverter as SfbToHtmlConverter;
 use Sfblib_SfbToFb2Converter as SfbToFb2Converter;
@@ -241,18 +242,19 @@ class Text extends BaseWork
 
 
 	/**
-	 * @var array
+	 * @var ArrayCollection
 	 * @ORM\OneToMany(targetEntity="TextAuthor", mappedBy="text", cascade={"persist", "remove"}, orphanRemoval=true)
 	 */
 	private $textAuthors;
 
 	/**
-	 * @var array
+	 * @var ArrayCollection
 	 * @ORM\OneToMany(targetEntity="TextTranslator", mappedBy="text", cascade={"persist", "remove"}, orphanRemoval=true)
 	 */
 	private $textTranslators;
 
 	/** FIXME doctrine:schema:create does not allow this relation
+	 * @var ArrayCollection
 	 * @ORM\ManyToMany(targetEntity="Person", inversedBy="textsAsAuthor")
 	 * @ORM\JoinTable(name="text_author")
 	 */
@@ -269,18 +271,20 @@ class Text extends BaseWork
 	private $authorOrigNames;
 
 	/** FIXME doctrine:schema:create does not allow this relation
+	 * @var ArrayCollection
 	 * @ORM\ManyToMany(targetEntity="Person", inversedBy="textsAsTranslator")
 	 * @ORM\JoinTable(name="text_translator")
 	 */
 	private $translators;
 
 	/**
-	 * @var array
+	 * @var ArrayCollection
 	 * @ORM\OneToMany(targetEntity="BookText", mappedBy="text")
 	 */
 	private $bookTexts;
 
 	/** FIXME doctrine:schema:create does not allow this relation
+	 * @var ArrayCollection
 	 * @ORM\ManyToMany(targetEntity="Book", mappedBy="texts")
 	 * @ORM\JoinTable(name="book_text",
 	 *	joinColumns={@ORM\JoinColumn(name="text_id", referencedColumnName="id")},
@@ -290,21 +294,21 @@ class Text extends BaseWork
 	private $books;
 
 	/**
-	 * @var array
+	 * @var ArrayCollection
 	 * @ORM\ManyToMany(targetEntity="Label", inversedBy="texts")
 	 * @ORM\OrderBy({"name" = "ASC"})
 	 */
 	private $labels;
 
 	/**
-	 * @var array
-	 * @ORM\OneToMany(targetEntity="TextHeader", mappedBy="text")
+	 * @var ArrayCollection
+	 * @ORM\OneToMany(targetEntity="TextHeader", mappedBy="text", cascade={"persist", "remove"}, orphanRemoval=true)
 	 * @ORM\OrderBy({"nr" = "ASC"})
 	 */
 	private $headers;
 
 	/** FIXME doctrine:schema:create does not allow this relation
-	 * @var array
+	 * @var ArrayCollection
 	 * @ORM\ManyToMany(targetEntity="User", inversedBy="readTexts")
 	 * @ORM\JoinTable(name="user_text_read",
 	 *	joinColumns={@ORM\JoinColumn(name="text_id")},
@@ -313,13 +317,13 @@ class Text extends BaseWork
 	private $readers;
 
 	/**
-	 * @var array
+	 * @var ArrayCollection
 	 * @ORM\OneToMany(targetEntity="UserTextContrib", mappedBy="text")
 	 */
 	private $userContribs;
 
 	/**
-	 * @var array
+	 * @var ArrayCollection
 	 * @ORM\OneToMany(targetEntity="TextRevision", mappedBy="text", cascade={"persist"})
 	 */
 	private $revisions;
@@ -416,19 +420,6 @@ class Text extends BaseWork
 	public function getSernr() { return $this->sernr; }
 	public function setSernr2($sernr2) { $this->sernr2 = $sernr2; }
 	public function getSernr2() { return $this->sernr2; }
-
-	public function setHeadlevel($headlevel) { $this->headlevel = $headlevel; }
-	public function getHeadlevel() { return $this->headlevel; }
-
-	public function setSize($size)
-	{
-		$this->size = $size;
-		$this->setZsize($size / 3.5);
-	}
-	public function getSize() { return $this->size; }
-
-	public function setZsize($zsize) { $this->zsize = $zsize; }
-	public function getZsize() { return $this->zsize; }
 
 	public function setCreatedAt($created_at) { $this->created_at = $created_at; }
 	public function getCreatedAt() { return $this->created_at; }
@@ -1044,9 +1035,33 @@ EOS;
 		$this->content_file = $file;
 		if ($file) {
 			$this->setSize($file->getSize() / 1000);
-			// TODO update headers
+			$this->rebuildHeaders($file->getRealPath());
 		}
 	}
+
+	public function isContentFileUpdated()
+	{
+		return $this->getContentFile() !== null;
+	}
+
+	public function setHeadlevel($headlevel)
+	{
+		$this->headlevel = $headlevel;
+		if ( !$this->isContentFileUpdated()) {
+			$this->rebuildHeaders();
+		}
+	}
+	public function getHeadlevel() { return $this->headlevel; }
+
+	public function setSize($size)
+	{
+		$this->size = $size;
+		$this->setZsize($size / 3.5);
+	}
+	public function getSize() { return $this->size; }
+
+	public function setZsize($zsize) { $this->zsize = $zsize; }
+	public function getZsize() { return $this->zsize; }
 
 	/**
 	 * @ORM\PostPersist()
@@ -1531,7 +1546,40 @@ EOS;
 	{
 		return $this->headers;
 	}
+	public function setHeaders(ArrayCollection $headers)
+	{
+		$this->headers = $headers;
+	}
+	public function addHeader(TextHeader $header)
+	{
+		$this->headers[] = $header;
+	}
 
+	public function clearHeaders()
+	{
+		$this->clearCollection($this->getHeaders());
+	}
+
+	public function rebuildHeaders($file = null)
+	{
+		if ($file === null) $file = Legacy::getContentFilePath('text', $this->id);
+		$headlevel = $this->getHeadlevel();
+
+		$this->clearHeaders();
+
+		$parser = new SfbParserSimple($file, $headlevel);
+		$parser->convert();
+		foreach ($parser->headersFlat() as $headerData) {
+			$header = new TextHeader;
+			$header->setNr($headerData['nr']);
+			$header->setLevel($headerData['level']);
+			$header->setLinecnt($headerData['line_count']);
+			$header->setName($headerData['title']);
+			$header->setFpos($headerData['file_pos']);
+			$header->setText($this);
+			$this->addHeader($header);
+		}
+	}
 
 	public function getEpubChunks($imgDir)
 	{
