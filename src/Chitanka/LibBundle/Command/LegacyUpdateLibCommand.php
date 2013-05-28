@@ -435,7 +435,7 @@ EOT
 
 	public function makeUpdateChunkQuery($file, $textId, $headlevel)
 	{
-		require_once __DIR__ . '/../Legacy/headerextract.php';
+		require_once __DIR__ . '/../Legacy/SfbParserSimple.php';
 
 		$data = array();
 		foreach (\Chitanka\LibBundle\Legacy\makeDbRows($file, $headlevel) as $row) {
