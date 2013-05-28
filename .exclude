@@ -8,6 +8,8 @@ web/content
 web/cache/*
 web/tor/*
 web/todo/*
+app/config/config_temp.yml
+web/index_temp.php
 *.php~
 .last
 .lock
