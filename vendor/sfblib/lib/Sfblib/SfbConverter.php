@@ -496,12 +496,6 @@ class Sfblib_SfbConverter
 	*/
 	protected function nextLine($canMarkEnd = true)
 	{
-// 		if ($this->i++ > $this->maxlinecnt) {
-// 			echo "Грешка при $this->file\n";
-// 			dprbt();
-// 			exit(-1);
-// 		}
-
 		if ($this->hasNextLine) {
 			$this->hasNextLine = false;
 			return $this->line;
@@ -532,7 +526,7 @@ class Sfblib_SfbConverter
 		if ($this->debug) {
 			echo sprintf("\033[44;1m%6d: %s\033[0m\n", $this->linecnt, $this->line);
 		}
-		#echo "$this->lcmd:$this->ltext\n";
+
 		return $this->line;
 	}
 
@@ -646,10 +640,11 @@ class Sfblib_SfbConverter
 	}
 
 
+	protected $sectionAttributes = array();
 	protected function openSection($id = null)
 	{
 		$attrs = $id ? array('id' => $id) : array();
-		$this->saveStartTag($this->sectionElement, $attrs);
+		$this->saveStartTag($this->sectionElement, $attrs + $this->sectionAttributes);
 		$this->sectionsEntered++;
 	}
 
@@ -1192,11 +1187,9 @@ class Sfblib_SfbConverter
 		$this->lcmd = '';
 		$this->doPoemEnd();
 		$this->enableEmptyLines();
-		#echo "LEAVING POEM _poemsEntered=$this->_poemsEntered\n";
 		if ( ! --$this->_poemsEntered ) {
 			$this->_inPoem = false;
 		}
-		#echo "_inPoem=$this->_inPoem\n";
 	}
 
 	/**
@@ -1695,7 +1688,7 @@ class Sfblib_SfbConverter
 	protected function inSubheader($lines, $isMulti)
 	{
 		foreach ($lines as $line) {
-			$this->doSubheaderLineStart($isMulti);
+			$this->doSubheaderLineStart($isMulti, $line);
 			$this->saveContent($line);
 			$this->doSubheaderLineEnd($isMulti);
 		}
@@ -1709,7 +1702,7 @@ class Sfblib_SfbConverter
 	{
 	}
 
-	protected function doSubheaderLineStart($isMulti)
+	protected function doSubheaderLineStart($isMulti, $line)
 	{
 		$this->saveStartTag($this->subheaderElement);
 	}
@@ -1783,7 +1776,6 @@ class Sfblib_SfbConverter
 	{
 		$buffer = $this->flushEmptyLineBuffer();
 		if ( ! empty($buffer) ) {
-			#echo "saveEmptyLineBuffer - $buffer\n";
 			$this->save($buffer);
 		}
 	}
@@ -2379,7 +2371,7 @@ class Sfblib_SfbConverter
 
 	protected function saveUnknownContent()
 	{
-		echo "doUnknownContent(): $this->linecnt: $this->line\n";
+		echo "Unknown content at line $this->linecnt: $this->line\n";
 		$this->saveContent($this->line);
 	}
 
@@ -2439,10 +2431,6 @@ class Sfblib_SfbConverter
 	protected function save($text, $forceEmpty = false)
 	{
 		if ( ! empty($text) || $forceEmpty ) {
-			#echo "$this->_curBlock += |$text|\n";#dprbt();
-/*			if ( !isset($this->_text[$this->_curBlock][$this->_curSubBlock]) ) {
-				var_dump($this->_curBlock, $this->_curSubBlock);
-			}*/
 			$this->_text[$this->_curBlock][$this->_curSubBlock] .= $text . $this->_newLineOutput;
 		}
 	}

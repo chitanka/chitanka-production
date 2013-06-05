@@ -683,13 +683,13 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 		}*/
 	}
 
-	protected function doSubheaderLineStart($isMulti)
+	protected function doSubheaderLineStart($isMulti, $line)
 	{
 		if ( $this->acceptsSubheader() ) {
 /*			if ( $this->_subheaderAsTitle ) {
 				$this->saveStartTag($this->paragraphElement);
 			} else {*/
-				parent::doSubheaderLineStart($isMulti);
+				parent::doSubheaderLineStart($isMulti, $line);
 // 			}
 		} else {
 			$this->saveStartTag($this->paragraphElement);
@@ -779,7 +779,9 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 
 	protected function addTableCaption($text)
 	{
-		$this->saveStartTag($this->subheaderElement);
+		$this->saveStartTag($this->subheaderElement, array(
+			'id' => $this->generateInternalId($text)
+		));
 		$this->saveContent($text);
 		$this->saveEndTag($this->subheaderElement);
 	}

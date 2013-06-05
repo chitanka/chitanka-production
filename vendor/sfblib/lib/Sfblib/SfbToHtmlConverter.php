@@ -16,6 +16,7 @@ class Sfblib_SfbToHtmlConverter extends Sfblib_SfbConverter
 	protected
 		/* block elements */
 		$sectionElement        = 'div',
+		$sectionAttributes     = array('class' => 'section'),
 		$epigraphElement       = 'blockquote',
 		$dedicationElement     = 'blockquote',
 		$citeElement           = 'blockquote',
@@ -196,7 +197,9 @@ class Sfblib_SfbToHtmlConverter extends Sfblib_SfbConverter
 		if ( ! empty($this->tableCaption) ) {
 			$this->tableCaption .= $this->out->getEmptyTag($this->breakLineElement);
 		}
-		$this->tableCaption .= $this->doInlineElements($text);
+		$this->tableCaption .= $this->out->xmlElement('span', $this->doInlineElements($text), array(
+			'id' => $this->generateInternalId($text)
+		));
 	}
 
 
@@ -314,9 +317,12 @@ class Sfblib_SfbToHtmlConverter extends Sfblib_SfbConverter
 	}
 
 
-	protected function doSubheaderLineStart($isMulti)
+	protected function doSubheaderLineStart($isMulti, $line)
 	{
-		$this->saveStartTag(self::$titleElements[self::TITLE_5], array('class' => 'subheader'));
+		$this->saveStartTag(self::$titleElements[self::TITLE_5], array(
+			'id' => $this->generateInternalId($line),
+			'class' => 'subheader',
+		));
 	}
 
 	protected function doSubheaderLineEnd($isMulti)
@@ -387,7 +393,7 @@ class Sfblib_SfbToHtmlConverter extends Sfblib_SfbConverter
 
 	protected function saveUnknownContent()
 	{
-		$this->saveContent("doUnknownContent(): $this->linecnt: $this->line\n");
+		$this->saveContent("SFB Error: Unknown content at line $this->linecnt: $this->line\n");
 	}
 
 }
