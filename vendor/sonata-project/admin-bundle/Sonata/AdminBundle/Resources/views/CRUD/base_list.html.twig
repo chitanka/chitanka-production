@@ -22,16 +22,20 @@ file that was distributed with this source code.
 {% block list_table %}
     {% set batchactions = admin.batchactions %}
     {% if admin.datagrid.results|length > 0 %}
+        {% if admin.hasRoute('batch') %}
         <form action="{{ admin.generateUrl('batch', {'filter': admin.filterParameters}) }}" method="POST" >
+        {% endif %}
             <table class="table table-bordered table-striped">
                 {% block table_header %}
                     <thead>
                         <tr class="sonata-ba-list-field-header">
                             {% for field_description in admin.list.elements %}
-                                {% if field_description.getOption('code') == '_batch' and batchactions|length > 0%}
+                                {% if admin.hasRoute('batch') and field_description.getOption('code') == '_batch' and batchactions|length > 0 %}
                                     <th class="sonata-ba-list-field-header sonata-ba-list-field-header-batch">
                                       <input type="checkbox" id="list_batch_checkbox" />
                                     </th>
+                                {% elseif field_description.getOption('code') == '_select' %}
+                                    <th class="sonata-ba-list-field-header sonata-ba-list-field-header-select"></th>
                                 {% elseif field_description.name == '_action' and app.request.isXmlHttpRequest %}
                                         {# Action buttons disabled in ajax view! #}
                                 {% else %}
@@ -72,7 +76,7 @@ file that was distributed with this source code.
                         <th colspan="{{ admin.list.elements|length - (app.request.isXmlHttpRequest ? (admin.list.has('_action') + admin.list.has('batch')) : 0) }}">
                             <div class="form-inline">
                                 {% if not app.request.isXmlHttpRequest %}
-                                    {% if batchactions|length > 0  %}
+                                    {% if admin.hasRoute('batch') and batchactions|length > 0  %}
                                         {% block batch %}
                                             <script type="text/javascript">
                                                 {% block batch_javascript %}
@@ -139,7 +143,7 @@ file that was distributed with this source code.
                             <td colspan="{{ admin.list.elements|length }}">
                                 <div class="pagination pagination-centered">
                                     <ul>
-                                        {% if admin.datagrid.pager.page != 1  %}
+                                        {% if admin.datagrid.pager.page > 2  %}
                                             <li><a href="{{ admin.generateUrl('list', admin.modelmanager.paginationparameters(admin.datagrid, 1)) }}" title="{{ 'link_first_pager'|trans({}, 'SonataAdminBundle') }}">&laquo;</a></li>
                                         {% endif %}
 
@@ -160,7 +164,7 @@ file that was distributed with this source code.
                                             <li><a href="{{ admin.generateUrl('list', admin.modelmanager.paginationparameters(admin.datagrid, admin.datagrid.pager.nextpage)) }}" title="{{ 'link_next_pager'|trans({}, 'SonataAdminBundle') }}">&rsaquo;</a></li>
                                         {% endif %}
 
-                                        {% if admin.datagrid.pager.page != admin.datagrid.pager.lastpage  %}
+                                        {% if admin.datagrid.pager.page != admin.datagrid.pager.lastpage and admin.datagrid.pager.lastpage != admin.datagrid.pager.nextpage %}
                                             <li><a href="{{ admin.generateUrl('list', admin.modelmanager.paginationparameters(admin.datagrid, admin.datagrid.pager.lastpage)) }}" title="{{ 'link_last_pager'|trans({}, 'SonataAdminBundle') }}">&raquo;</a></li>
                                         {% endif %}
                                     </ul>
@@ -170,7 +174,9 @@ file that was distributed with this source code.
                     {% endif %}
                 {% endblock %}
             </table>
+        {% if admin.hasRoute('batch') %}
         </form>
+        {% endif %}
     {% else %}
         <p class="notice">
             {{ 'no_result'|trans({}, 'SonataAdminBundle') }}

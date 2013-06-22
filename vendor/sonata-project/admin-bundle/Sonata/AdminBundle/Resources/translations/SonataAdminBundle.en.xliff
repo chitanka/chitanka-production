@@ -136,7 +136,7 @@
             </trans-unit>
             <trans-unit id='flash_batch_empty'>
                 <source>flash_batch_empty</source>
-                <target>Action aborted. No items where selected.</target>
+                <target>Action aborted. No items were selected.</target>
             </trans-unit>
             <trans-unit id='flash_create_success'>
                 <source>flash_create_success</source>
@@ -341,6 +341,10 @@
             <trans-unit id="label_per_page">
               <source>label_per_page</source>
               <target>Per page</target>
+            </trans-unit>
+            <trans-unit id="list_select">
+              <source>list_select</source>
+              <target>Select</target>
             </trans-unit>
         </body>
     </file>

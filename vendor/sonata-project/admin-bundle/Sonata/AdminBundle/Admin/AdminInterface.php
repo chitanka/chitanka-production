@@ -555,4 +555,44 @@ interface AdminInterface
      * @return null|string
      */
     public function getTemplate($name);
+
+    /**
+     * Set the translation domain
+     *
+     * @param string $translationDomain the translation domain
+     *
+     * @return void
+     */
+    public function setTranslationDomain($translationDomain);
+
+    /**
+     * Returns the translation domain
+     *
+     * @return string the translation domain
+     */
+    public function getTranslationDomain();
+
+    /**
+     * Return the form groups
+     *
+     * @return array
+     */
+    public function getFormGroups();
+
+    /**
+     * Set the form groups
+     *
+     * @param array $formGroups
+     */
+    public function setFormGroups(array $formGroups);
+
+    /**
+     * add a FieldDescription
+     *
+     * @param string                                              $name
+     * @param \Sonata\AdminBundle\Admin\FieldDescriptionInterface $fieldDescription
+     *
+     * @return void
+     */
+    public function addFormFieldDescription($name, FieldDescriptionInterface $fieldDescription);
 }

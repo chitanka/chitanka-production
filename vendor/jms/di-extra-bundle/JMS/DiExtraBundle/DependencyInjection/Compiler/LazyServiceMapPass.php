@@ -45,14 +45,12 @@ class LazyServiceMapPass implements CompilerPassInterface, \Serializable
         }
 
         $serviceMap = array();
-        foreach ($container->findTaggedServiceIds($this->tagName) as $id => $tags) {
-            foreach ($tags as $tag) {
-                if ( ! isset($tag[$this->keyAttributeName])) {
-                    throw new \RuntimeException(sprintf('The attribute "%s" must be set for service "%s" and tag "%s".', $this->keyAttributeName, $id, $this->tagName));
-                }
-    
-                $serviceMap[$tag[$this->keyAttributeName]] = $id;
+        foreach ($container->findTaggedServiceIds($this->tagName) as $id => $attrs) {
+            if ( ! isset($attrs[0][$this->keyAttributeName])) {
+                throw new \RuntimeException(sprintf('The attribute "%s" must be set for service "%s" and tag "%s".', $this->keyAttributeName, $id, $this->tagName));
             }
+
+            $serviceMap[$attrs[0][$this->keyAttributeName]] = $id;
         }
 
         $def = new Definition('JMS\DiExtraBundle\DependencyInjection\Collection\LazyServiceMap');

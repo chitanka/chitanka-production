@@ -690,6 +690,19 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
         foreach ($this->getExtensions() as $extension) {
             $extension->configureListFields($mapper);
         }
+
+        if ($this->hasRequest() && $this->getRequest()->isXmlHttpRequest()) {
+            $fieldDescription = $this->getModelManager()->getNewFieldDescriptionInstance($this->getClass(), 'select', array(
+                'label'    => false,
+                'code'     => '_select',
+                'sortable' => false,
+            ));
+
+            $fieldDescription->setAdmin($this);
+            $fieldDescription->setTemplate($this->getTemplate('select'));
+
+            $mapper->add($fieldDescription, 'select');
+        }
     }
 
     /**
@@ -1469,7 +1482,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * @return array
+     * {@inheritdoc}
      */
     public function getFormGroups()
     {
@@ -1477,7 +1490,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * @param array $formGroups
+     * {@inheritdoc}
      */
     public function setFormGroups(array $formGroups)
     {
@@ -1615,12 +1628,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * add a FieldDescription
-     *
-     * @param string                                              $name
-     * @param \Sonata\AdminBundle\Admin\FieldDescriptionInterface $fieldDescription
-     *
-     * @return void
+     * {@inheritdoc}
      */
     public function addFormFieldDescription($name, FieldDescriptionInterface $fieldDescription)
     {
@@ -1841,7 +1849,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function setParent(AdminInterface $parent)
     {
@@ -1849,7 +1857,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getParent()
     {
@@ -2091,11 +2099,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * set the translation domain
-     *
-     * @param string $translationDomain the translation domain
-     *
-     * @return void
+     * {@inheritdoc}
      */
     public function setTranslationDomain($translationDomain)
     {
@@ -2103,9 +2107,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * Returns the translation domain
-     *
-     * @return string the translation domain
+     * {@inheritdoc}
      */
     public function getTranslationDomain()
     {

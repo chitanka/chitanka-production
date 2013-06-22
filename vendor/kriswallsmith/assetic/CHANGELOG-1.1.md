@@ -1,5 +1,20 @@
-1.1.0
------
+1.1.2 (coming soon)
+-------------------
+
+ * Fixed deep mtime on asset collections
+ * `CallablesFilter` now implements `DependencyExtractorInterface`
+ * Fixed detection of "partial" children in subfolders in `SassFilter`
+
+1.1.1 (June 1, 2013)
+--------------------
+
+ * Fixed cloning of asset collections
+ * Fixed environment var inheritance
+ * Replaced `AssetWriter::getCombinations()` for BC, even though we don't use it
+ * Added support for `@import-once` to Less filters
+
+1.1.0 (May 15, 2013)
+--------------------
 
  * Added LazyAssetManager::getLastModified() for determining "deep" mtime
  * Added DartFilter

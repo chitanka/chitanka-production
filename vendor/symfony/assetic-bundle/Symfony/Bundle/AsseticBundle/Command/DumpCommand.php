@@ -11,9 +11,10 @@
 
 namespace Symfony\Bundle\AsseticBundle\Command;
 
-use Assetic\Asset\AssetCollectionInterface;
+use Assetic\Util\PathUtils;
+
+use Assetic\AssetWriter;
 use Assetic\Asset\AssetInterface;
-use Assetic\Util\VarUtils;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -45,6 +46,8 @@ class DumpCommand extends ContainerAwareCommand
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
+        parent::initialize($input, $output);
+
         $this->basePath = $input->getArgument('write_to') ?: $this->getContainer()->getParameter('assetic.write_to');
         $this->verbose = $input->getOption('verbose');
         $this->am = $this->getContainer()->get('assetic.asset_manager');
@@ -60,15 +63,19 @@ class DumpCommand extends ContainerAwareCommand
             foreach ($this->am->getNames() as $name) {
                 $this->dumpAsset($name, $output);
             }
-        } elseif (!$this->am->isDebug()) {
-            throw new \RuntimeException('The --watch option is only available in debug mode.');
-        } else {
-            $this->watch($input, $output);
+
+            return;
         }
+
+        if (!$this->am->isDebug()) {
+            throw new \RuntimeException('The --watch option is only available in debug mode.');
+        }
+
+        $this->watch($input, $output);
     }
 
     /**
-     * Watches the asset manager for changes.
+     * Watches a asset manager for changes.
      *
      * This method includes an infinite loop the continuously polls the asset
      * manager for changes.
@@ -78,6 +85,10 @@ class DumpCommand extends ContainerAwareCommand
      */
     private function watch(InputInterface $input, OutputInterface $output)
     {
+        $refl = new \ReflectionClass('Assetic\\AssetManager');
+        $prop = $refl->getProperty('assets');
+        $prop->setAccessible(true);
+
         $cache = sys_get_temp_dir().'/assetic_watch_'.substr(sha1($this->basePath), 0, 7);
         if ($input->getOption('force') || !file_exists($cache)) {
             $previously = array();
@@ -98,7 +109,7 @@ class DumpCommand extends ContainerAwareCommand
                 }
 
                 // reset the asset manager
-                $this->am->clear();
+                $prop->setValue($this->am, array());
                 $this->am->load();
 
                 file_put_contents($cache, serialize($previously));
@@ -109,7 +120,6 @@ class DumpCommand extends ContainerAwareCommand
                     $error = $msg;
                 }
             }
-
             sleep($input->getOption('period'));
         }
     }
@@ -127,10 +137,25 @@ class DumpCommand extends ContainerAwareCommand
         $formula = $this->am->hasFormula($name) ? serialize($this->am->getFormula($name)) : null;
         $asset = $this->am->get($name);
 
-        $mtime = 0;
-        foreach ($this->getAssetVarCombinations($asset) as $combination) {
-            $asset->setValues($combination);
-            $mtime = max($mtime, $this->am->getLastModified($asset));
+        $values = $this->getContainer()->getParameter('assetic.variables');
+        $values = array_intersect_key($values, array_flip($asset->getVars()));
+
+        if (empty($values)) {
+            $mtime = $asset->getLastModified();
+        } else {
+            $writer = new AssetWriter(sys_get_temp_dir(), $this->getContainer()->getParameter('assetic.variables'));
+            $ref = new \ReflectionMethod($writer, 'getCombinations');
+            $ref->setAccessible(true);
+            $combinations = $ref->invoke($writer, $asset->getVars());
+
+            $mtime = 0;
+            foreach ($combinations as $combination) {
+                $asset->setValues($combination);
+                $assetMtime = $asset->getLastModified();
+                if ($assetMtime > $mtime) {
+                    $mtime = $assetMtime;
+                }
+            }
         }
 
         if (isset($previously[$name])) {
@@ -179,21 +204,23 @@ class DumpCommand extends ContainerAwareCommand
      */
     private function doDump(AssetInterface $asset, OutputInterface $output)
     {
-        foreach ($this->getAssetVarCombinations($asset) as $combination) {
+        $writer = new AssetWriter(sys_get_temp_dir(), $this->getContainer()->getParameter('assetic.variables'));
+        $ref = new \ReflectionMethod($writer, 'getCombinations');
+        $ref->setAccessible(true);
+        $combinations = $ref->invoke($writer, $asset->getVars());
+
+        foreach ($combinations as $combination) {
             $asset->setValues($combination);
 
-            // resolve the target path
-            $target = rtrim($this->basePath, '/').'/'.$asset->getTargetPath();
-            $target = str_replace('_controller/', '', $target);
-            $target = VarUtils::resolve($target, $asset->getVars(), $asset->getValues());
-
+            $target = rtrim($this->basePath, '/').'/'.str_replace('_controller/', '',
+                PathUtils::resolvePath($asset->getTargetPath(), $asset->getVars(),
+                    $asset->getValues()));
             if (!is_dir($dir = dirname($target))) {
                 $output->writeln(sprintf(
                     '<comment>%s</comment> <info>[dir+]</info> %s',
                     date('H:i:s'),
                     $dir
                 ));
-
                 if (false === @mkdir($dir, 0777, true)) {
                     throw new \RuntimeException('Unable to create directory '.$dir);
                 }
@@ -204,9 +231,8 @@ class DumpCommand extends ContainerAwareCommand
                 date('H:i:s'),
                 $target
             ));
-
             if ($this->verbose) {
-                if ($asset instanceof AssetCollectionInterface) {
+                if ($asset instanceof \Traversable) {
                     foreach ($asset as $leaf) {
                         $root = $leaf->getSourceRoot();
                         $path = $leaf->getSourcePath();
@@ -223,13 +249,5 @@ class DumpCommand extends ContainerAwareCommand
                 throw new \RuntimeException('Unable to write file '.$target);
             }
         }
-    }
-
-    private function getAssetVarCombinations(AssetInterface $asset)
-    {
-        return VarUtils::getCombinations(
-            $asset->getVars(),
-            $this->getContainer()->getParameter('assetic.variables')
-        );
     }
 }

@@ -18,9 +18,9 @@
                     <ul class="nav nav-tabs">
                         {% for name, form_group in admin.formgroups %}
                             <li class="{% if loop.first %}active{% endif %}">
-                                <a href="#{{ admin.uniqid }}_{{ name|sonata_slugify }}" data-toggle="tab">
+                                <a href="#{{ admin.uniqid }}_{{ loop.index }}" data-toggle="tab">
                                     <i class="icon-exclamation-sign has-errors hide"></i>
-                                    {{ admin.trans(name) }}
+                                    {{ admin.trans(name, {}, form_group.translation_domain) }}
                                 </a>
                             </li>
                         {% endfor %}
@@ -29,7 +29,7 @@
 
                 <div class="tab-content">
                     {% for name, form_group in admin.formgroups %}
-                        <div class="tab-pane {% if loop.first %} active{% endif %}" id="{{ admin.uniqid }}_{{ name|sonata_slugify }}">
+                        <div class="tab-pane {% if loop.first %} active{% endif %}" id="{{ admin.uniqid }}_{{ loop.index }}">
                             <fieldset>
                                 <div class="sonata-ba-collapsed-fields">
                                     {% if form_group.description != false %}
@@ -63,7 +63,10 @@
                         {% endif %}
                     {% else %}
                         {% if admin.supportsPreviewMode %}
-                            <input class="btn btn-info persist-preview" name="btn_preview" type="submit" value="{{ 'btn_preview'|trans({}, 'SonataAdminBundle') }}"/>
+                            <button class="btn btn-info persist-preview" name="btn_preview" type="submit">
+                                <i class="icon-eye-open"></i>
+                                {{ 'btn_preview'|trans({}, 'SonataAdminBundle') }}
+                            </button>
                         {% endif %}
                         {% if admin.id(object) %}
                             <input type="submit" class="btn btn-primary" name="btn_update_and_edit" value="{{ 'btn_update_and_edit_again'|trans({}, 'SonataAdminBundle') }}"/>

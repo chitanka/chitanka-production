@@ -41,7 +41,7 @@ You have two options to configure the catalogue for the admin class:
 
 
 An admin instance always gets the ``translator`` instance, so it can be used to
-translate messages within the ``configure*Fields`` method or in templates.
+translate messages within the ``configureFields`` method or in templates.
 
 .. code-block:: jinja
 
@@ -61,8 +61,48 @@ Translate field labels
 ----------------------
 
 The Admin bundle comes with a customized form field template. The most notable
-changes from the original one is the use of the translation domain provided by
-the Admin instance to translate label.
+change from the original one is the use of the translation domain provided by
+either the Admin instance or the field description to translate labels.
+
+Overriding the translation domain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The translation domain (message catalog) can be overridden at either the form
+group or individual field level.
+
+If a translation domain is set at the group level it will cascade down to all
+fields within the group.
+
+Overriding the translation domain is of particular use when using
+:doc:`extensions <extensions>`, where the extension and the translations would
+be defined in one bundle, but implemented in many different admin instances.
+
+The following example sets the translation domain on a form group:
+
+.. code-block:: php
+
+        $formMapper->with('form.my_group', array(
+            'translation_domain' => 'MyTranslationDomain'
+            ))
+            ->add('publishable', 'checkbox', array(), array(
+                // ...
+                'translation_domain' => 'MyTranslationDomain',
+            ))
+            ->add('start_date', 'date', array(), array(
+            ));
+
+Setting the translation domain on an individual field:
+
+.. code-block:: php
+
+        $formMapper->with('form.my_group')
+            ->add('publishable', 'checkbox', array(), array(
+                // ...
+                'translation_domain' => 'MyTranslationDomain',
+            ));
+
+Setting the label name
+^^^^^^^^^^^^^^^^^^^^^^
 
 By default, the label is the field name. However a label can be defined as
 third argument of the ``add`` method:
@@ -77,6 +117,9 @@ third argument of the ``add`` method:
             $formMapper->add('isValid', null, array('required' => false, 'label' => 'label.is_valid'));
         }
     }
+
+Label strategies
+^^^^^^^^^^^^^^^^
 
 There is another option for rapid prototyping or to avoid spending too much time
 adding the ``label`` key to all option fields: ``Label Strategies``. By default
