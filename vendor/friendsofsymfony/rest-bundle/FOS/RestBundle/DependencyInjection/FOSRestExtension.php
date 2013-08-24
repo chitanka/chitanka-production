@@ -15,6 +15,9 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\DefinitionDecorator;
+use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Kernel;
 
 use FOS\Rest\Util\Codes;
@@ -53,6 +56,10 @@ class FOSRestExtension extends Extension
             }
         }
 
+        // The validator service alias is only set if validation is enabled for the request body converter
+        $validator = $config['service']['validator'];
+        unset($config['service']['validator']);
+
         foreach ($config['service'] as $key => $service) {
             $container->setAlias($this->getAlias().'.'.$key, $config['service'][$key]);
         }
@@ -63,6 +70,7 @@ class FOSRestExtension extends Extension
         if (!empty($config['serializer']['groups'])) {
             $container->setParameter($this->getAlias().'.serializer.exclusion_strategy.groups', $config['serializer']['groups']);
         }
+        $container->setParameter($this->getAlias().'.serializer.serialize_null', $config['serializer']['serialize_null']);
 
         $container->setParameter($this->getAlias().'.formats', $formats);
         $container->setParameter($this->getAlias().'.default_engine', $config['view']['default_engine']);
@@ -125,6 +133,22 @@ class FOSRestExtension extends Extension
             $container->setParameter($this->getAlias().'.fallback_format', 'html');
         }
 
+        if (!empty($config['view']['jsonp_handler'])) {
+            $handler = new DefinitionDecorator($config['service']['view_handler']);
+            $handler->setPublic(true);
+
+            $jsonpHandler = new Reference($this->getAlias().'.view_handler.jsonp');
+            $handler->addMethodCall('registerHandler', array('jsonp', array($jsonpHandler, 'createResponse')));
+            $container->setDefinition($this->getAlias().'.view_handler', $handler);
+
+            $container->setParameter($this->getAlias().'.view_handler.jsonp.callback_param', $config['view']['jsonp_handler']['callback_param']);
+            $container->setParameter($this->getAlias().'.view_handler.jsonp.callback_filter', $config['view']['jsonp_handler']['callback_filter']);
+
+            if (empty($config['view']['mime_types']['jsonp'])) {
+                $config['view']['mime_types']['jsonp'] = $config['view']['jsonp_handler']['mime_type'];
+            }
+        }
+
         if (!empty($config['view']['mime_types'])) {
             $loader->load('mime_type_listener.xml');
 
@@ -148,6 +172,21 @@ class FOSRestExtension extends Extension
         if (!empty($config['access_denied_listener'])) {
             $loader->load('access_denied_listener.xml');
             $container->setParameter($this->getAlias().'.access_denied_listener.formats', $config['access_denied_listener']);
+        }
+
+        if (!empty($config['body_converter'])) {
+            if (!empty($config['body_converter']['enabled'])) {
+                $loader->load('request_body_param_converter.xml');
+            }
+            if (!empty($config['body_converter']['validate'])) {
+                $container->setAlias($this->getAlias().'.validator', $validator);
+            }
+            if (!empty($config['body_converter']['validation_errors_argument'])) {
+                $container->setParameter(
+                    'fos_rest.converter.request_body.validation_errors_argument',
+                    $config['body_converter']['validation_errors_argument']
+                );
+            }
         }
     }
 

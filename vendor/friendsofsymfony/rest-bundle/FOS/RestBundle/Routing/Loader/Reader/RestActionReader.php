@@ -202,7 +202,7 @@ class RestActionReader
         if ($this->includeFormat === true) {
             $pattern .= '.{_format}';
 
-            if (!empty($this->formats)) {
+            if (!isset($requirements['_format']) && !empty($this->formats)) {
                 $requirements['_format'] = implode('|', array_keys($this->formats));
             }
         }
@@ -284,9 +284,11 @@ class RestActionReader
         // ignore type hinted arguments that are or extend from:
         // * Symfony\Component\HttpFoundation\Request
         // * FOS\RestBundle\Request\QueryFetcher
+        // * Symfony\Component\Validator\ConstraintViolationList
         $ignoreClasses = array(
             'Symfony\Component\HttpFoundation\Request',
             'FOS\RestBundle\Request\ParamFetcherInterface',
+            'Symfony\Component\Validator\ConstraintViolationListInterface',
         );
 
         $arguments = array();

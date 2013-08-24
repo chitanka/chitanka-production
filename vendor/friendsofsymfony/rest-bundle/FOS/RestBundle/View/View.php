@@ -60,6 +60,11 @@ class View
     private $route;
 
     /**
+     * @var mixed
+     */
+    private $routeParameters;
+
+    /**
      * @var SerializationContext
      */
     private $serializationContext;
@@ -249,6 +254,20 @@ class View
     }
 
     /**
+     * set route data
+     *
+     * @param mixed $parameters
+     *
+     * @return View
+     */
+    public function setRouteParameters($parameters)
+    {
+        $this->routeParameters = $parameters;
+
+        return $this;
+    }
+
+    /**
      * set the response
      *
      * @param  Response $response
@@ -352,6 +371,16 @@ class View
     }
 
     /**
+     * get route parameters
+     *
+     * @return string|null route
+     */
+    public function getRouteParameters()
+    {
+        return $this->routeParameters;
+    }
+
+    /**
      * get the response
      *
      * @return Response response
@@ -368,10 +397,14 @@ class View
     /**
      * get the serialization context
      *
-     * @return SerializationContext|null serialization context
+     * @return SerializationContext serialization context
      */
     public function getSerializationContext()
     {
+        if (null === $this->serializationContext) {
+            $this->serializationContext = new SerializationContext();
+        }
+
         return $this->serializationContext;
     }
 }

@@ -1,5 +1,8 @@
 jQuery(document).ready(function() {
     jQuery('html').removeClass('no-js');
+    if (window.SONATA_CONFIG.CONFIRM_EXIT) {
+        jQuery('.sonata-ba-form form').confirmExit();
+    }
     Admin.add_pretty_errors(document);
     Admin.add_filters(document);
     Admin.set_object_field_value(document);
@@ -31,46 +34,33 @@ var Admin = {
      */
     add_pretty_errors: function(subject) {
         jQuery('div.sonata-ba-field-error', subject).each(function(index, element) {
-            var input = jQuery('input, textarea, select', element);
+            var input = jQuery(':input', element);
 
-            var message = jQuery('div.sonata-ba-field-error-messages', element).html();
-            jQuery('div.sonata-ba-field-error-messages', element).html('');
-            if (!message) {
-                message = '';
-            }
-
-            if (message.length == 0) {
+            if (!input.length) {
                 return;
             }
 
-            var target;
+            var message = jQuery('div.sonata-ba-field-error-messages', element).html();
+            jQuery('div.sonata-ba-field-error-messages', element).remove();
 
-            /* Hack to handle qTip on select */
-            if(jQuery(input).is('select')) {
-                input.wrap('<span></span>');
-                target = input.parent();
-            }
-            else {
-                target = input;
+            if (!message || message.length == 0) {
+                return;
             }
 
-            target.qtip({
+            var target = input,
+                fieldShortDescription = input.closest('.field-container').find('.field-short-description')
+            ;
+
+            if (fieldShortDescription.length) {
+                target = fieldShortDescription;
+            }
+
+            target.popover({
                 content: message,
-                show: 'focusin',
-                hide: 'focusout',
-                position: {
-                    corner: {
-                        target: 'rightMiddle',
-                        tooltip: 'leftMiddle'
-                    }
-                },
-                style: {
-                    name: 'red',
-                    border: {
-                        radius: 2
-                    },
-                    tip: 'leftMiddle'
-                }
+                trigger: 'hover',
+                html: true,
+                placement: 'right',
+                template: '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content alert-error"><p></p></div></div></div>'
             });
 
         });
@@ -139,13 +129,14 @@ var Admin = {
 
             var container = jQuery(this).closest('[data-prototype]');
             var proto = container.attr('data-prototype');
+            var protoName = container.attr('data-prototype-name') || '__name__';
             // Set field id
-            var idRegexp = new RegExp(container.attr('id')+'___name__','g');
+            var idRegexp = new RegExp(container.attr('id')+'_'+protoName,'g');
             proto = proto.replace(idRegexp, container.attr('id')+'_'+(container.children().length - 1));
 
             // Set field name
             var parts = container.attr('id').split('_');
-            var nameRegexp = new RegExp(parts[parts.length-1]+'\\]\\[__name__','g');
+            var nameRegexp = new RegExp(parts[parts.length-1]+'\\]\\['+protoName,'g');
             proto = proto.replace(nameRegexp, parts[parts.length-1]+']['+(container.children().length - 1));
             jQuery(proto).insertBefore(jQuery(this).parent());
 
@@ -248,4 +239,4 @@ var Admin = {
             errors.show();
         }
     }
-}
+};

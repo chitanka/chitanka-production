@@ -16,7 +16,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\Output;
 use Symfony\Component\HttpKernel\KernelInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Sensio\Bundle\GeneratorBundle\Generator\BundleGenerator;
 use Sensio\Bundle\GeneratorBundle\Manipulator\KernelManipulator;
 use Sensio\Bundle\GeneratorBundle\Manipulator\RoutingManipulator;
@@ -27,10 +26,8 @@ use Sensio\Bundle\GeneratorBundle\Command\Helper\DialogHelper;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class GenerateBundleCommand extends ContainerAwareCommand
+class GenerateBundleCommand extends GeneratorCommand
 {
-    private $generator;
-
     /**
      * @see Command
      */
@@ -265,7 +262,7 @@ EOT
         }
     }
 
-    protected function updateKernel($dialog, InputInterface $input, OutputInterface $output, KernelInterface $kernel, $namespace, $bundle)
+    protected function updateKernel(DialogHelper $dialog, InputInterface $input, OutputInterface $output, KernelInterface $kernel, $namespace, $bundle)
     {
         $auto = true;
         if ($input->isInteractive()) {
@@ -296,7 +293,7 @@ EOT
         }
     }
 
-    protected function updateRouting($dialog, InputInterface $input, OutputInterface $output, $bundle, $format)
+    protected function updateRouting(DialogHelper $dialog, InputInterface $input, OutputInterface $output, $bundle, $format)
     {
         $auto = true;
         if ($input->isInteractive()) {
@@ -331,27 +328,8 @@ EOT
         }
     }
 
-    protected function getGenerator()
+    protected function createGenerator()
     {
-        if (null === $this->generator) {
-            $this->generator = new BundleGenerator($this->getContainer()->get('filesystem'), __DIR__.'/../Resources/skeleton/bundle');
-        }
-
-        return $this->generator;
-    }
-
-    public function setGenerator(BundleGenerator $generator)
-    {
-        $this->generator = $generator;
-    }
-
-    protected function getDialogHelper()
-    {
-        $dialog = $this->getHelperSet()->get('dialog');
-        if (!$dialog || get_class($dialog) !== 'Sensio\Bundle\GeneratorBundle\Command\Helper\DialogHelper') {
-            $this->getHelperSet()->set($dialog = new DialogHelper());
-        }
-
-        return $dialog;
+        return new BundleGenerator($this->getContainer()->get('filesystem'));
     }
 }

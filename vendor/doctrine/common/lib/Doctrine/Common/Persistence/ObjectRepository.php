@@ -22,28 +22,28 @@ namespace Doctrine\Common\Persistence;
 /**
  * Contract for a Doctrine persistence layer ObjectRepository class to implement.
  *
- * @link   www.doctrine-project.org
- * @since  2.1
- * @author Benjamin Eberlei <kontakt@beberlei.de>
- * @author Jonathan Wage <jonwage@gmail.com>
+ * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
+ * @link    www.doctrine-project.org
+ * @since   2.1
+ * @author  Benjamin Eberlei <kontakt@beberlei.de>
+ * @author  Jonathan Wage <jonwage@gmail.com>
  */
 interface ObjectRepository
 {
     /**
      * Finds an object by its primary key / identifier.
      *
-     * @param mixed $id The identifier.
-     *
+     * @param int $id The identifier.
      * @return object The object.
      */
-    public function find($id);
+    function find($id);
 
     /**
      * Finds all objects in the repository.
      *
-     * @return array The objects.
+     * @return mixed The objects.
      */
-    public function findAll();
+    function findAll();
 
     /**
      * Finds objects by a set of criteria.
@@ -52,30 +52,27 @@ interface ObjectRepository
      * an UnexpectedValueException if certain values of the sorting or limiting details are
      * not supported.
      *
-     * @param array      $criteria
-     * @param array|null $orderBy
-     * @param int|null   $limit
-     * @param int|null   $offset
-     *
-     * @return array The objects.
-     *
      * @throws \UnexpectedValueException
+     * @param array $criteria
+     * @param array|null $orderBy
+     * @param int|null $limit
+     * @param int|null $offset
+     * @return mixed The objects.
      */
-    public function findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null);
+    function findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null);
 
     /**
      * Finds a single object by a set of criteria.
      *
-     * @param array $criteria The criteria.
-     *
+     * @param array $criteria
      * @return object The object.
      */
-    public function findOneBy(array $criteria);
+    function findOneBy(array $criteria);
 
     /**
-     * Returns the class name of the object managed by the repository.
+     * Returns the class name of the object managed by the repository
      *
      * @return string
      */
-    public function getClassName();
+    function getClassName();
 }

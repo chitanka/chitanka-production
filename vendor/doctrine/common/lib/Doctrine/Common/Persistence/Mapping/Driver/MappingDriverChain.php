@@ -19,13 +19,13 @@
 
 namespace Doctrine\Common\Persistence\Mapping\Driver;
 
-use Doctrine\Common\Persistence\Mapping\Driver\MappingDriver;
-use Doctrine\Common\Persistence\Mapping\ClassMetadata;
-use Doctrine\Common\Persistence\Mapping\MappingException;
+use Doctrine\Common\Persistence\Mapping\Driver\MappingDriver,
+    Doctrine\Common\Persistence\Mapping\ClassMetadata,
+    Doctrine\Common\Persistence\Mapping\MappingException;
 
 /**
  * The DriverChain allows you to add multiple other mapping drivers for
- * certain namespaces.
+ * certain namespaces
  *
  * @since  2.2
  * @author Benjamin Eberlei <kontakt@beberlei.de>
@@ -36,11 +36,11 @@ use Doctrine\Common\Persistence\Mapping\MappingException;
 class MappingDriverChain implements MappingDriver
 {
     /**
-     * The default driver.
+     * The default driver
      *
-     * @var MappingDriver|null
+     * @var MappingDriver
      */
-    private $defaultDriver = null;
+    private $defaultDriver;
 
     /**
      * @var array
@@ -48,7 +48,7 @@ class MappingDriverChain implements MappingDriver
     private $drivers = array();
 
     /**
-     * Gets the default driver.
+     * Get the default driver.
      *
      * @return MappingDriver|null
      */
@@ -61,8 +61,6 @@ class MappingDriverChain implements MappingDriver
      * Set the default driver.
      *
      * @param MappingDriver $driver
-     *
-     * @return void
      */
     public function setDefaultDriver(MappingDriver $driver)
     {
@@ -70,12 +68,10 @@ class MappingDriverChain implements MappingDriver
     }
 
     /**
-     * Adds a nested driver.
+     * Add a nested driver.
      *
      * @param MappingDriver $nestedDriver
-     * @param string        $namespace
-     *
-     * @return void
+     * @param string $namespace
      */
     public function addDriver(MappingDriver $nestedDriver, $namespace)
     {
@@ -83,7 +79,7 @@ class MappingDriverChain implements MappingDriver
     }
 
     /**
-     * Gets the array of nested drivers.
+     * Get the array of nested drivers.
      *
      * @return array $drivers
      */
@@ -93,7 +89,12 @@ class MappingDriverChain implements MappingDriver
     }
 
     /**
-     * {@inheritDoc}
+     * Loads the metadata for the specified class into the provided container.
+     *
+     * @param string $className
+     * @param ClassMetadata $metadata
+     *
+     * @throws MappingException
      */
     public function loadMetadataForClass($className, ClassMetadata $metadata)
     {
@@ -114,7 +115,9 @@ class MappingDriverChain implements MappingDriver
     }
 
     /**
-     * {@inheritDoc}
+     * Gets the names of all mapped classes known to this driver.
+     *
+     * @return array The names of all mapped classes known to this driver.
      */
     public function getAllClassNames()
     {
@@ -136,17 +139,16 @@ class MappingDriverChain implements MappingDriver
             }
         }
 
-        if (null !== $this->defaultDriver) {
-            foreach ($this->defaultDriver->getAllClassNames() as $className) {
-                $classNames[$className] = true;
-            }
-        }
-
         return array_keys($classNames);
     }
 
     /**
-     * {@inheritDoc}
+     * Whether the class with the specified name should have its metadata loaded.
+     *
+     * This is only the case for non-transient classes either mapped as an Entity or MappedSuperclass.
+     *
+     * @param string $className
+     * @return boolean
      */
     public function isTransient($className)
     {

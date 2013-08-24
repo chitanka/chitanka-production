@@ -80,7 +80,10 @@ interface AdminInterface
     public function setRouteGenerator(RouteGeneratorInterface $routeGenerator);
 
     /**
-     * Returns the class name managed
+     * Returns subjectClass/class/subclass name managed
+     * - subclass name if subclass parameter is defined
+     * - subject class name if subject is defined
+     * - class name if not
      *
      * @return string
      */
@@ -99,11 +102,25 @@ interface AdminInterface
     public function getDatagrid();
 
     /**
+     * Generates the object url with the given $name
+     *
+     * @param string  $name
+     * @param mixed   $object
+     * @param array   $parameters
+     * @param boolean $absolute
+     *
+     * @return string return a complete url
+     */
+    public function generateObjectUrl($name, $object, array $parameters = array(), $absolute = false);
+
+    /**
+     * Generates an url for the given parameters
+     *
      * @param string $name
      * @param array  $parameters
      * @param bool   $absolute
      *
-     * @return string
+     * @return string return a complete url
      */
     public function generateUrl($name, array $parameters = array(), $absolute = false);
 
@@ -138,8 +155,16 @@ interface AdminInterface
 
     /**
      * @return \Symfony\Component\HttpFoundation\Request
+     *
+     * @throws \RuntimeException if no request is set.
      */
     public function getRequest();
+
+    /**
+     * @return boolean true if a request object is linked to this Admin, false
+     *      otherwise.
+     */
+    public function hasRequest();
 
     /**
      *
@@ -310,7 +335,7 @@ interface AdminInterface
     /**
      * Returns an array of extension related to the current Admin
      *
-     * @return void
+     * @return AdminExtensionInterface[]
      */
     public function getExtensions();
 
@@ -595,4 +620,49 @@ interface AdminInterface
      * @return void
      */
     public function addFormFieldDescription($name, FieldDescriptionInterface $fieldDescription);
+
+    /**
+     * Returns true if this admin uses ACL
+     *
+     * @return boolean
+     */
+    public function isAclEnabled();
+
+    /**
+     * Sets the list of supported sub classes
+     *
+     * @param array $subClasses the list of sub classes
+     */
+    public function setSubClasses(array $subClasses);
+
+    /**
+     * Returns true if the admin has the sub classes
+     *
+     * @param string $name The name of the sub class
+     *
+     * @return bool
+     */
+    public function hasSubClass($name);
+
+    /**
+     * Returns true if a subclass is currently active
+     *
+     * @return bool
+     */
+    public function hasActiveSubClass();
+
+    /**
+     * Returns the currently active sub class
+     *
+     * @return string the active sub class
+     */
+    public function getActiveSubClass();
+    
+    /**
+     * Returns the currently active sub class code
+     * 
+     * @return string the code for active sub class
+     */
+    public function getActiveSubclassCode();
+
 }

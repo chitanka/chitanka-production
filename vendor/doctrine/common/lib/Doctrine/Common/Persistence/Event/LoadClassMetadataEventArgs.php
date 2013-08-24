@@ -54,7 +54,7 @@ class LoadClassMetadataEventArgs extends EventArgs
     }
 
     /**
-     * Retrieves the associated ClassMetadata.
+     * Retrieve associated ClassMetadata.
      *
      * @return ClassMetadata
      */
@@ -64,7 +64,7 @@ class LoadClassMetadataEventArgs extends EventArgs
     }
 
     /**
-     * Retrieves the associated ObjectManager.
+     * Retrieve associated ObjectManager.
      *
      * @return ObjectManager
      */
@@ -73,3 +73,4 @@ class LoadClassMetadataEventArgs extends EventArgs
         return $this->objectManager;
     }
 }
+

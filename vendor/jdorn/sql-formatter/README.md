@@ -75,36 +75,10 @@ Output:
 
 ![](http://jdorn.github.com/sql-formatter/highlight.png)
 
-Compress Query
---------------------------
-
-The compress method removes all comments and compresses whitespace.
-
-This is useful for outputting queries that can be copy pasted to the command line easily.
-
-```
--- This is a comment
-    SELECT
-    /* This is another comment
-    On more than one line */
-    Id #This is one final comment
-    as temp, DateCreated as Created FROM MyTable;
-```
-
-```php
-echo SqlFormatter::compress($query)
-```
-
-Output:
-
-```
-SELECT Id as temp, DateCreated as Created FROM MyTable;
-```
-
 Remove Comments
 ------------------------
-If you want to keep all original whitespace formatting and just remove comments, 
-you can use the removeComments method instead of compress.
+
+There is a removeComments method that, you guessed it, removes all comments from a query.
 
 ```
 -- This is a comment

@@ -38,6 +38,7 @@ use Sonata\AdminBundle\Builder\RouteBuilderInterface;
 use Sonata\AdminBundle\Route\RouteGeneratorInterface;
 
 use Sonata\AdminBundle\Security\Handler\SecurityHandlerInterface;
+use Sonata\AdminBundle\Security\Handler\AclSecurityHandlerInterface;
 use Sonata\AdminBundle\Route\RouteCollection;
 use Sonata\AdminBundle\Model\ModelManagerInterface;
 
@@ -48,6 +49,8 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
 {
     const CONTEXT_MENU       = 'menu';
     const CONTEXT_DASHBOARD  = 'dashboard';
+
+    const CLASS_REGEX        = '@([A-Za-z0-9]*)\\\(Bundle\\\)?([A-Za-z0-9]+)Bundle\\\([A-Za-z0-9].*)\\\([A-Za-z0-9]*)$@';
 
     /**
      * The class name managed by the admin class
@@ -844,7 +847,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     public function getBaseRoutePattern()
     {
         if (!$this->baseRoutePattern) {
-            preg_match('@([A-Za-z0-9]*)\\\([A-Za-z0-9]*)Bundle\\\(Entity|Document|Model|PHPCR)\\\(.*)@', $this->getClass(), $matches);
+            preg_match(self::CLASS_REGEX, $this->class, $matches);
 
             if (!$matches) {
                 throw new \RuntimeException(sprintf('Please define a default `baseRoutePattern` value for the admin class `%s`', get_class($this)));
@@ -853,14 +856,14 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
             if ($this->isChild()) { // the admin class is a child, prefix it with the parent route name
                 $this->baseRoutePattern = sprintf('%s/{id}/%s',
                     $this->getParent()->getBaseRoutePattern(),
-                    $this->urlize($matches[4], '-')
+                    $this->urlize($matches[5], '-')
                 );
             } else {
 
                 $this->baseRoutePattern = sprintf('/%s/%s/%s',
                     $this->urlize($matches[1], '-'),
-                    $this->urlize($matches[2], '-'),
-                    $this->urlize($matches[4], '-')
+                    $this->urlize($matches[3], '-'),
+                    $this->urlize($matches[5], '-')
                 );
             }
         }
@@ -878,23 +881,23 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     public function getBaseRouteName()
     {
         if (!$this->baseRouteName) {
-            preg_match('@([A-Za-z0-9]*)\\\([A-Za-z0-9]*)Bundle\\\(Entity|Document|Model|PHPCR)\\\(.*)@', $this->getClass(), $matches);
+            preg_match(self::CLASS_REGEX, $this->class , $matches);
 
             if (!$matches) {
-                throw new \RuntimeException(sprintf('Please define a default `baseRouteName` value for the admin class `%s`', get_class($this)));
+                throw new \RuntimeException(sprintf('Cannot automatically determine base route name, please define a default `baseRouteName` value for the admin class `%s`', get_class($this)));
             }
 
             if ($this->isChild()) { // the admin class is a child, prefix it with the parent route name
                 $this->baseRouteName = sprintf('%s_%s',
                     $this->getParent()->getBaseRouteName(),
-                    $this->urlize($matches[4])
+                    $this->urlize($matches[5])
                 );
             } else {
 
                 $this->baseRouteName = sprintf('admin_%s_%s_%s',
                     $this->urlize($matches[1]),
-                    $this->urlize($matches[2]),
-                    $this->urlize($matches[4])
+                    $this->urlize($matches[3]),
+                    $this->urlize($matches[5])
                 );
             }
         }
@@ -920,13 +923,23 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
      */
     public function getClass()
     {
-        return $this->class;
+        if (!$this->hasActiveSubClass()) {
+            $subject = $this->getSubject();
+
+            if ($subject) {
+                return get_class($subject);
+            }
+
+            return $this->class;
+        }
+
+        $subClass = $this->getRequest()->query->get('subclass');
+
+        return $this->getSubClass($subClass);
     }
 
     /**
-     * Returns the list of supported sub classes
-     *
-     * @return array the list of sub classes
+     * {@inheritdoc}
      */
     public function getSubClasses()
     {
@@ -934,9 +947,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * Sets the list of supported sub classes
-     *
-     * @param array $subClasses the list of sub classes
+     * {@inheritdoc}
      */
     public function setSubClasses(array $subClasses)
     {
@@ -960,11 +971,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * Returns true if the admin has the sub classes
-     *
-     * @param string $name The name of the sub class
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function hasSubClass($name)
     {
@@ -972,35 +979,47 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * Returns true if a subclass is currently active
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function hasActiveSubClass()
     {
         if ($this->request) {
-            return null !== $this->getRequest()->get('subclass');
+            return null !== $this->getRequest()->query->get('subclass');
         }
 
         return false;
     }
 
     /**
-     * Returns the currently active sub class
-     *
-     * @return string the active sub class
+     * {@inheritdoc}
      */
     public function getActiveSubClass()
     {
         if (!$this->hasActiveSubClass()) {
             return null;
         }
-
-        $subClass = $this->getRequest()->get('subclass');
-
-        return $this->getSubClass($subClass);
+        
+        return $this->getClass();
     }
-
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getActiveSubclassCode()
+    {
+        if (!$this->hasActiveSubClass()) {
+            return null;
+        }
+        
+        $subClass = $this->getRequest()->query->get('subclass');
+        
+        if(! $this->hasSubClass($subClass)){
+            return null;
+        }
+        
+        return $subClass;
+    }
+    
     /**
      * Returns the list of batchs actions
      *
@@ -1115,13 +1134,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     * Generates the object url with the given $name
-     *
-     * @param string $name
-     * @param mixed  $object
-     * @param array  $parameters
-     *
-     * @return string return a complete url
+     * {@inheritdoc}
      */
     public function generateObjectUrl($name, $object, array $parameters = array(), $absolute = false)
     {
@@ -1186,7 +1199,12 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
      */
     public function getNewInstance()
     {
-        return $this->getModelManager()->getModelInstance($this->getActiveSubClass() ?: $this->getClass());
+        $object = $this->getModelManager()->getModelInstance($this->getClass());
+        foreach($this->getExtensions() as $extension) {
+            $extension->alterNewInstance($this, $object);
+        }
+
+        return $object;
     }
 
     /**
@@ -1194,7 +1212,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
      */
     public function getFormBuilder()
     {
-        $this->formOptions['data_class'] = $this->getActiveSubClass() ?: $this->getClass();
+        $this->formOptions['data_class'] = $this->getClass();
 
         $formBuilder = $this->getFormContractor()->getFormBuilder(
             $this->getUniqid(),
@@ -1580,7 +1598,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
             if (!preg_match('#^[0-9A-Fa-f]+$#', $id)) {
                 $this->subject = false;
             } else {
-                $this->subject = $this->getModelManager()->find($this->getClass(), $id);
+                $this->subject = $this->getModelManager()->find($this->class, $id);
             }
         }
 
@@ -2014,8 +2032,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
             $menu = $menu->addChild($this->toString($this->getSubject()));
         } elseif ($action != 'list') {
             $menu = $menu->addChild(
-//                $this->trans($this->getLabelTranslatorStrategy()->getLabel(sprintf('%s_%s', $this->getClassnameLabel(), $action), 'breadcrumb', 'link'))
-                  $this->toString($this->getSubject())
+                $this->trans($this->getLabelTranslatorStrategy()->getLabel(sprintf('%s_%s', $this->getClassnameLabel(), $action), 'breadcrumb', 'link'))
             );
         } else {
             $menu->getBreadcrumbsArray();
@@ -2155,8 +2172,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
     }
 
     /**
-     *
-     * @return boolean true if the request object is linked to the Admin
+     * {@inheritdoc}
      */
     public function hasRequest()
     {
@@ -2544,7 +2560,7 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
             return '';
         }
 
-        if (method_exists($object, '__toString')) {
+        if (method_exists($object, '__toString') && null !== $object->__toString()) {
             return (string) $object;
         }
 
@@ -2618,5 +2634,13 @@ abstract class Admin implements AdminInterface, DomainObjectInterface
         array_unshift($this->perPageOptions, $this->maxPerPage);
         $this->perPageOptions = array_unique($this->perPageOptions);
         sort($this->perPageOptions);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isAclEnabled()
+    {
+        return $this->getSecurityHandler() instanceof AclSecurityHandlerInterface;
     }
 }

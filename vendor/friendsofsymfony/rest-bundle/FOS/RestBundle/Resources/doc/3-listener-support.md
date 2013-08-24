@@ -171,6 +171,89 @@ Your custom decoder service must use a class that implements the
 
 If you want to be able to use form with checkbox and have true and false value (without any issue) you have to use : fos_rest.decoder.jsontoform (available since fosrest 0.8.0)
 
+### Request Body Converter Listener
+
+[Converters](http://symfony.com/doc/master/bundles/SensioFrameworkExtraBundle/annotations/converters.html)
+are a way to populate objects and inject them as controller method arguments.
+The Request body converter makes it possible to deserialize the request body
+into an object.
+
+This converter requires that you have installed [SensioFrameworkExtraBundle](http://symfony.com/doc/current/bundles/SensioFrameworkExtraBundle/index.html)
+and have the converters enabled:
+```yaml
+# app/config/config.yml
+sensio_framework_extra:
+    request: { converters: true }
+```
+
+To enable the Request body converter, add the following configuration:
+```yaml
+# app/config/config.yml
+fos_rest:
+    body_converter:
+        enabled: true
+```
+
+Note: You will probably want to disable the automatic route generation (`@NoRoute`)
+for routes using the body converter, and instead define the routes manually to 
+avoid having the deserialized, typehinted objects (`$post in this example`) appear
+in the route as a parameter.
+
+Now, in the following example, the request body will be deserialized into a
+new instance of `Post` and injected into the `$post` variable:
+```PHP
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+
+// ...
+
+/**
+ * @ParamConverter("post", converter="fos_rest.request_body")
+ */
+public function putPostAction(Post $post)
+{
+    // ...
+}
+```
+
+You can configure the context used by the serializer during deserialization
+via the `deserializationContext` option:
+```PHP
+/**
+ * @ParamConverter("post", converter="fos_rest.request_body", options={"deserializationContext"={"groups"={"group1", "group2"}, "version"="1.0"}})
+ */
+public function putPostAction(Post $post)
+{
+    // ...
+}
+```
+
+#### Validation
+If you would like to validate the deserialized object, you can do so by
+enabling validation:
+```yaml
+# app/config/config.yml
+fos_rest:
+    body_converter:
+        enabled: true
+        validate: true
+        validation_errors_argument: validationErrors # This is the default value
+```
+The validation errors will be set on the `validationErrors` controller argument:
+
+```PHP
+/**
+ * @ParamConverter("post", converter="fos_rest.request_body")
+ */
+public function putPostAction(Post $post, ConstraintViolationListInterface $validationErrors)
+{
+    if (count($validationErrors) > 0) {
+        // Handle validation errors
+    }
+
+    // ...
+}
+```
+
 ### Format listener
 
 The Request format listener attempts to determine the best format for the
@@ -279,7 +362,7 @@ class FooController extends Controller
      *
      * Will look for a firstname request parameters, ie. firstname=foo in POST data.
      * If not passed it will error out when read out of the ParamFetcher since RequestParam defaults to strict=true
-     * If passed but doesn't match the requirement "\d+" it will also error out (400 Bad Request)
+     * If passed but doesn't match the requirement "[a-z]+" it will also error out (400 Bad Request)
      * Note that if the value matches the default then no validation is run.
      * So make sure the default value really matches your expectations.
      *

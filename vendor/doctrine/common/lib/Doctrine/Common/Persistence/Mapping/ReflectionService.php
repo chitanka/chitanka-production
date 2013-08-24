@@ -30,58 +30,51 @@ namespace Doctrine\Common\Persistence\Mapping;
 interface ReflectionService
 {
     /**
-     * Returns an array of the parent classes (not interfaces) for the given class.
+     * Return an array of the parent classes (not interfaces) for the given class.
      *
      * @param string $class
-     *
-     * @throws \Doctrine\Common\Persistence\Mapping\MappingException
-     *
      * @return array
      */
-    public function getParentClasses($class);
+    function getParentClasses($class);
 
     /**
-     * Returns the shortname of a class.
+     * Return the shortname of a class.
      *
      * @param string $class
-     *
      * @return string
      */
-    public function getClassShortName($class);
+    function getClassShortName($class);
 
     /**
      * @param string $class
-     *
      * @return string
      */
-    public function getClassNamespace($class);
+    function getClassNamespace($class);
 
     /**
-     * Returns a reflection class instance or null.
+     * Return a reflection class instance or null
      *
      * @param string $class
-     *
      * @return \ReflectionClass|null
      */
-    public function getClass($class);
+    function getClass($class);
 
     /**
-     * Returns an accessible property (setAccessible(true)) or null.
+     * Return an accessible property (setAccessible(true)) or null.
      *
      * @param string $class
      * @param string $property
-     *
      * @return \ReflectionProperty|null
      */
-    public function getAccessibleProperty($class, $property);
+    function getAccessibleProperty($class, $property);
 
     /**
-     * Checks if the class have a public method with the given name.
+     * Check if the class have a public method with the given name.
      *
      * @param mixed $class
      * @param mixed $method
-     *
      * @return bool
      */
-    public function hasPublicMethod($class, $method);
+    function hasPublicMethod($class, $method);
 }
+

@@ -58,14 +58,8 @@ EOT
         $connection = $this->getDoctrineConnection($input->getOption('connection'));
 
         $params = $connection->getParams();
-        if (isset($params['master'])) {
-            $params = $params['master'];
-        }
+        $name = isset($params['path']) ? $params['path'] : $params['dbname'];
 
-        $name = isset($params['path']) ? $params['path'] : (isset($params['dbname']) ? $params['dbname'] : false);
-        if (!$name) {
-            throw new \InvalidArgumentException("Connection does not contain a 'path' or 'dbname' parameter and cannot be dropped.");
-        }
         unset($params['dbname']);
 
         $tmpConnection = DriverManager::getConnection($params);

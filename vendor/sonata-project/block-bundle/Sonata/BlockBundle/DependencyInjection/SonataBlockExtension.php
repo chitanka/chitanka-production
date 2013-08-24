@@ -93,7 +93,7 @@ class SonataBlockExtension extends Extension
             $cacheBlocks['by_class'][$class] = $settings['cache'];
         }
 
-        $container->getDefinition('sonata.block.twig.extension')->replaceArgument(1, $cacheBlocks);
+        $container->setParameter($this->getAlias() . '.cache_blocks', $cacheBlocks);
     }
 
     /**
@@ -260,5 +260,10 @@ class SonataBlockExtension extends Extension
             "Sonata\\BlockBundle\\Twig\\Extension\\BlockExtension",
             "Sonata\\BlockBundle\\Twig\\GlobalVariables",
         ));
+    }
+
+    public function getNamespace()
+    {
+        return 'http://sonata-project.com/schema/dic/block';
     }
 }

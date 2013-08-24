@@ -13,6 +13,7 @@ namespace Symfony\Bundle\WebProfilerBundle\Controller;
 
 use Symfony\Component\HttpKernel\Profiler\Profiler;
 use Symfony\Component\HttpKernel\Debug\ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -26,7 +27,7 @@ class ExceptionController
     protected $debug;
     protected $profiler;
 
-    public function __construct(Profiler $profiler, \Twig_Environment $twig, $debug)
+    public function __construct(Profiler $profiler = null, \Twig_Environment $twig, $debug)
     {
         $this->profiler = $profiler;
         $this->twig = $twig;
@@ -42,6 +43,10 @@ class ExceptionController
      */
     public function showAction($token)
     {
+        if (null === $this->profiler) {
+            throw new NotFoundHttpException('The profiler must be enabled.');
+        }
+
         $this->profiler->disable();
 
         $exception = $this->profiler->loadProfile($token)->getCollector('exception')->getException();
@@ -76,6 +81,10 @@ class ExceptionController
      */
     public function cssAction($token)
     {
+        if (null === $this->profiler) {
+            throw new NotFoundHttpException('The profiler must be enabled.');
+        }
+
         $this->profiler->disable();
 
         $exception = $this->profiler->loadProfile($token)->getCollector('exception')->getException();
@@ -84,10 +93,10 @@ class ExceptionController
         if (!$this->templateExists($template)) {
             $handler = new ExceptionHandler();
 
-            return new Response($handler->getStylesheet($exception));
+            return new Response($handler->getStylesheet($exception), 200, array('Content-Type' => 'text/css'));
         }
 
-        return new Response($this->twig->render('@WebProfiler/Collector/exception.css.twig'), 200, 'text/css');
+        return new Response($this->twig->render('@WebProfiler/Collector/exception.css.twig'), 200, array('Content-Type' => 'text/css'));
     }
 
     protected function getTemplate()

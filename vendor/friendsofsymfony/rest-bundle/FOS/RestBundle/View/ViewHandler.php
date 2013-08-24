@@ -11,7 +11,7 @@
 
 namespace FOS\RestBundle\View;
 
-use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -140,10 +140,6 @@ class ViewHandler extends ContainerAware implements ViewHandlerInterface
      */
     protected function getStatusCode(View $view, $content = null)
     {
-        if (200 !== ($code = $view->getStatusCode())) {
-            return $code;
-        }
-
         $data = $view->getData();
         if ($data instanceof FormInterface) {
             $form = $data;
@@ -155,6 +151,10 @@ class ViewHandler extends ContainerAware implements ViewHandlerInterface
 
         if ($form && $form->isBound() && !$form->isValid()) {
             return $this->failedValidationCode;
+        }
+
+        if (200 !== ($code = $view->getStatusCode())) {
+            return $code;
         }
 
         return null !== $content ? Codes::HTTP_OK : $this->emptyContentCode;
@@ -175,7 +175,7 @@ class ViewHandler extends ContainerAware implements ViewHandlerInterface
     /**
      * Get the router service
      *
-     * @return Symfony\Component\Routing\RouterInterface
+     * @return \Symfony\Component\Routing\RouterInterface
      */
     protected function getRouter()
     {
@@ -205,19 +205,23 @@ class ViewHandler extends ContainerAware implements ViewHandlerInterface
     public function getSerializationContext(View $view)
     {
         $context = $view->getSerializationContext();
-        if (null === $context) {
-            $context = new SerializationContext();
 
+        if ($context->attributes->get('groups')->isEmpty()) {
             $groups = $this->container->getParameter('fos_rest.serializer.exclusion_strategy.groups');
             if ($groups) {
                 $context->setGroups($groups);
             }
+        }
 
+        if ($context->attributes->get('version')->isEmpty()) {
             $version = $this->container->getParameter('fos_rest.serializer.exclusion_strategy.version');
             if ($version) {
                 $context->setVersion($version);
             }
         }
+
+        $serializeNull = $this->container->getParameter('fos_rest.serializer.serialize_null');
+        $context->setSerializeNull($serializeNull);
 
         return $context;
     }
@@ -225,7 +229,7 @@ class ViewHandler extends ContainerAware implements ViewHandlerInterface
     /**
      * Get the templating service
      *
-     * @return Symfony\Bundle\FrameworkBundle\Templating\EngineInterface
+     * @return \Symfony\Bundle\FrameworkBundle\Templating\EngineInterface
      */
     protected function getTemplating()
     {
@@ -274,11 +278,15 @@ class ViewHandler extends ContainerAware implements ViewHandlerInterface
     public function createRedirectResponse(View $view, $location, $format)
     {
         $content = null;
-        $response = $view->getResponse();
-        if ('html' === $format && isset($this->forceRedirects[$format])) {
-            $redirect = new RedirectResponse($location);
-            $content = $redirect->getContent();
-            $response->setContent($content);
+        if (($view->getStatusCode() == Codes::HTTP_CREATED || $view->getStatusCode() == Codes::HTTP_ACCEPTED) && $view->getData() != null) {
+            $response = $this->initResponse($view, $format);
+        } else {
+            $response = $view->getResponse();
+            if ('html' === $format && isset($this->forceRedirects[$format])) {
+                $redirect = new RedirectResponse($location);
+                $content = $redirect->getContent();
+                $response->setContent($content);
+            }
         }
 
         $code = isset($this->forceRedirects[$format])
@@ -354,19 +362,38 @@ class ViewHandler extends ContainerAware implements ViewHandlerInterface
     {
         $route = $view->getRoute();
         $location = $route
-            ? $this->getRouter()->generate($route, (array) $view->getData(), true)
+            ? $this->getRouter()->generate($route, (array) $view->getRouteParameters(), true)
             : $view->getLocation();
 
         if ($location) {
             return $this->createRedirectResponse($view, $location, $format);
         }
 
+        $response = $this->initResponse($view, $format);
+
+        if (!$response->headers->has('Content-Type')) {
+            $response->headers->set('Content-Type', $request->getMimeType($format));
+        }
+
+        return $response;
+    }
+
+    /**
+     * Initializes a response object that represents the view and holds the view's status code.
+     *
+     * @param View    $view
+     * @param string  $format
+     *
+     * @return Response
+     */
+    private function initResponse(View $view, $format)
+    {
         $content = null;
         if ($this->isFormatTemplating($format)) {
             $content = $this->renderTemplate($view, $format);
         } elseif ($this->serializeNull || null !== $view->getData()) {
             $serializer = $this->getSerializer($view);
-            if ($serializer instanceof Serializer) {
+            if ($serializer instanceof SerializerInterface) {
                 $context = $this->getSerializationContext($view);
                 $content = $serializer->serialize($view->getData(), $format, $context);
             } else {
@@ -379,10 +406,6 @@ class ViewHandler extends ContainerAware implements ViewHandlerInterface
 
         if (null !== $content) {
             $response->setContent($content);
-        }
-
-        if (!$response->headers->has('Content-Type')) {
-            $response->headers->set('Content-Type', $request->getMimeType($format));
         }
 
         return $response;

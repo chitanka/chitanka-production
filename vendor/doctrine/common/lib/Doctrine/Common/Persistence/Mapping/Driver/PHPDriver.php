@@ -23,19 +23,21 @@ use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 
 /**
  * The PHPDriver includes php files which just populate ClassMetadataInfo
- * instances with plain PHP code.
+ * instances with plain php code
  *
- * @link   www.doctrine-project.org
- * @since  2.0
- * @author Benjamin Eberlei <kontakt@beberlei.de>
- * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
- * @author Jonathan H. Wage <jonwage@gmail.com>
- * @author Roman Borschel <roman@code-factory.org>
+ * @license 	http://www.opensource.org/licenses/lgpl-license.php LGPL
+ * @link    	www.doctrine-project.org
+ * @since   	2.0
+ * @version     $Revision$
+ * @author      Benjamin Eberlei <kontakt@beberlei.de>
+ * @author      Guilherme Blanco <guilhermeblanco@hotmail.com>
+ * @author      Jonathan H. Wage <jonwage@gmail.com>
+ * @author      Roman Borschel <roman@code-factory.org>
  */
 class PHPDriver extends FileDriver
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected $metadata;
 
@@ -49,7 +51,7 @@ class PHPDriver extends FileDriver
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function loadMetadataForClass($className, ClassMetadata $metadata)
     {
@@ -58,7 +60,7 @@ class PHPDriver extends FileDriver
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected function loadMappingFile($file)
     {

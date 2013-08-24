@@ -29,6 +29,7 @@ use Doctrine\Common\Collections\Collection;
  *
  * This class is a forward compatible implementation of the PersistentObject trait.
  *
+ *
  * Limitations:
  *
  * 1. All persistent objects have to be associated with a single ObjectManager, multiple
@@ -37,7 +38,7 @@ use Doctrine\Common\Collections\Collection;
  *    This is either done on `postLoad` of an object or by accessing the global object manager.
  * 3. There are no hooks for setters/getters. Just implement the method yourself instead of relying on __call().
  * 4. Slower than handcoded implementations: An average of 7 method calls per access to a field and 11 for an association.
- * 5. Only the inverse side associations get autoset on the owning side as well. Setting objects on the owning side
+ * 5. Only the inverse side associations get autoset on the owning side aswell. Setting objects on the owning side
  *    will not set the inverse side associations.
  *
  * @example
@@ -57,21 +58,19 @@ use Doctrine\Common\Collections\Collection;
 abstract class PersistentObject implements ObjectManagerAware
 {
     /**
-     * @var ObjectManager|null
+     * @var ObjectManager
      */
-    private static $objectManager = null;
+    private static $objectManager;
 
     /**
-     * @var ClassMetadata|null
+     * @var ClassMetadata
      */
-    private $cm = null;
+    private $cm;
 
     /**
-     * Sets the object manager responsible for all persistent object base classes.
+     * Set the object manager responsible for all persistent object base classes.
      *
-     * @param ObjectManager|null $objectManager
-     *
-     * @return void
+     * @param ObjectManager $objectManager
      */
     static public function setObjectManager(ObjectManager $objectManager = null)
     {
@@ -79,7 +78,7 @@ abstract class PersistentObject implements ObjectManagerAware
     }
 
     /**
-     * @return ObjectManager|null
+     * @return ObjectManager
      */
     static public function getObjectManager()
     {
@@ -87,12 +86,10 @@ abstract class PersistentObject implements ObjectManagerAware
     }
 
     /**
-     * Injects the Doctrine Object Manager.
+     * Inject Doctrine Object Manager
      *
      * @param ObjectManager $objectManager
      * @param ClassMetadata $classMetadata
-     *
-     * @return void
      *
      * @throws \RuntimeException
      */
@@ -110,12 +107,11 @@ abstract class PersistentObject implements ObjectManagerAware
      * Sets a persistent fields value.
      *
      * @param string $field
-     * @param array  $args
+     * @param array $args
      *
+     * @throws \BadMethodCallException - When no persistent field exists by that name.
+     * @throws \InvalidArgumentException - When the wrong target object type is passed to an association
      * @return void
-     *
-     * @throws \BadMethodCallException   When no persistent field exists by that name.
-     * @throws \InvalidArgumentException When the wrong target object type is passed to an association.
      */
     private function set($field, $args)
     {
@@ -136,13 +132,13 @@ abstract class PersistentObject implements ObjectManagerAware
     }
 
     /**
-     * Gets a persistent field value.
+     * Get persistent field value.
+     *
      *
      * @param string $field
      *
+     * @throws \BadMethodCallException - When no persistent field exists by that name.
      * @return mixed
-     *
-     * @throws \BadMethodCallException When no persistent field exists by that name.
      */
     private function get($field)
     {
@@ -156,17 +152,15 @@ abstract class PersistentObject implements ObjectManagerAware
     }
 
     /**
-     * If this is an inverse side association, completes the owning side.
+     * If this is an inverse side association complete the owning side.
      *
-     * @param string        $field
+     * @param string $field
      * @param ClassMetadata $targetClass
-     * @param object        $targetObject
-     *
-     * @return void
+     * @param object $targetObject
      */
     private function completeOwningSide($field, $targetClass, $targetObject)
     {
-        // add this object on the owning side as well, for obvious infinite recursion
+        // add this object on the owning side aswell, for obvious infinite recursion
         // reasons this is only done when called on the inverse side.
         if ($this->cm->isAssociationInverseSide($field)) {
             $mappedByField = $this->cm->getAssociationMappedByTargetField($field);
@@ -178,12 +172,10 @@ abstract class PersistentObject implements ObjectManagerAware
     }
 
     /**
-     * Adds an object to a collection.
+     * Add an object to a collection
      *
      * @param string $field
-     * @param array  $args
-     *
-     * @return void
+     * @param array $args
      *
      * @throws \BadMethodCallException
      * @throws \InvalidArgumentException
@@ -208,11 +200,10 @@ abstract class PersistentObject implements ObjectManagerAware
     }
 
     /**
-     * Initializes Doctrine Metadata for this class.
-     *
-     * @return void
+     * Initialize Doctrine Metadata for this class.
      *
      * @throws \RuntimeException
+     * @return void
      */
     private function initializeDoctrine()
     {
@@ -228,14 +219,13 @@ abstract class PersistentObject implements ObjectManagerAware
     }
 
     /**
-     * Magic methods.
+     * Magic method that implements
      *
      * @param string $method
-     * @param array  $args
-     *
-     * @return mixed
+     * @param array $args
      *
      * @throws \BadMethodCallException
+     * @return mixed
      */
     public function __call($method, $args)
     {

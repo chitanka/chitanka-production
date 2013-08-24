@@ -29,12 +29,13 @@ use Doctrine\Common\Persistence\Mapping\MappingException;
  * file per class and the file names of the mapping files must correspond to the full
  * class name, including namespace, with the namespace delimiters '\', replaced by dots '.'.
  *
- * @link   www.doctrine-project.org
- * @since  2.2
- * @author Benjamin Eberlei <kontakt@beberlei.de>
- * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
- * @author Jonathan H. Wage <jonwage@gmail.com>
- * @author Roman Borschel <roman@code-factory.org>
+ * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
+ * @link        www.doctrine-project.com
+ * @since       2.2
+ * @author      Benjamin Eberlei <kontakt@beberlei.de>
+ * @author      Guilherme Blanco <guilhermeblanco@hotmail.com>
+ * @author      Jonathan H. Wage <jonwage@gmail.com>
+ * @author      Roman Borschel <roman@code-factory.org>
  */
 abstract class FileDriver implements MappingDriver
 {
@@ -44,12 +45,12 @@ abstract class FileDriver implements MappingDriver
     protected $locator;
 
     /**
-     * @var array|null
+     * @var array
      */
     protected $classCache;
 
     /**
-     * @var string|null
+     * @var string
      */
     protected $globalBasename;
 
@@ -57,9 +58,8 @@ abstract class FileDriver implements MappingDriver
      * Initializes a new FileDriver that looks in the given path(s) for mapping
      * documents and operates in the specified operating mode.
      *
-     * @param string|array|FileLocator $locator       A FileLocator or one/multiple paths
-     *                                                where mapping documents can be found.
-     * @param string|null              $fileExtension
+     * @param string|array|FileLocator $locator A FileLocator or one/multiple paths where mapping documents can be found.
+     * @param string $fileExtension
      */
     public function __construct($locator, $fileExtension = null)
     {
@@ -71,11 +71,9 @@ abstract class FileDriver implements MappingDriver
     }
 
     /**
-     * Sets the global basename.
+     * Set global basename
      *
      * @param string $file
-     *
-     * @return void
      */
     public function setGlobalBasename($file)
     {
@@ -83,9 +81,9 @@ abstract class FileDriver implements MappingDriver
     }
 
     /**
-     * Retrieves the global basename.
+     * Retrieve global basename
      *
-     * @return string|null
+     * @return string
      */
     public function getGlobalBasename()
     {
@@ -93,14 +91,13 @@ abstract class FileDriver implements MappingDriver
     }
 
     /**
-     * Gets the element of schema meta data for the class from the mapping file.
-     * This will lazily load the mapping file if it is not loaded yet.
+     * Get the element of schema meta data for the class from the mapping file.
+     * This will lazily load the mapping file if it is not loaded yet
      *
      * @param string $className
      *
-     * @return array The element of schema meta data.
-     *
      * @throws MappingException
+     * @return array The element of schema meta data
      */
     public function getElement($className)
     {
@@ -121,7 +118,12 @@ abstract class FileDriver implements MappingDriver
     }
 
     /**
-     * {@inheritDoc}
+     * Whether the class with the specified name should have its metadata loaded.
+     * This is only the case if it is either mapped as an Entity or a
+     * MappedSuperclass.
+     *
+     * @param string $className
+     * @return boolean
      */
     public function isTransient($className)
     {
@@ -137,7 +139,9 @@ abstract class FileDriver implements MappingDriver
     }
 
     /**
-     * {@inheritDoc}
+     * Gets the names of all mapped classes known to this driver.
+     *
+     * @return array The names of all mapped classes known to this driver.
      */
     public function getAllClassNames()
     {
@@ -157,13 +161,12 @@ abstract class FileDriver implements MappingDriver
      * from class/entity names to their corresponding file driver elements.
      *
      * @param string $file The mapping file to load.
-     *
      * @return array
      */
     abstract protected function loadMappingFile($file);
 
     /**
-     * Initializes the class cache from all the global files.
+     * Initialize the class cache from all the global files.
      *
      * Using this feature adds a substantial performance hit to file drivers as
      * more metadata has to be loaded into memory than might actually be
@@ -190,7 +193,7 @@ abstract class FileDriver implements MappingDriver
     }
 
     /**
-     * Retrieves the locator used to discover mapping files by className.
+     * Retrieve the locator used to discover mapping files by className
      *
      * @return FileLocator
      */
@@ -200,7 +203,7 @@ abstract class FileDriver implements MappingDriver
     }
 
     /**
-     * Sets the locator used to discover mapping files by className.
+     * Set the locator used to discover mapping files by className
      *
      * @param FileLocator $locator
      */

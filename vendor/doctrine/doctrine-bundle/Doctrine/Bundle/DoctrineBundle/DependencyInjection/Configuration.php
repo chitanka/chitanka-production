@@ -305,7 +305,6 @@ class Configuration implements ConfigurationInterface
                     ->scalarNode('default_repository_class')->defaultValue('Doctrine\ORM\EntityRepository')->end()
                     ->scalarNode('auto_mapping')->defaultFalse()->end()
                     ->scalarNode('naming_strategy')->defaultValue('doctrine.orm.naming_strategy.default')->end()
-                    ->scalarNode('entity_listener_resolver')->defaultNull()->end()
                 ->end()
                 ->fixXmlConfig('hydrator')
                 ->children()

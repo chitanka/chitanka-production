@@ -304,14 +304,16 @@ class Parser
 
         $isItUnindentedCollection = $this->isStringUnIndentedCollectionItem($this->currentLine);
 
-        while ($this->moveToNextLine()) {
+        // We are in string block (ie. after a line ending with "|")
+        $removeComments = !preg_match('~(.*)\|[\s]*$~', $this->currentLine);
 
+        while ($this->moveToNextLine()) {
             if ($isItUnindentedCollection && !$this->isStringUnIndentedCollectionItem($this->currentLine)) {
                 $this->moveToPreviousLine();
                 break;
             }
 
-            if ($this->isCurrentLineEmpty()) {
+            if ($removeComments && $this->isCurrentLineEmpty() || $this->isCurrentLineBlank()) {
                 if ($this->isCurrentLineBlank()) {
                     $data[] = substr($this->currentLine, $newIndent);
                 }
@@ -365,7 +367,9 @@ class Parser
     /**
      * Parses a YAML value.
      *
-     * @param string $value A YAML value
+     * @param string  $value                  A YAML value
+     * @param Boolean $exceptionOnInvalidType True if an exception must be thrown on invalid types false otherwise
+     * @param Boolean $objectSupport          True if object support is enabled, false otherwise
      *
      * @return mixed  A PHP value
      *

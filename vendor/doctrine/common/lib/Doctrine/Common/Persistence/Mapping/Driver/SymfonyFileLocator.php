@@ -15,7 +15,7 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the MIT license. For more information, see
  * <http://www.doctrine-project.org>.
- */
+*/
 
 namespace Doctrine\Common\Persistence\Mapping\Driver;
 
@@ -26,8 +26,8 @@ use Doctrine\Common\Persistence\Mapping\MappingException;
  * to the DefaultFileLocator. By assuming paths only contain entities of a certain
  * namespace the mapping files consists of the short classname only.
  *
- * @author  Fabien Potencier <fabien@symfony.com>
- * @author  Benjamin Eberlei <kontakt@beberlei.de>
+ * @author Fabien Potencier <fabien@symfony.com>
+ * @author Benjamin Eberlei <kontakt@beberlei.de>
  * @license MIT
  */
 class SymfonyFileLocator implements FileLocator
@@ -49,14 +49,14 @@ class SymfonyFileLocator implements FileLocator
     /**
      * File extension that is searched for.
      *
-     * @var string|null
+     * @var string
      */
     protected $fileExtension;
 
     /**
-     * Constructor.
+     * Constructor
      *
-     * @param array       $prefixes
+     * @param array $prefixes
      * @param string|null $fileExtension
      */
     public function __construct(array $prefixes, $fileExtension = null)
@@ -66,11 +66,9 @@ class SymfonyFileLocator implements FileLocator
     }
 
     /**
-     * Adds Namespace Prefixes.
+     * Add Namespace Prefixes
      *
      * @param array $prefixes
-     *
-     * @return void
      */
     public function addNamespacePrefixes(array $prefixes)
     {
@@ -79,7 +77,7 @@ class SymfonyFileLocator implements FileLocator
     }
 
     /**
-     * Gets Namespace Prefixes.
+     * Get Namespace Prefixes
      *
      * @return array
      */
@@ -105,10 +103,9 @@ class SymfonyFileLocator implements FileLocator
     }
 
     /**
-     * Sets the file extension used to look for mapping files under.
+     * Set the file extension used to look for mapping files under
      *
-     * @param string $fileExtension The file extension to set.
-     *
+     * @param string $fileExtension The file extension to set
      * @return void
      */
     public function setFileExtension($fileExtension)

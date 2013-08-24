@@ -22,6 +22,7 @@ class Twig_Extensions_Autoloader
      */
     static public function register()
     {
+        ini_set('unserialize_callback_func', 'spl_autoload_call');
         spl_autoload_register(array(new self, 'autoload'));
     }
 

@@ -15,7 +15,7 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the MIT license. For more information, see
  * <http://www.doctrine-project.org>.
- */
+*/
 
 namespace Doctrine\Common\Persistence\Event;
 
@@ -41,44 +41,32 @@ class LifecycleEventArgs extends EventArgs
     /**
      * @var object
      */
-    private $object;
+    private $entity;
 
     /**
-     * Constructor.
+     * Constructor
      *
-     * @param object        $object
+     * @param object $entity
      * @param ObjectManager $objectManager
      */
-    public function __construct($object, ObjectManager $objectManager)
+    public function __construct($entity, ObjectManager $objectManager)
     {
-        $this->object = $object;
+        $this->entity = $entity;
         $this->objectManager = $objectManager;
     }
 
     /**
-     * Retrieves the associated entity.
-     *
-     * @deprecated
+     * Retrieve associated Entity.
      *
      * @return object
      */
     public function getEntity()
     {
-        return $this->object;
+        return $this->entity;
     }
 
     /**
-     * Retrieves the associated object.
-     *
-     * @return object
-     */
-    public function getObject()
-    {
-        return $this->object;
-    }
-
-    /**
-     * Retrieves the associated ObjectManager.
+     * Retrieve associated ObjectManager.
      *
      * @return ObjectManager
      */

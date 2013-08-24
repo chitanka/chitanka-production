@@ -6,10 +6,10 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Collator' => $vendorDir . '/symfony/symfony/src/Symfony/Component/Locale/Resources/stubs/Collator.php',
-    'IntlDateFormatter' => $vendorDir . '/symfony/symfony/src/Symfony/Component/Locale/Resources/stubs/IntlDateFormatter.php',
-    'Locale' => $vendorDir . '/symfony/symfony/src/Symfony/Component/Locale/Resources/stubs/Locale.php',
-    'NumberFormatter' => $vendorDir . '/symfony/symfony/src/Symfony/Component/Locale/Resources/stubs/NumberFormatter.php',
+    'Collator' => $vendorDir . '/symfony/symfony/src/Symfony/Component/Intl/Resources/stubs/Collator.php',
+    'IntlDateFormatter' => $vendorDir . '/symfony/symfony/src/Symfony/Component/Intl/Resources/stubs/IntlDateFormatter.php',
+    'Locale' => $vendorDir . '/symfony/symfony/src/Symfony/Component/Intl/Resources/stubs/Locale.php',
+    'NumberFormatter' => $vendorDir . '/symfony/symfony/src/Symfony/Component/Intl/Resources/stubs/NumberFormatter.php',
     'SessionHandlerInterface' => $vendorDir . '/symfony/symfony/src/Symfony/Component/HttpFoundation/Resources/stubs/SessionHandlerInterface.php',
     'SqlFormatter' => $vendorDir . '/jdorn/sql-formatter/lib/SqlFormatter.php',
 );

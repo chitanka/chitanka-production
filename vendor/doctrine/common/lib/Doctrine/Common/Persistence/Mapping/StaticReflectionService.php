@@ -19,15 +19,21 @@
 
 namespace Doctrine\Common\Persistence\Mapping;
 
+use ReflectionClass;
+use ReflectionProperty;
+
 /**
- * PHP Runtime Reflection Service.
+ * PHP Runtime Reflection Service
  *
  * @author Benjamin Eberlei <kontakt@beberlei.de>
  */
 class StaticReflectionService implements ReflectionService
 {
     /**
-     * {@inheritDoc}
+     * Return an array of the parent classes (not interfaces) for the given class.
+     *
+     * @param string $class
+     * @return array
      */
     public function getParentClasses($class)
     {
@@ -35,7 +41,10 @@ class StaticReflectionService implements ReflectionService
     }
 
     /**
-     * {@inheritDoc}
+     * Return the shortname of a class.
+     *
+     * @param string $className
+     * @return string
      */
     public function getClassShortName($className)
     {
@@ -46,7 +55,10 @@ class StaticReflectionService implements ReflectionService
     }
 
     /**
-     * {@inheritDoc}
+     * Return the namespace of a class.
+     *
+     * @param string $className
+     * @return string
      */
     public function getClassNamespace($className)
     {
@@ -58,7 +70,10 @@ class StaticReflectionService implements ReflectionService
     }
 
     /**
-     * {@inheritDoc}
+     * Return a reflection class instance or null
+     *
+     * @param string $class
+     * @return ReflectionClass|null
      */
     public function getClass($class)
     {
@@ -66,7 +81,11 @@ class StaticReflectionService implements ReflectionService
     }
 
     /**
-     * {@inheritDoc}
+     * Return an accessible property (setAccessible(true)) or null.
+     *
+     * @param string $class
+     * @param string $property
+     * @return ReflectionProperty|null
      */
     public function getAccessibleProperty($class, $property)
     {
@@ -74,10 +93,15 @@ class StaticReflectionService implements ReflectionService
     }
 
     /**
-     * {@inheritDoc}
+     * Check if the class have a public method with the given name.
+     *
+     * @param mixed $class
+     * @param mixed $method
+     * @return bool
      */
     public function hasPublicMethod($class, $method)
     {
         return method_exists($class, $method) && is_callable(array($class, $method));
     }
 }
+

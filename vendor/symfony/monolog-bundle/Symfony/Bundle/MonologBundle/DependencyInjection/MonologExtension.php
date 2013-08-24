@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 /**
  * MonologExtension is an extension for the Monolog library.
@@ -250,7 +251,7 @@ class MonologExtension extends Extension
                 $prototype = new Reference($messageId);
             }
             $definition->setArguments(array(
-                new Reference('mailer'),
+                new Reference($handler['mailer']),
                 $prototype,
                 $handler['level'],
                 $handler['bubble'],
@@ -289,6 +290,22 @@ class MonologExtension extends Extension
                 $handler['token'],
                 $handler['user'],
                 $handler['title'],
+                $handler['level'],
+                $handler['bubble'],
+            ));
+            break;
+
+        case 'raven':
+            $clientId = 'monolog.raven.client.' . sha1($handler['dsn']);
+            if (!$container->hasDefinition($clientId)) {
+                $client = new Definition("Raven_Client", array(
+                    $handler['dsn']
+                ));
+                $client->setPublic(false);
+                $container->setDefinition($clientId, $client);
+            }
+            $definition->setArguments(array(
+                new Reference($clientId),
                 $handler['level'],
                 $handler['bubble'],
             ));

@@ -147,6 +147,28 @@ default the order is undefined, but you may change it to either "alphabetical", 
         private $name;
     }
 
+    /**
+     * @AccessorOrder("custom", custom = {"name", "SomeMethod" ,"id"})
+     *
+     * Resulting Property Order: name, mood, id
+     */
+    class User
+    {
+        private $id;
+        private $name;
+
+        /**
+         * @Serializer\VirtualProperty
+         * @Serializer\SerializedName("mood")
+         *
+         * @return string
+         */
+        public function getSomeMethod()
+        {
+            return 'happy';
+        }
+    }
+
 @VirtualProperty
 ~~~~~~~~~~~~~~~~
 This annotation can be defined on a method to indicate that the data returned by
@@ -192,7 +214,7 @@ by the object iself.
 .. code-block :: php
 
     <?php
-    
+
     class Article
     {
         /**
@@ -253,10 +275,10 @@ Available Types:
 +---------------------------+--------------------------------------------------+
 | DateTime                  | PHP's DateTime object (default format/timezone)  |
 +---------------------------+--------------------------------------------------+
-| DateTime<"format">        | PHP's DateTime object (custom format/default     |
+| DateTime<'format'>        | PHP's DateTime object (custom format/default     |
 |                           | timezone)                                        |
 +---------------------------+--------------------------------------------------+
-| DateTime<"format", "zone">| PHP's DateTime object (custom format/timezone)   |
+| DateTime<'format', 'zone'>| PHP's DateTime object (custom format/timezone)   |
 +---------------------------+--------------------------------------------------+
 | T                         | Where T is a fully qualified class name.         |
 +---------------------------+--------------------------------------------------+
@@ -298,6 +320,11 @@ Examples:
          * @Type("DateTime")
          */
         private $createdAt;
+
+        /**
+         * @Type("DateTime<'Y-m-d'>")
+         */
+        private $updatedAt;
 
         /**
          * @Type("boolean")

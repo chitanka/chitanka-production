@@ -15,7 +15,6 @@ use \ModelCriteria;
 use \BaseObject;
 use \Persistent;
 
-use Symfony\Component\Form\Exception\FormException;
 use Symfony\Component\Form\Exception\StringCastException;
 use Symfony\Component\Form\Extension\Core\ChoiceList\ObjectChoiceList;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
@@ -84,7 +83,7 @@ class ModelChoiceList extends ObjectChoiceList
     {
         $this->class        = $class;
 
-        $queryClass         = $this->class . 'Query';
+        $queryClass         = $this->class.'Query';
         $query              = new $queryClass();
 
         $this->identifier   = $query->getTableMap()->getPrimaryKeys();
@@ -198,7 +197,7 @@ class ModelChoiceList extends ObjectChoiceList
     {
         if (!$this->loaded) {
             if (1 === count($this->identifier)) {
-                $filterBy = 'filterBy' . current($this->identifier)->getPhpName();
+                $filterBy = 'filterBy'.current($this->identifier)->getPhpName();
 
                 return (array) $this->query->create()
                     ->$filterBy($values)
@@ -289,7 +288,7 @@ class ModelChoiceList extends ObjectChoiceList
         $choices = $this->fixChoices($models);
         foreach ($this->getChoices() as $i => $choice) {
             foreach ($choices as $j => $givenChoice) {
-                if ($this->getIdentifierValues($choice) === $this->getIdentifierValues($givenChoice)) {
+                if (null !== $givenChoice && $this->getIdentifierValues($choice) === $this->getIdentifierValues($givenChoice)) {
                     $indices[] = $i;
                     unset($choices[$j]);
 
@@ -402,8 +401,6 @@ class ModelChoiceList extends ObjectChoiceList
      * @param object $model The model for which to get the identifier
      *
      * @return array
-     *
-     * @throws FormException If the model does not exist
      */
     private function getIdentifierValues($model)
     {
@@ -414,6 +411,10 @@ class ModelChoiceList extends ObjectChoiceList
         // readonly="true" models do not implement Persistent.
         if ($model instanceof BaseObject && method_exists($model, 'getPrimaryKey')) {
             return array($model->getPrimaryKey());
+        }
+
+        if (null === $model) {
+            return array();
         }
 
         return $model->getPrimaryKeys();

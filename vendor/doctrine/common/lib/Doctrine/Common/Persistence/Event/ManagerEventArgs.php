@@ -15,22 +15,22 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the MIT license. For more information, see
  * <http://www.doctrine-project.org>.
- */
+*/
 
 namespace Doctrine\Common\Persistence\Event;
 
-use Doctrine\Common\EventArgs;
 use Doctrine\Common\Persistence\ObjectManager;
 
 /**
  * Provides event arguments for the preFlush event.
  *
- * @link   www.doctrine-project.org
- * @since  2.2
- * @author Roman Borschel <roman@code-factory.de>
- * @author Benjamin Eberlei <kontakt@beberlei.de>
+ * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
+ * @link        www.doctrine-project.org
+ * @since       2.2
+ * @author      Roman Borschel <roman@code-factory.de>
+ * @author      Benjamin Eberlei <kontakt@beberlei.de>
  */
-class ManagerEventArgs extends EventArgs
+class ManagerEventArgs extends \Doctrine\Common\EventArgs
 {
     /**
      * @var ObjectManager
@@ -48,7 +48,7 @@ class ManagerEventArgs extends EventArgs
     }
 
     /**
-     * Retrieves the associated ObjectManager.
+     * Retrieve associated ObjectManager.
      *
      * @return ObjectManager
      */

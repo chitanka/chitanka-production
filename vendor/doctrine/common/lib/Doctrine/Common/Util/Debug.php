@@ -19,35 +19,32 @@
 
 namespace Doctrine\Common\Util;
 
-use Doctrine\Common\Persistence\Proxy;
-
 /**
  * Static class containing most used debug methods.
  *
- * @link   www.doctrine-project.org
- * @since  2.0
- * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
- * @author Jonathan Wage <jonwage@gmail.com>
- * @author Roman Borschel <roman@code-factory.org>
- * @author Giorgio Sironi <piccoloprincipeazzurro@gmail.com>
+ * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
+ * @link    www.doctrine-project.org
+ * @since   2.0
+ * @author  Guilherme Blanco <guilhermeblanco@hotmail.com>
+ * @author  Jonathan Wage <jonwage@gmail.com>
+ * @author  Roman Borschel <roman@code-factory.org>
+ * @author  Giorgio Sironi <piccoloprincipeazzurro@gmail.com>
  */
 final class Debug
 {
     /**
-     * Private constructor (prevents instantiation).
+     * Private constructor (prevents from instantiation)
+     *
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * Prints a dump of the public, protected and private properties of $var.
      *
      * @link http://xdebug.org/
-     *
-     * @param mixed   $var       The variable to dump.
-     * @param integer $maxDepth  The maximum nesting level for object properties.
-     * @param boolean $stripTags Whether output should strip HTML tags.
+     * @param mixed $var
+     * @param integer $maxDepth Maximum nesting level for object properties
+     * @param boolean $stripTags Flag that indicate if output should strip HTML tags
      */
     public static function dump($var, $maxDepth = 2, $stripTags = true)
     {
@@ -70,9 +67,10 @@ final class Debug
     }
 
     /**
-     * @param mixed $var
-     * @param int   $maxDepth
+     * Export
      *
+     * @param mixed $var
+     * @param int $maxDepth
      * @return mixed
      */
     public static function export($var, $maxDepth)
@@ -101,13 +99,9 @@ final class Debug
                     $reflClass = ClassUtils::newReflectionObject($var);
                     $return->__CLASS__ = ClassUtils::getClass($var);
 
-                    if ($var instanceof Proxy) {
+                    if ($var instanceof \Doctrine\Common\Persistence\Proxy) {
                         $return->__IS_PROXY__ = true;
                         $return->__PROXY_INITIALIZED__ = $var->__isInitialized();
-                    }
-
-                    if ($var instanceof \ArrayObject || $var instanceof \ArrayIterator) {
-                        $return->__STORAGE__ = self::export($var->getArrayCopy(), $maxDepth - 1);
                     }
 
                     foreach ($reflClass->getProperties() as $reflProperty) {
@@ -129,14 +123,13 @@ final class Debug
     }
 
     /**
-     * Returns a string representation of an object.
+     * Convert to string
      *
      * @param object $obj
-     *
      * @return string
      */
     public static function toString($obj)
     {
-        return method_exists($obj, '__toString') ? (string) $obj : get_class($obj) . '@' . spl_object_hash($obj);
+        return method_exists('__toString', $obj) ? (string) $obj : get_class($obj) . '@' . spl_object_hash($obj);
     }
 }

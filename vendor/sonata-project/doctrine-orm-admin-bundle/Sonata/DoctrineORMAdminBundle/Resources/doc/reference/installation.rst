@@ -1,25 +1,36 @@
 Installation
 ============
 
-First install the Sonata Admin Bundle which provides Core functionalities. The ``EntityAudit`` is an optional
-history feature (https://github.com/simplethings/EntityAudit).
+SonataDoctrineORMAdminBundle is part of a set of bundles aimed at abstracting 
+storage connectivity for SonataAdminBundle. As such, SonataDoctrineORMAdminBundle
+depends on SonataAdminBundle, and will not work without it. 
 
-Download bundles
-----------------
+.. note::
+    These installation instructions are meant to be used only as part of SonataAdminBundle's
+    installation process, which is documented `here <http://sonata-project.org/bundles/admin/master/doc/reference/installation.html>`_.
+    
+Download the bundle
+-------------------
 
-Use composer ::
+Use composer:
+
+.. code-block:: bash
 
     php composer.phar require sonata-project/doctrine-orm-admin-bundle
 
-    # optional bundle
-    php composer.phar require simplethings/entity-audit-bundle
+You'll be asked to type in a version constraint. 'dev-master' will usually get you the latest, bleeding edge
+version. Check `packagist <https://packagist.org/packages/sonata-project/doctrine-orm-admin-bundle>`_
+for stable and legacy versions:
+
+.. code-block:: bash
+
+    Please provide a version constraint for the sonata-project/doctrine-orm-admin-bundle requirement: dev-master
 
 
-Configuration
--------------
+Enable the bundle
+-----------------
 
-Next, be sure to enable the bundles in your autoload.php and AppKernel.php
-files:
+Next, be sure to enable the bundle in your AppKernel.php file:
 
 .. code-block:: php
 
@@ -29,8 +40,13 @@ files:
     {
         return array(
             // ...
+            // set up basic sonata requirements
+            // ...
             new Sonata\DoctrineORMAdminBundle\SonataDoctrineORMAdminBundle(),
-            new SimpleThings\EntityAudit\SimpleThingsEntityAuditBundle(),
             // ...
         );
     }
+
+.. note::
+    Don't forget that, as part of `SonataAdminBundle's installation instructions <http://sonata-project.org/bundles/admin/master/doc/reference/installation.html>`_,
+    you need to enable additional bundles on AppKernel.php

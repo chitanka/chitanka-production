@@ -75,6 +75,9 @@ class StringUtil
         // lives (life), wives (wife)
         array('sevi', 4, false, true, 'ife'),
 
+        // moves (move)
+        array('sevom', 5, true, true, 'move'),
+
         // hooves (hoof), dwarves (dwarf), elves (elf), leaves (leaf)
         array('sev', 3, true, true, 'f'),
 
@@ -168,13 +171,13 @@ class StringUtil
                         $singulars = array();
 
                         foreach ($newSuffix as $newSuffixEntry) {
-                            $singulars[] = $newBase . ($firstUpper ? ucfirst($newSuffixEntry) : $newSuffixEntry);
+                            $singulars[] = $newBase.($firstUpper ? ucfirst($newSuffixEntry) : $newSuffixEntry);
                         }
 
                         return $singulars;
                     }
 
-                    return $newBase . ($firstUpper ? ucFirst($newSuffix) : $newSuffix);
+                    return $newBase.($firstUpper ? ucFirst($newSuffix) : $newSuffix);
                 }
 
                 // Suffix is longer than word

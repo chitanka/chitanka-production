@@ -1,4 +1,5 @@
 <?php
+
 /*
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -22,27 +23,23 @@ namespace Doctrine\Common\Reflection;
 interface ReflectionProviderInterface
 {
     /**
-     * Gets the ReflectionClass equivalent for this class.
+     * Get the ReflectionClass equivalent for this class.
      *
-     * @return \ReflectionClass
+     * @return ReflectionClass
      */
     public function getReflectionClass();
 
     /**
-     * Gets the ReflectionMethod equivalent for this class.
+     * Get the ReflectionClass equivalent for this class.
      *
-     * @param string $name
-     *
-     * @return \ReflectionMethod
+     * @return ReflectionMethod
      */
     public function getReflectionMethod($name);
 
     /**
-     * Gets the ReflectionProperty equivalent for this class.
+     * Get the ReflectionClass equivalent for this class.
      *
-     * @param string $name
-     *
-     * @return \ReflectionProperty
+     * @return ReflectionMethod
      */
     public function getReflectionProperty($name);
 }

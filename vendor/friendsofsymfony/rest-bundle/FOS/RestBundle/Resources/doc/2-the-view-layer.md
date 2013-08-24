@@ -78,15 +78,14 @@ the important ones for configuring the view:
 * ``setData($data)`` - Set the object graph or list of objects to serialize.
 * ``setHeader($name, $value)`` - Set a header to put on the HTTP response.
 * ``setHeaders(array $headers)`` - Set multiple headers to put on the HTTP response.
-* ``setSerializerVersion($version)`` - Set the version of the serialization format to use.
-* ``setSerializerGroups($groups)`` - Set the groups for serialization.
-* ``setSerializerCallback($callback)`` - Set a callback that receives the serializer for configuration purposes.
+* ``setSerializationContext($context)`` - Set the serialization context to use.
 * ``setTemplate($name)`` - Name of the template to use in case of HTML rendering.
 * ``setTemplateVar($name)`` - Name of the variable the data is in, when passed to HTML template. Defaults to ``'data'``.
 * ``setEngine($name)`` - Name of the engine to render HTML template. Can be autodetected.
 * ``setFormat($format)`` - The format the response is supposed to be rendered in. Can be autodetected using HTTP semantics.
 * ``setLocation($location)`` - The location to redirect to with a response.
 * ``setRoute($route)`` - The route to redirect to with a response.
+* ``setRouteParameters($parameters)`` - Set the parameters for the route.
 * ``setResponse(Response $response)`` - The response instance that is populated by the ``ViewHandler``.
 
 See the following example code for more details:
@@ -213,6 +212,44 @@ class UsersController extends Controller
         return $handler->handle($view);
     }
 }
+```
+
+#### Jsonp custom handler
+
+To enable the common use case of creating Jsonp responses this Bundle provides an
+easy solution to handle a custom handler for this use case. Enabling this setting
+also automatically uses the mime type listener (see the next chapter) to register
+a mime type for Jsonp.
+
+Simply add the following to your configuration
+
+```yaml
+# app/config/config.yml
+fos_rest:
+    view:
+        jsonp_handler: ~
+```
+
+It is also possible to customize both the name of the GET parameter with the callback,
+as well as the filter pattern that validates if the provided callback is valid or not.
+
+```yaml
+# app/config/config.yml
+fos_rest:
+    view:
+        jsonp_handler:
+           callback_param:       mycallback
+           callback_filter:      /^[a-z0-9_]+$/i
+```
+
+Finally the filter can also be disabled by setting it to false.
+
+```yaml
+# app/config/config.yml
+fos_rest:
+    view:
+        jsonp_handler:
+            callback_param:       false
 ```
 
 ## That was it!

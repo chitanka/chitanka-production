@@ -115,7 +115,9 @@ This also allows you to have multiple converters in one action::
 In the example above, the post parameter is handled automatically, but the comment is 
 configured with the annotation since they can not both follow the default convention.
 
-If you want to match an entity using multiple fields use ``mapping``::
+If you want to match an entity using multiple fields use the ``mapping`` hash
+option: the key is route placeholder name and the value is the Doctrine
+field name::
 
     /**
      * @Route("/blog/{date}/{slug}/comments/{comment_slug}")
@@ -217,13 +219,13 @@ To register your converter service you must add a tag to your service
         # app/config/config.yml
         services:
             my_converter:
-                class:        MyBundle/Request/ParamConverter/MyConverter
+                class:        MyBundle\Request\ParamConverter\MyConverter
                 tags:
                     - { name: request.param_converter, priority: -2, converter: my_converter }
 
     .. code-block:: xml
 
-        <service id="my_converter" class="MyBundle/Request/ParamConverter/MyConverter">
+        <service id="my_converter" class="MyBundle\Request\ParamConverter\MyConverter">
             <tag name="request.param_converter" priority="-2" converter="my_converter" />
         </service>
 

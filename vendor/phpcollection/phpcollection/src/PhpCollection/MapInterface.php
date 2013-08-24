@@ -18,8 +18,6 @@
 
 namespace PhpCollection;
 
-use PhpOption\Option;
-
 /**
  * Basic map interface.
  *

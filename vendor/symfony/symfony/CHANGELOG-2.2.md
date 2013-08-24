@@ -7,6 +7,20 @@ in 2.2 minor versions.
 To get the diff for a specific change, go to https://github.com/symfony/symfony/commit/XXX where XXX is the change hash
 To get the diff between two versions, go to https://github.com/symfony/symfony/compare/v2.2.0...v2.2.1
 
+* 2.2.4 (2013-07-15)
+
+ * 52e530d: Fixed NativeSessionStorage:regenerate when does not exists
+ * bb59f40: Reverts JSON_NUMERIC_CHECK
+ * 9c5f8c6: [Yaml] removed wrong comment removal inside a string block
+ * 2dc1ee0: [HtppKernel] fixed inline fragment renderer
+ * 06b69b8: fixed inline fragment renderer
+ * 91bb757: ProgressHelper shows percentage complete.
+ * 9d1004b: fix handling of a default 'template' as a string
+ * 82dbaee: [HttpKernel] fixed the inline renderer when passing objects as attributes (closes #7124)
+ * 6dbd1e1: [WebProfiler] fix content-type parameter
+ * a830001: Passed the config when building the Configuration in ConfigurableExtension
+ * c875d0a: [Form] fixed INF usage which does not work on Solaris (closes #8246)
+
 * 2.2.3 (2013-06-19)
 
  * c0da3ae: [Process] Disable exception on stream_select timeout
@@ -95,7 +109,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 * 2.2.1 (2013-04-06)
 
  * 751abe1: Doctrine cannot handle bare random non-utf8 strings
- * 673fd9b:  idAsIndex should be true with a smallint or bigint id field.
+ * 673fd9b: idAsIndex should be true with a smallint or bigint id field.
  * 64a1d39: Fixed long multibyte parameter logging in DbalLogger:startQuery
  * 4cf06c1: Keep the file extension in the temporary copy and test that it exists (closes #7482)
  * 64ac34d: [Security] fixed wrong interface
@@ -117,7 +131,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * 6575df6: [Security] use current request attributes to generate redirect url?
  * 7216cb0: [Validator] fix showing wrong max file size for upload errors
  * c423f16: [2.1][TwigBridge] Fixes Issue #7342 in TwigBridge
- * 7d87ecd: [FrameworkBundle] fixed cahe:clear command's warmup
+ * 7d87ecd: [FrameworkBundle] fixed cache:clear command's warmup
  * 5ad4bd1: [TwigBridge] now enter/leave scope on Twig_Node_Module
  * fe4cc24: [TwigBridge] fixed fixed scope & trans_default_domain node visitor
  * fc47589: [BrowserKit] added ability to ignored malformed set-cookie header
