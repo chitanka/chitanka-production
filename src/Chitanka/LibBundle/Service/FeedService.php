@@ -13,8 +13,14 @@ class FeedService
 
 	public function removeScriptContent($contents)
 	{
-		$contents = preg_replace('|<\s*script[^>]*>.*<\s*/\s*script\s*>|Ums', '', $contents);
-		return $contents;
+		$dirtyContents = $contents;
+		while (true) {
+			$cleanedContents = preg_replace('|<\s*script[^>]*>.*<\s*/\s*script\s*>|Ums', '', $dirtyContents);
+			if ($cleanedContents === $dirtyContents) {
+				return $cleanedContents;
+			}
+			$dirtyContents = $cleanedContents;
+		}
 	}
 
 	public function removeImageBeacons($contents)
