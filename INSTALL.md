@@ -139,7 +139,6 @@ app/cache, app/logs, web/cache
 		}
 
 		location ~ /(index|index_dev)\.php($|/) {
-		location ~ ^/(index|index_dev)\.php(/|$) {
 			fastcgi_pass 127.0.0.1:9000;
 			# or thru a unix socket
 			#fastcgi_pass unix:/var/run/php5-fpm.sock;
@@ -148,23 +147,16 @@ app/cache, app/logs, web/cache
 		}
 
 		location /bundles/lib {
-			if (-f $request_filename) {
-				break;
-			}
-			if (-f $document_root/cache$request_uri) {
-				rewrite . /cache$request_uri break;
-			}
-			rewrite ^/(bundles/lib/(css|js))/(.+) /$1/index.php?$1/$3 last;
+			try_files /cache$request_uri @asset_generator;
 		}
-
+		location @asset_generator {
+			rewrite ^/(bundles/lib/(css|js))/(.+) /$1/index.php?$1/$3;
+		}
 		location /thumb {
-			if (-f $request_filename) {
-				break;
-			}
-			if (-f $document_root/cache$request_uri) {
-				rewrite . /cache$request_uri break;
-			}
-			rewrite ^/thumb/(.+) /thumb/index.php?$1 last;
+			try_files /cache$request_uri @thumb_generator;
+		}
+		location @thumb_generator {
+			rewrite ^/thumb/(.+) /thumb/index.php?$1;
 		}
 
 	}

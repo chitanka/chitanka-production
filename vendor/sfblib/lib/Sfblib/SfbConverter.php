@@ -1568,7 +1568,9 @@ class Sfblib_SfbConverter
 
 	protected function doParagraphStart()
 	{
-		$this->saveStartTag($this->paragraphElement);
+		$this->saveStartTag($this->paragraphElement, array(
+			'id' => 'p-'.$this->linecnt,
+		));
 	}
 
 	protected function doParagraphEnd()
