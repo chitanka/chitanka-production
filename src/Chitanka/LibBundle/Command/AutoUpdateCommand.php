@@ -127,14 +127,15 @@ EOT
 		$updater = new SourceUpdater($rootDir, $updateDir);
 		$updater->lockFrontController();
 		$updater->extractArchive($zip);
-		$this->clearAppCache("$rootDir/app/cache/prod");
+		$this->clearAppCache();
 		$updater->unlockFrontController();
 
 		return true;
 	}
 
-	private function clearAppCache($cacheDir)
+	private function clearAppCache()
 	{
+		$cacheDir = $this->getApplication()->getKernel()->getCacheDir();
 		$cacheDirOld = $cacheDir.'_old_'.time();
 		$fs = new \Symfony\Component\Filesystem\Filesystem;
 		try {
@@ -150,9 +151,10 @@ EOT
 
 	private function runCommand($commandName)
 	{
-		$command = $this->getApplication()->find($commandName);
-		$arguments = array('command' => $commandName);
-		return $command->run(new ArrayInput($arguments), $this->output);
+		$php = isset($_SERVER['_']) ? $_SERVER['_'] : PHP_BINDIR.'/php'; // PHP_BINARY available since 5.4
+		$rootDir = $this->getApplication()->getKernel()->getRootDir();
+		$environment = $this->getApplication()->getKernel()->getEnvironment();
+		shell_exec("$php $rootDir/console $commandName --env=$environment");
 	}
 
 	/** @return \ZipArchive */
