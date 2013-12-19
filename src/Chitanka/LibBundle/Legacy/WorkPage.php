@@ -64,10 +64,9 @@ class WorkPage extends Page {
 
 		$fileWhiteList = array(
 			'txt', 'sfb', 'fb2',
-			'zip', 'rar',
-			'7z', 'gz', 'tar', 'tgz', 'bz2',
-			'odt', 'pdf', 'doc', 'rtf', 'djvu',
-			'jpg', 'png', 'gif',
+			'zip', '7z', 'gz', 'tar', 'tgz', 'bz2',
+			'odt', 'rtf', 'pdf', 'djvu',
+			'jpg', 'png',
 		);
 
 
