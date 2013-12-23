@@ -22,7 +22,7 @@ use Symfony\Component\Form\Exception\BadMethodCallException;
 class Button implements \IteratorAggregate, FormInterface
 {
     /**
-     * @var FormInterface
+     * @var FormInterface|null
      */
     private $parent;
 
@@ -200,7 +200,8 @@ class Button implements \IteratorAggregate, FormInterface
      */
     public function setData($modelData)
     {
-        throw new BadMethodCallException('Buttons cannot have data.');
+        // called during initialization of the form tree
+        // noop
     }
 
     /**

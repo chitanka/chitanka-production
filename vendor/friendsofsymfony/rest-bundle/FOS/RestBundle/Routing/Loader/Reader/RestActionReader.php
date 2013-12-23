@@ -184,6 +184,8 @@ class RestActionReader
         $defaults     = array('_controller' => $method->getName());
         $requirements = array('_method' => strtoupper($httpMethod));
         $options      = array();
+        $host         = '';
+        $schemes      = array();
 
         $annotation = $this->readRouteAnnotation($method);
         if ($annotation) {
@@ -197,6 +199,13 @@ class RestActionReader
             $requirements = array_merge($requirements, $annoRequirements);
             $options      = array_merge($options, $annotation->getOptions());
             $defaults     = array_merge($defaults, $annotation->getDefaults());
+            //TODO remove checks after Symfony requirement is bumped to 2.2
+            if (method_exists($annotation, 'getHost')) {
+                $host = $annotation->getHost(); 
+            }
+            if (method_exists($annotation, 'getSchemes')) {
+                $schemes = $annotation->getSchemes();
+            }
         }
 
         if ($this->includeFormat === true) {
@@ -209,7 +218,7 @@ class RestActionReader
 
         // add route to collection
         $collection->add($routeName, new Route(
-            $pattern, $defaults, $requirements, $options
+            $pattern, $defaults, $requirements, $options, $host, $schemes
         ));
     }
 
@@ -226,9 +235,16 @@ class RestActionReader
         if ('_' === substr($method->getName(), 0, 1)) {
             return false;
         }
-
-        // if method has NoRoute annotation - skip
-        if ($this->readMethodAnnotation($method, 'NoRoute')) {
+        
+        $hasNoRouteMethod = (bool) $this->readMethodAnnotation($method, 'NoRoute');
+        $hasNoRouteClass = (bool) $this->readClassAnnotation($method->getDeclaringClass(), 'NoRoute');
+        
+        $hasNoRoute = $hasNoRoute = $hasNoRouteMethod || $hasNoRouteClass;
+        // since NoRoute extends Route we need to exclude all the method NoRoute annotations
+        $hasRoute = (bool) $this->readMethodAnnotation($method, 'Route') && !$hasNoRouteMethod;
+        
+        // if method has NoRoute annotation and does not have Route annotation - skip
+        if ($hasNoRoute && !$hasRoute) {
             return false;
         }
 
@@ -363,6 +379,7 @@ class RestActionReader
             } elseif (null !== $resource) {
                 if ((0 === count($arguments) && !in_array($httpMethod, $this->availableHTTPMethods))
                     || 'new' === $httpMethod
+                    || 'post' === $httpMethod
                 ) {
                     $urlParts[] = $this->inflector->pluralize(strtolower($resource));
                 } else {
@@ -413,6 +430,23 @@ class RestActionReader
             if ($annotation = $this->readMethodAnnotation($reflection, $annotationName)) {
                 return $annotation;
             }
+        }
+    }
+
+    /**
+     * Reads class annotations.
+     *
+     * @param ReflectionClass $reflection     controller class
+     * @param string          $annotationName annotation name
+     *
+     * @return Annotation|null
+     */
+    private function readClassAnnotation(\ReflectionClass $reflection, $annotationName)
+    {
+        $annotationClass = "FOS\\RestBundle\\Controller\\Annotations\\$annotationName";
+
+        if ($annotation = $this->annotationReader->getClassAnnotation($reflection, $annotationClass)) {
+            return $annotation;
         }
     }
 

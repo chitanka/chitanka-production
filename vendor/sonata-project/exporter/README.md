@@ -6,6 +6,21 @@ Data Exporter
 
 Data Exporter is a lightweight library to export data into different formats.
 
+### Installation using Composer
+
+Add the dependency:
+
+```bash
+php composer.phar require sonata-project/exporter
+```
+
+If asked for a version, type in 'dev-master' (unless you want another version):
+
+```bash
+Please provide a version constraint for the sonata-project/exporter requirement: dev-master
+```
+
+### Usage
 
 ```php
 
@@ -25,8 +40,16 @@ Handler::create($source, $writer)->export();
 
 ```
 
+### Google Groups
 
-**Google Groups**: For questions and proposals you can post on this google groups
+For questions and proposals you can post on this google groups
 
 * [Sonata Users](https://groups.google.com/group/sonata-users): Only for user questions
 * [Sonata Devs](https://groups.google.com/group/sonata-devs): Only for devs
+ 
+
+### Note for symfony2 users
+
+* For >= symfony2.2, use tag 1.3.1
+* For symfony2.1, use tag 1.2.3
+* For symfony2.0, use tag 1.1.0

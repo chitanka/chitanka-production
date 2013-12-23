@@ -15,7 +15,7 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-use FOS\Rest\Util\Codes;
+use FOS\RestBundle\Util\Codes;
 
 /**
  * This class contains the configuration information for the bundle
@@ -41,6 +41,7 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
+                ->scalarNode('disable_csrf_role')->defaultNull()->end()
                 ->arrayNode('access_denied_listener')
                     ->useAttributeAsKey('name')
                     ->prototype('boolean')->end()
@@ -81,7 +82,7 @@ class Configuration implements ConfigurationInterface
                 ->end()
                 ->arrayNode('serializer')
                     ->validate()
-                        ->ifTrue(function($v) { return !empty($v['version']) && !empty($v['groups']); })
+                        ->ifTrue(function ($v) { return !empty($v['version']) && !empty($v['groups']); })
                         ->thenInvalid('Only either a version or a groups exclusion strategy can be set')
                     ->end()
                     ->addDefaultsIfNotSet()
@@ -143,13 +144,14 @@ class Configuration implements ConfigurationInterface
                         ->end()
                         ->scalarNode('failed_validation')->defaultValue(Codes::HTTP_BAD_REQUEST)->end()
                         ->scalarNode('empty_content')->defaultValue(Codes::HTTP_NO_CONTENT)->end()
+                        ->scalarNode('exception_wrapper_handler')->defaultValue('FOS\RestBundle\View\ExceptionWrapperHandler')->end()
                         ->booleanNode('serialize_null')->defaultFalse()->end()
                         ->arrayNode('jsonp_handler')
                             ->canBeUnset()
                             ->children()
                                 ->scalarNode('callback_param')->defaultValue('callback')->end()
                                 ->scalarNode('callback_filter')->defaultValue('/(^[a-z0-9_]+$)|(^YUI\.Env\.JSONP\._[0-9]+$)/i')->end()
-                                ->scalarNode('mime_type')->defaultValue('application/javascript')->end()
+                                ->scalarNode('mime_type')->defaultValue('application/javascript+jsonp')->end()
                             ->end()
                         ->end()
                     ->end()
@@ -181,16 +183,33 @@ class Configuration implements ConfigurationInterface
         $rootNode
             ->children()
                 ->arrayNode('format_listener')
-                    ->fixXmlConfig('default_priority', 'default_priorities')
+                    ->fixXmlConfig('rule', 'rules')
                     ->addDefaultsIfNotSet()
                     ->canBeUnset()
                     ->children()
-                        ->arrayNode('default_priorities')
-                            ->defaultValue(array('html', '*/*'))
-                            ->prototype('scalar')->end()
+                        ->arrayNode('rules')
+                            ->cannotBeOverwritten()
+                            ->prototype('array')
+                                ->fixXmlConfig('priority', 'priorities')
+                                ->children()
+                                    ->scalarNode('path')->defaultNull()->info('URL path info')->end()
+                                    ->scalarNode('host')->defaultNull()->info('URL host name')->end()
+                                    ->booleanNode('prefer_extension')->defaultTrue()->end()
+                                    ->scalarNode('fallback_format')->defaultValue('html')->end()
+                                    ->arrayNode('priorities')
+                                        ->beforeNormalization()->ifString()->then(function ($v) { return preg_split('/\s*,\s*/', $v); })->end()
+                                        ->prototype('scalar')->end()
+                                    ->end()
+                                ->end()
+                            ->end()
                         ->end()
-                        ->booleanNode('prefer_extension')->defaultTrue()->end()
-                        ->scalarNode('fallback_format')->defaultValue('html')->end()
+                        ->arrayNode('media_type')
+                            ->children()
+                                ->scalarNode('version_regex')
+                                    ->defaultValue('/(v|version)=(?P<version>[0-9\.]+)/')
+                                ->end()
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end();

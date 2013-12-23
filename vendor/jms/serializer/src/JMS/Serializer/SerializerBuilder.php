@@ -2,13 +2,13 @@
 
 /*
  * Copyright 2013 Johannes M. Schmitt <schmittjoh@gmail.com>
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@
 namespace JMS\Serializer;
 
 use JMS\Serializer\Handler\PhpCollectionHandler;
+use JMS\Serializer\Handler\PropelCollectionHandler;
 use JMS\Serializer\Exception\RuntimeException;
 use Metadata\MetadataFactory;
 use JMS\Serializer\Metadata\Driver\AnnotationDriver;
@@ -115,6 +116,7 @@ class SerializerBuilder
         $this->handlerRegistry->registerSubscribingHandler(new DateHandler());
         $this->handlerRegistry->registerSubscribingHandler(new PhpCollectionHandler());
         $this->handlerRegistry->registerSubscribingHandler(new ArrayCollectionHandler());
+        $this->handlerRegistry->registerSubscribingHandler(new PropelCollectionHandler());
 
         return $this;
     }

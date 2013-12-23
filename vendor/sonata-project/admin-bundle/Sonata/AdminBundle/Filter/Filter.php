@@ -23,10 +23,6 @@ abstract class Filter implements FilterInterface
 
     protected $condition;
 
-    const CONDITION_OR = 'OR';
-
-    const CONDITION_AND = 'AND';
-
     /**
      * {@inheritdoc}
      */
@@ -197,13 +193,15 @@ abstract class Filter implements FilterInterface
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public function isActive()
     {
         $values = $this->getValue();
 
-        return !empty($values['value']);
+        return isset($values['value'])
+            && false !== $values['value']
+            && "" !== $values['value'];
     }
 
     /**
@@ -217,10 +215,18 @@ abstract class Filter implements FilterInterface
     }
 
     /**
-     * @return
+     * @return string
      */
     public function getCondition()
     {
         return $this->condition;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getTranslationDomain()
+    {
+        return $this->getOption('translation_domain');
     }
 }

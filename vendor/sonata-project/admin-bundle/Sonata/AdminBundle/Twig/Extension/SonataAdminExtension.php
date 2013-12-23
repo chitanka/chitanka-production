@@ -54,7 +54,7 @@ class SonataAdminExtension extends \Twig_Extension
             'render_view_element'     => new \Twig_Filter_Method($this, 'renderViewElement', array('is_safe' => array('html'))),
             'render_relation_element' => new \Twig_Filter_Method($this, 'renderRelationElement'),
             'sonata_urlsafeid'        => new \Twig_Filter_Method($this, 'getUrlsafeIdentifier'),
-            'sonata_slugify'          => new \Twig_Filter_Method($this, 'slugify'),
+            'sonata_xeditable_type'   => new \Twig_Filter_Method($this, 'getXEditableType'),
         );
     }
 
@@ -204,14 +204,14 @@ class SonataAdminExtension extends \Twig_Extension
      */
     public function renderRelationElement($element, FieldDescriptionInterface $fieldDescription)
     {
-        $method = $fieldDescription->getOption('associated_tostring', '__toString');
-
         if (!is_object($element)) {
             return $element;
         }
 
+        $method = $fieldDescription->getOption('associated_tostring', '__toString');
+
         if (!method_exists($element, $method)) {
-            throw new \RunTimeException(sprintf('You must define an `associated_tostring` option or create a `%s::__toString` method to the field option %s from service %s is ', get_class($element), $fieldDescription->getName(), $fieldDescription->getAdmin()->getCode()));
+            throw new \RunTimeException(sprintf('You must define an `associated_tostring` option or create a `%s::__toString` method to the field option "%s" from service "%s".', get_class($element), $fieldDescription->getName(), $fieldDescription->getAdmin()->getCode()));
         }
 
         return call_user_func(array($element, $method));
@@ -234,31 +234,26 @@ class SonataAdminExtension extends \Twig_Extension
     }
 
     /**
-     * Slugify a text
+     * @param $type
      *
-     * @param $text
-     *
-     * @return string
+     * @return string|bool
      */
-    public function slugify($text)
+    public function getXEditableType($type)
     {
-        // replace non letter or digits by -
-        $text = preg_replace('~[^\\pL\d]+~u', '-', $text);
+        $mapping = array(
+            'text'       => 'text',
+            'textarea'   => 'textarea',
+            'email'      => 'email',
+            'string'     => 'text',
+            'smallint'   => 'text',
+            'bigint'     => 'text',
+            'integer'    => 'number',
+            'decimal'    => 'number',
+            'currency'   => 'number',
+            'percent'    => 'number',
+            'url'        => 'url',
+        );
 
-        // trim
-        $text = trim($text, '-');
-
-        // transliterate
-        if (function_exists('iconv')) {
-            $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
-        }
-
-        // lowercase
-        $text = strtolower($text);
-
-        // remove unwanted characters
-        $text = preg_replace('~[^-\w]+~', '', $text);
-
-        return $text;
+        return isset($mapping[$type]) ? $mapping[$type] : false;
     }
 }

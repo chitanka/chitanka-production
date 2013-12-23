@@ -22,7 +22,7 @@ use JMS\Serializer\SerializationContext;
 
 use FOS\RestBundle\View\View;
 
-use FOS\Rest\Util\Codes;
+use FOS\RestBundle\Util\Codes;
 
 /**
  * The ViewResponseListener class handles the View core event as well as the "@extra:Template" annotation.
@@ -72,10 +72,11 @@ class ViewResponseListener extends TemplateListener
     public function onKernelView(GetResponseForControllerResultEvent $event)
     {
         $request = $event->getRequest();
+        /** @var \FOS\RestBundle\Controller\Annotations\View $configuration */
         $configuration = $request->attributes->get('_view');
 
         $view = $event->getControllerResult();
-        if (!$view instanceOf View) {
+        if (!$view instanceof View) {
             if (!$configuration && !$this->container->getParameter('fos_rest.view_response_listener.force_view')) {
                 return parent::onKernelView($event);
             }
@@ -95,6 +96,14 @@ class ViewResponseListener extends TemplateListener
                 $context->setGroups($configuration->getSerializerGroups());
                 $view->setSerializationContext($context);
             }
+            if ($configuration->getSerializerEnableMaxDepthChecks()) {
+                $context = $view->getSerializationContext() ?: new SerializationContext();
+                $context->enableMaxDepthChecks();
+                $view->setSerializationContext($context);
+            }
+            $populateDefaultVars = $configuration->isPopulateDefaultVars();
+        } else {
+            $populateDefaultVars = true;
         }
 
         if (null === $view->getFormat()) {
@@ -102,7 +111,7 @@ class ViewResponseListener extends TemplateListener
         }
 
         $vars = $request->attributes->get('_template_vars');
-        if (!$vars) {
+        if (!$vars && $populateDefaultVars) {
             $vars = $request->attributes->get('_template_default_vars');
         }
 

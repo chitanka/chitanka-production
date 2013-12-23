@@ -384,7 +384,13 @@ class ModelManager implements ModelManagerInterface
         $query->setFirstResult($firstResult);
         $query->setMaxResults($maxResult);
 
-        return new DoctrineORMQuerySourceIterator($query instanceof ProxyQuery ? $query->getQuery() : $query, $fields);
+        if ($query instanceof ProxyQueryInterface) {
+            $query->addOrderBy($query->getSortBy(), $query->getSortOrder());
+
+            $query = $query->getQuery();
+        }
+
+        return new DoctrineORMQuerySourceIterator($query, $fields);
     }
 
     /**
@@ -412,18 +418,17 @@ class ModelManager implements ModelManagerInterface
     {
         $values = $datagrid->getValues();
 
-        if ($fieldDescription->getName() == $values['_sort_by']->getName()) {
+        if ($fieldDescription->getName() == $values['_sort_by']->getName() || $values['_sort_by']->getName() === $fieldDescription->getOption('sortable')) {
             if ($values['_sort_order'] == 'ASC') {
                 $values['_sort_order'] = 'DESC';
             } else {
                 $values['_sort_order'] = 'ASC';
             }
-
-            $values['_sort_by']    = $fieldDescription->getName();
         } else {
             $values['_sort_order'] = 'ASC';
-            $values['_sort_by']    = $fieldDescription->getName();
         }
+
+        $values['_sort_by'] = is_string($fieldDescription->getOption('sortable')) ? $fieldDescription->getOption('sortable') :  $fieldDescription->getName();
 
         return array('filter' => $values);
     }

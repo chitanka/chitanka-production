@@ -1,8 +1,54 @@
 Upgrading
 =========
 
-Note as FOSRestBundle is not yet declared stable, this document will be updated to
-list important BC breaks.
+This document will be updated to list important BC breaks and behavioral changes.
+
+### upgrading to 2.0.0 (unreleased)
+
+ * RedirectView and RouteRedirect view were removed. Use View::createRedirect and
+   View::createRouteRedirect instead. Note: the default status code for a route redirect
+   has changed from HTTP_CREATED (201) to HTTP_FOUND (302).
+
+### upgrading from 1.0.0-RC1
+
+ * The Bundle no longer depends on "friendsofsymfony/rest" and as a result several class names have changed.
+   Specifically ``FOS\Rest\Util\Codes`` is now ``FOS\RestBundle\Util\Codes`` and also the sub-namespace for
+   the decoders has changed from ``FOS\Rest\Decoder`` to ``FOS\RestBundle\Decoder``. In practice it should be
+   sufficient to simply search replace ``FOS\Rest\`` with ``FOS\RestBundle\`.
+ * The XmlDecoder now has a dependency on "symfony/serializer"
+
+### upgrading from 0.13.1
+
+ * ExceptionController::showAction() doesn't have type hint on the $exception object anymore due to a BC change
+   in symfony/symfony 2.3.5, see https://github.com/FriendsOfSymfony/FOSRestBundle/pull/565
+
+ * POST routes now pluralize the resource name, ie. /users vs. /user
+
+ * The response for non-valid Forms has changed. See https://github.com/FriendsOfSymfony/FOSRestBundle/blob/master/Resources/doc/2-the-view-layer.md#forms-and-views
+
+ * The default error message structure has changed.
+
+    _Old structure_
+
+        {
+          "status": "error",
+          "status_code": 400,
+          "status_text": "Bad Request",
+          "current_content": "",
+          "message": "New comment is not valid."
+        }
+
+    _New structure_
+
+        {
+          "code": 400,
+          "message": "New comment is not valid.";
+        }
+
+    _Alternatively you can inject your own implementation. See https://github.com/FriendsOfSymfony/FOSRestBundle/blob/master/Resources/doc/2-the-view-layer.md#forms-and-views_
+
+ * The ``format_listener`` configuration has changed to allow different settings per host/path.
+   Finally the signature of FormatNegotiatorInterface::getBestFormat() changed.
 
 ### upgrading from 0.12.0
 

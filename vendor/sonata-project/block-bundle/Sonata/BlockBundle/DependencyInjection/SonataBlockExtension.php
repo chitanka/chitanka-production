@@ -50,6 +50,7 @@ class SonataBlockExtension extends Extension
         $this->configureForm($container, $config);
         $this->configureProfiler($container, $config);
         $this->configureException($container, $config);
+        $this->configureMenus($container, $config);
         $this->configureClassesToCompile();
 
         $bundles = $container->getParameter('kernel.bundles');
@@ -63,6 +64,15 @@ class SonataBlockExtension extends Extension
 
         $container->getDefinition('sonata.block.twig.global')
             ->replaceArgument(1, $config['templates']);
+    }
+
+    /**
+     * @param ContainerBuilder $container
+     * @param array            $config
+     */
+    public function configureMenus(ContainerBuilder $container, array $config)
+    {
+        $container->getDefinition('sonata.block.service.menu')->replaceArgument(3, $config['menus']);
     }
 
     /**
@@ -85,6 +95,13 @@ class SonataBlockExtension extends Extension
      */
     public function configureCache(ContainerBuilder $container, array $config)
     {
+        $container->setAlias('sonata.block.cache.handler', $config['http_cache']['handler']);
+
+        if ($config['http_cache']['listener']) {
+            $container->getDefinition($config['http_cache']['handler'])
+                ->addTag('kernel.event_listener', array('event' => 'kernel.response', 'method' => 'onKernelResponse'));
+        }
+
         $cacheBlocks = array();
         foreach ($config['blocks'] as $service => $settings) {
             $cacheBlocks['by_type'][$service] = $settings['cache'];
@@ -150,24 +167,17 @@ class SonataBlockExtension extends Extension
      */
     public function configureProfiler(ContainerBuilder $container, array $config)
     {
+        $container->setAlias('sonata.block.renderer', 'sonata.block.renderer.default');
+
         if (!$config['profiler']['enabled']) {
-            $container->setAlias('sonata.block.renderer', 'sonata.block.renderer.default');
-
-            $container->removeDefinition('sonata.block.renderer.traceable');
-
             return;
         }
-
-        $container->setAlias('sonata.block.renderer', 'sonata.block.renderer.traceable');
-        $container
-            ->getDefinition('sonata.block.renderer.traceable')
-            ->replaceArgument(0, new Reference('sonata.block.renderer.default'));
 
         // add the block data collector
         $definition = new Definition('Sonata\BlockBundle\Profiler\DataCollector\BlockDataCollector');
         $definition->setPublic(false);
         $definition->addTag('data_collector', array('id' => 'block', 'template' => $config['profiler']['template']));
-        $definition->addArgument(new Reference('sonata.block.renderer.traceable'));
+        $definition->addArgument(new Reference('sonata.block.templating.helper'));
         $definition->addArgument($config['profiler']['container_types']);
         $container->setDefinition('sonata.block.data_collector', $definition);
     }
@@ -237,6 +247,7 @@ class SonataBlockExtension extends Extension
             "Sonata\\BlockBundle\\Block\\Loader\\ServiceLoader",
             "Sonata\\BlockBundle\\Block\\Service\\EmptyBlockService",
             "Sonata\\BlockBundle\\Block\\Service\\RssBlockService",
+            "Sonata\\BlockBundle\\Block\\Service\\MenuBlockService",
             "Sonata\\BlockBundle\\Block\\Service\\TextBlockService",
             "Sonata\\BlockBundle\\Exception\\BlockExceptionInterface",
             "Sonata\\BlockBundle\\Exception\\BlockNotFoundException",

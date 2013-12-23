@@ -31,26 +31,22 @@ class LocaleBasedTimezoneDetector implements TimezoneDetectorInterface
     protected $timezoneMap;
 
     /**
-     * @var string
+     * @param LocaleDetectorInterface $localeDetector
+     * @param array                   $timezoneMap
      */
-    protected $defaultTimezone;
-
-    public function __construct(LocaleDetectorInterface $localeDetector, $defaultTimezone, array $timezoneMap = array())
+    public function __construct(LocaleDetectorInterface $localeDetector, array $timezoneMap = array())
     {
         $this->localeDetector  = $localeDetector;
-        $this->defaultTimezone = $defaultTimezone;
         $this->timezoneMap     = $timezoneMap;
     }
 
     /**
-     * Get the appropriate timezone.
-     *
-     * @return string
+     * {@inheritDoc}
      */
     public function getTimezone()
     {
         $locale = $this->localeDetector->getLocale();
 
-        return isset($this->timezoneMap[$locale]) ? $this->timezoneMap[$locale] : $this->defaultTimezone;
+        return isset($this->timezoneMap[$locale]) ? $this->timezoneMap[$locale] : null;
     }
 }

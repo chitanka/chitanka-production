@@ -2,13 +2,13 @@
 
 /*
  * Copyright 2013 Johannes M. Schmitt <schmittjoh@gmail.com>
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,13 @@ use JMS\Serializer\XmlDeserializationVisitor;
 use JMS\Serializer\Exception\RuntimeException;
 use JMS\Serializer\VisitorInterface;
 use JMS\Serializer\GraphNavigator;
+use JMS\Serializer\XmlSerializationVisitor;
 
 class DateHandler implements SubscribingHandlerInterface
 {
     private $defaultFormat;
     private $defaultTimezone;
+    private $xmlCData;
 
     public static function getSubscribingMethods()
     {
@@ -55,14 +57,18 @@ class DateHandler implements SubscribingHandlerInterface
         return $methods;
     }
 
-    public function __construct($defaultFormat = \DateTime::ISO8601, $defaultTimezone = 'UTC')
+    public function __construct($defaultFormat = \DateTime::ISO8601, $defaultTimezone = 'UTC', $xmlCData = true)
     {
         $this->defaultFormat = $defaultFormat;
         $this->defaultTimezone = new \DateTimeZone($defaultTimezone);
+        $this->xmlCData = $xmlCData;
     }
 
     public function serializeDateTime(VisitorInterface $visitor, \DateTime $date, array $type, Context $context)
     {
+        if ($visitor instanceof XmlSerializationVisitor && false === $this->xmlCData) {
+            return $visitor->visitSimpleString($date->format($this->getFormat($type)), $type, $context);
+        }
         return $visitor->visitString($date->format($this->getFormat($type)), $type, $context);
     }
 
@@ -70,14 +76,17 @@ class DateHandler implements SubscribingHandlerInterface
     {
         $iso8601DateIntervalString = $this->format($date);
 
+        if ($visitor instanceof XmlSerializationVisitor && false === $this->xmlCData) {
+            return $visitor->visitSimpleString($iso8601DateIntervalString, $type, $context);
+        }
+
         return $visitor->visitString($iso8601DateIntervalString, $type, $context);
     }
 
     public function deserializeDateTimeFromXml(XmlDeserializationVisitor $visitor, $data, array $type)
     {
-        $attributes = $data->attributes();
-        if ((isset($attributes['nil'][0]) && (string) $attributes['nil'][0] === 'true') ||
-            (isset($attributes['xsi:nil'][0]) && (string) $attributes['xsi:nil'][0] === 'true')) {
+        $attributes = $data->attributes('xsi', true);
+        if (isset($attributes['nil'][0]) && (string) $attributes['nil'][0] === 'true') {
             return null;
         }
 

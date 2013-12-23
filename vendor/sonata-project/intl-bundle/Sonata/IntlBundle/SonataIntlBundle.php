@@ -11,6 +11,8 @@
 
 namespace Sonata\IntlBundle;
 
+use Sonata\IntlBundle\DependencyInjection\Compiler\TimezoneDetectorCompilerPass;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class SonataIntlBundle extends Bundle

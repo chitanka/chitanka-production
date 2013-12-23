@@ -58,14 +58,13 @@ abstract class Kernel implements KernelInterface, TerminableInterface
     protected $booted;
     protected $name;
     protected $startTime;
-    protected $classes;
     protected $loadClassCache;
 
-    const VERSION         = '2.3.3';
-    const VERSION_ID      = '20303';
+    const VERSION         = '2.3.8';
+    const VERSION_ID      = '20308';
     const MAJOR_VERSION   = '2';
     const MINOR_VERSION   = '3';
-    const RELEASE_VERSION = '3';
+    const RELEASE_VERSION = '8';
     const EXTRA_VERSION   = '';
 
     /**
@@ -83,7 +82,6 @@ abstract class Kernel implements KernelInterface, TerminableInterface
         $this->booted = false;
         $this->rootDir = $this->getRootDir();
         $this->name = $this->getName();
-        $this->classes = array();
         $this->bundles = array();
 
         if ($this->debug) {
@@ -499,7 +497,9 @@ abstract class Kernel implements KernelInterface, TerminableInterface
         }
 
         // look for orphans
-        if (count($diff = array_values(array_diff(array_keys($directChildren), array_keys($this->bundles))))) {
+        if (!empty($directChildren) && count($diff = array_diff_key($directChildren, $this->bundles))) {
+            $diff = array_keys($diff);
+
             throw new \LogicException(sprintf('Bundle "%s" extends bundle "%s", which is not registered.', $directChildren[$diff[0]], $diff[0]));
         }
 
@@ -714,7 +714,7 @@ abstract class Kernel implements KernelInterface, TerminableInterface
 
         $content = $dumper->dump(array('class' => $class, 'base_class' => $baseClass));
         if (!$this->debug) {
-            $content = self::stripComments($content);
+            $content = static::stripComments($content);
         }
 
         $cache->write($content, $container->getResources());

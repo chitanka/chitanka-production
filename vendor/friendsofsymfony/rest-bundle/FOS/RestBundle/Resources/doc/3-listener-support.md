@@ -141,8 +141,40 @@ public function getUsersAction()
 }
 ```
 
+Enabling the MaxDepth exclusion strategy support for the serializer can be configured as follows:
+
+```php
+<?php
+
+/**
+ * @View(serializerEnableMaxDepthChecks=true)
+ */
+public function getUsersAction()
+{
+    //...
+}
+```
+
 See the following example code for more details:
 https://github.com/liip/LiipHelloBundle/blob/master/Controller/ExtraController.php
+
+The ViewResponse listener will automatically populate your view with request attributes if
+you do not provide any data when returning a view object. This behaviour comes from
+SensioFrameworkExtraBundle and will automatically add any variables listed in the
+`_template_default_vars` request attribute when no data is supplied. In some cases, this
+is not desirable and can be disabled by either supplying the data you want or disabling
+the automatic population of data with the @View annotation. :
+
+```php
+/**
+ * $user will no longer end up in the View's data.
+ *
+ * @View(populateDefaultVars=false)
+ */
+public function getUserDetails(User $user)
+{
+}
+```
 
 ### Body listener
 
@@ -167,9 +199,12 @@ fos_rest:
 ```
 
 Your custom decoder service must use a class that implements the
-``FOS\Rest\Decoder\DecoderInterface``.
+``FOS\RestBundle\Decoder\DecoderInterface``.
 
 If you want to be able to use form with checkbox and have true and false value (without any issue) you have to use : fos_rest.decoder.jsontoform (available since fosrest 0.8.0)
+
+If the listener receives content that it tries to decode but the decode fails then a BadRequestHttpException will be thrown with the message:
+``'Invalid ' . $format . ' message received'``. When combined with the [exception controller support](4-exception-controller-support.md) this means your API will provide useful error messages to your API users if they are making invalid requests.
 
 ### Request Body Converter Listener
 
@@ -195,7 +230,7 @@ fos_rest:
 ```
 
 Note: You will probably want to disable the automatic route generation (`@NoRoute`)
-for routes using the body converter, and instead define the routes manually to 
+for routes using the body converter, and instead define the routes manually to
 avoid having the deserialized, typehinted objects (`$post in this example`) appear
 in the route as a parameter.
 
@@ -261,8 +296,10 @@ request based on the Request's Accept-Header and the format priority
 configuration. This way it becomes possible to leverage Accept-Headers to
 determine the request format, rather than a file extension (like foo.json).
 
-The ``default_priorities`` define the order of formats as the application
-prefers.  The algorithm iteratively examines the provided Accept header first
+The ``priorities`` define the order of media types as the application
+prefers. Note that if a format is provided instead of a media type, the
+format is converted into a list of media types matching the format.
+The algorithm iteratively examines the provided Accept header first
 looking at all the options with the highest ``q``. The first priority that
 matches is returned. If none match the next lowest set of Accept headers with
 equal ``q`` is examined and so on until there are no more Accept headers to
@@ -273,18 +310,20 @@ header setting is added with a ``q`` setting one lower than the lowest Accept
 header, meaning that format is checked for a match in the priorities last. If
 ``prefer_extension`` is set to ``true`` then the virtual Accept header will be
 one higher than the highest ``q`` causing the extension to be checked first.
-
-Note that setting ``default_priorities`` to a non empty array enables Accept
-header negotiations, while adding '*/*' to the priorities will effectively
-cause any priority to match.
+Setting ``priorities`` to a non empty array enables Accept header negotiations.
 
 ```yaml
 # app/config/config.yml
 fos_rest:
     format_listener:
-        default_priorities: ['json', html, '*/*']
-        fallback_format: json
-        prefer_extension: true
+        rules:
+            # setting fallback_format to json means that instead of considering the next rule in case of a priority mismatch, json will be used
+            - { path: '^/', host: 'api.%domain%', priorities: ['json', 'xml'], fallback_format: json, prefer_extension: false }
+            # setting fallback_format to false means that instead of considering the next rule in case of a priority mismatch, a 406 will be caused
+            - { path: '^/image', priorities: ['jpeg', 'gif'], fallback_format: false, prefer_extension: true }
+            # setting fallback_format to null means that in case of a priority mismatch the next rule will be considered
+            - { path: '^/admin', priorities: [ 'xml', 'html'], fallback_format: ~, prefer_extension: false }
+            - { path: '^/', priorities: [ 'text/html', '*/*'], fallback_format: html, prefer_extension: true }
 ```
 
 For example using the above configuration and the following Accept header:
@@ -302,12 +341,56 @@ hello:
 
 When calling:
 
-* ``/foo`` will lead to setting the request format to ``json``
-* ``/foo.html`` will lead to setting the request format to ``html``
+* ``/foo.json`` will lead to setting the request format to ``json``
+* ``/foo`` will lead to setting the request format to ``html``
+
+Furthermore the listener sets a ``media_type`` attribute on the request in
+case the listener is configured with a ``MediaTypeNegotiatorInterface`` instance,
+which is the case by default, with the matched media type.
+
+```php
+// f.e. text/html or ``application/vnd.custom_something+json etc.
+$mediaType = $request->attributes->get('media_type');
+```
+
+Note take care to configure the ``priorities`` carefully especially when the
+controller actions for specific routes only handle necessary security checks
+for specific formats. In such cases it might make sense to hard code the format
+in the controller action.
+
+
+```php
+public function getAction(Request $request)
+{
+    $view = new View();
+    // hard code the output format of the controller action
+    $view->setFormat('html');
+
+    ..
+}
+```
 
 Note that the format needs to either be supported by the ``Request`` class
-natively or it needs to be added as documented here:
+natively or it needs to be added as documented here or using the mime type
+listener explained below:
 http://symfony.com/doc/current/cookbook/request/mime_type.html
+
+The format listener can also determine the version of the selected media type
+based on a regular expression. The regular expression can be configured as
+follows. Setting it to an empty value will disable the behavior entirely.
+
+```
+fos_rest:
+    format_listener:
+        media_type:
+            version_regex:        '/(v|version)=(?P<version>[0-9\.]+)/'
+```
+
+The matched version is set as a Request attribute with the name ``version``,
+and when using JMS serializer it is also set as an exclusion strategy
+automatically in the ``ViewHandler``. See the following documentation
+for details:
+http://jmsyst.com/libs/serializer/master/cookbook/exclusion_strategies#versioning-objects
 
 ### Mime type listener
 
@@ -320,7 +403,7 @@ http://symfony.com/doc/current/cookbook/request/mime_type.html
 # app/config/config.yml
 fos_rest:
     view:
-        mime_types: {'jsonp': ['application/javascript', 'application/javascript+jsonp']}
+        mime_types: {'jsonp': ['application/javascript+jsonp']}
 ```
 
 ### Param fetcher listener
@@ -370,7 +453,7 @@ class FooController extends Controller
      *
      * If you want to work with array: ie. ?ids[]=1&ids[]=2&ids[]=1337, use:
      *
-     * @QueryParam(array="true", name="ids", requirements="\d+", default="1", description="List of ids")
+     * @QueryParam(array=true, name="ids", requirements="\d+", default="1", description="List of ids")
      * (works with QueryParam and RequestParam)
      *
      * It will validate each entries of ids with your requirement, by this way, if an entry is invalid,

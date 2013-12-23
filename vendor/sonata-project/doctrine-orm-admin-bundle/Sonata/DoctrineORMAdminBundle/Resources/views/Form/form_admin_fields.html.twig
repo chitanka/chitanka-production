@@ -39,13 +39,13 @@ file that was distributed with this source code.
 
     {% if sonata_admin.field_description is empty %}
         {{ block('choice_widget') }}
-    {% elseif sonata_admin.field_description.mappingtype == 1 %}
+    {% elseif sonata_admin.field_description.mappingtype == constant('Doctrine\\ORM\\Mapping\\ClassMetadataInfo::ONE_TO_ONE') %}
         {{ block('sonata_admin_orm_one_to_one_widget') }}
-    {% elseif sonata_admin.field_description.mappingtype == 2 %}
+    {% elseif sonata_admin.field_description.mappingtype == constant('Doctrine\\ORM\\Mapping\\ClassMetadataInfo::MANY_TO_ONE') %}
         {{ block('sonata_admin_orm_many_to_one_widget') }}
-    {% elseif sonata_admin.field_description.mappingtype == 8 %}
+    {% elseif sonata_admin.field_description.mappingtype == constant('Doctrine\\ORM\\Mapping\\ClassMetadataInfo::MANY_TO_MANY') %}
         {{ block('sonata_admin_orm_many_to_many_widget') }}
-    {% elseif sonata_admin.field_description.mappingtype == 4 %}
+    {% elseif sonata_admin.field_description.mappingtype == constant('Doctrine\\ORM\\Mapping\\ClassMetadataInfo::ONE_TO_MANY') %}
         {{ block('sonata_admin_orm_one_to_many_widget') }}
     {% else %}
         {#INVALID MODE : {{ id }}#}
@@ -58,12 +58,11 @@ file that was distributed with this source code.
         <span id="field_actions_{{ id }}" class="field-actions">
             <span id="field_widget_{{ id }}" class="field-short-description">
                 {% if sonata_admin.field_description.associationadmin.id(sonata_admin.value) %}
-                    {% render url('sonata_admin_short_object_information',{
-                            'code':     sonata_admin.field_description.associationadmin.code,
-                            'objectId': sonata_admin.field_description.associationadmin.id(sonata_admin.value),
-                            'uniqid':   sonata_admin.field_description.associationadmin.uniqid
-                        }
-                    )%}
+                    {% render url('sonata_admin_short_object_information', {
+                        'code':     sonata_admin.field_description.associationadmin.code,
+                        'objectId': sonata_admin.field_description.associationadmin.id(sonata_admin.value),
+                        'uniqid':   sonata_admin.field_description.associationadmin.uniqid
+                    }) %}
                 {% elseif sonata_admin.field_description.options.placeholder is defined and sonata_admin.field_description.options.placeholder %}
                     <span class="inner-field-short-description">
                         {{ sonata_admin.field_description.options.placeholder|trans({}, 'SonataAdminBundle') }}
@@ -75,7 +74,7 @@ file that was distributed with this source code.
                 {% if sonata_admin.field_description.associationadmin.hasroute('list') and sonata_admin.field_description.associationadmin.isGranted('LIST') and btn_list %}
                     <a  href="{{ sonata_admin.field_description.associationadmin.generateUrl('list') }}"
                         onclick="return start_field_dialog_form_list_{{ id }}(this);"
-                        class="btn sonata-ba-action"
+                        class="btn btn-small sonata-ba-action"
                         title="{{ btn_list|trans({}, btn_catalogue) }}"
                             >
                         <i class="icon-list"></i>
@@ -86,7 +85,7 @@ file that was distributed with this source code.
                 {% if sonata_admin.field_description.associationadmin.hasroute('create') and sonata_admin.field_description.associationadmin.isGranted('CREATE') and btn_add %}
                     <a  href="{{ sonata_admin.field_description.associationadmin.generateUrl('create') }}"
                         onclick="return start_field_dialog_form_add_{{ id }}(this);"
-                        class="btn sonata-ba-action"
+                        class="btn btn-small sonata-ba-action"
                         title="{{ btn_add|trans({}, btn_catalogue) }}"
                             >
                         <i class="icon-plus"></i>
@@ -99,7 +98,7 @@ file that was distributed with this source code.
                 {% if sonata_admin.field_description.associationadmin.hasRoute('delete') and sonata_admin.field_description.associationadmin.isGranted('DELETE') and btn_delete %}
                     <a  href=""
                         onclick="return remove_selected_element_{{ id }}(this);"
-                        class="btn sonata-ba-action"
+                        class="btn btn-small sonata-ba-action"
                         title="{{ btn_delete|trans({}, btn_catalogue) }}"
                             >
                         <i class="icon-off"></i>
@@ -123,13 +122,13 @@ file that was distributed with this source code.
 
 {% block sonata_type_admin_widget %}
     {#admin {{ sonata_admin.field_description.mappingtype }}#}
-    {% if sonata_admin.field_description.mappingtype == 1 %}
+    {% if sonata_admin.field_description.mappingtype == constant('Doctrine\\ORM\\Mapping\\ClassMetadataInfo::ONE_TO_ONE') %}
         {{ block('sonata_admin_orm_one_to_one_widget') }}
-    {% elseif sonata_admin.field_description.mappingtype == 2 %}
+    {% elseif sonata_admin.field_description.mappingtype == constant('Doctrine\\ORM\\Mapping\\ClassMetadataInfo::MANY_TO_ONE') %}
         {{ block('sonata_admin_orm_many_to_one_widget') }}
-    {% elseif sonata_admin.field_description.mappingtype == 8 %}
+    {% elseif sonata_admin.field_description.mappingtype == constant('Doctrine\\ORM\\Mapping\\ClassMetadataInfo::MANY_TO_MANY') %}
         {{ block('sonata_admin_orm_many_to_many_widget') }}
-    {% elseif sonata_admin.field_description.mappingtype == 4 %}
+    {% elseif sonata_admin.field_description.mappingtype == constant('Doctrine\\ORM\\Mapping\\ClassMetadataInfo::ONE_TO_MANY') %}
         {{ block('sonata_admin_orm_one_to_many_widget') }}
     {% else %}
         INVALID MODE : {{ id }}
@@ -137,8 +136,10 @@ file that was distributed with this source code.
 {% endblock %}
 
 {% block sonata_type_collection_widget %}
-    {% if sonata_admin.field_description.mappingtype == 4 %}
+    {% if sonata_admin.field_description.mappingtype == constant('Doctrine\\ORM\\Mapping\\ClassMetadataInfo::ONE_TO_MANY') %}
         {{ block('sonata_admin_orm_one_to_many_widget') }}
+    {% elseif sonata_admin.field_description.mappingtype == constant('Doctrine\\ORM\\Mapping\\ClassMetadataInfo::MANY_TO_MANY') %}
+        {{ block('sonata_admin_orm_many_to_many_widget') }}
     {% else %}
         INVALID MODE : {{ id }} - type : sonata_type_collection - mapping : {{ sonata_admin.field_description.mappingtype }}
     {% endif %}

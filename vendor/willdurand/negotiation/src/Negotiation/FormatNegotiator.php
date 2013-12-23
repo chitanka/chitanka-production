@@ -21,6 +21,82 @@ class FormatNegotiator extends Negotiator
     );
 
     /**
+     * {@inheritDoc}
+     */
+    public function getBest($header, array $priorities = array())
+    {
+        $acceptHeaders   = $this->parseHeader($header);
+        $priorities      = $this->sanitize($priorities);
+        $catchAllEnabled = $this->isCatchAllEnabled($priorities);
+
+        foreach ($acceptHeaders as $accept) {
+            $mimeType = $accept->getValue();
+
+            if ('/*' !== substr($mimeType, -2)) {
+                if (in_array($mimeType, $priorities)) {
+                    return $accept;
+                }
+
+                $regex = '#^' . preg_quote($mimeType) . '#';
+
+                foreach ($priorities as $priority) {
+                    if (self::CATCH_ALL_VALUE !== $priority && 1 === preg_match($regex, $priority)) {
+                        return new AcceptHeader($priority, $accept->getQuality(), $this->parseParameters($priority));
+                    }
+                }
+
+                continue;
+            }
+
+            if (false === $catchAllEnabled &&
+                self::CATCH_ALL_VALUE === $mimeType &&
+                self::CATCH_ALL_VALUE !== $value = array_shift($priorities)
+            ) {
+                return new AcceptHeader($value, $accept->getQuality(), $this->parseParameters($value));
+            }
+
+            if (false === $pos = strpos($mimeType, ';')) {
+                $pos = strpos($mimeType, '/');
+            }
+
+            $regex = '#^' . preg_quote(substr($mimeType, 0, $pos)) . '/#';
+
+            foreach ($priorities as $priority) {
+                if (self::CATCH_ALL_VALUE !== $priority && 1 === preg_match($regex, $priority)) {
+                    return new AcceptHeader($priority, $accept->getQuality(), $this->parseParameters($priority));
+                }
+            }
+        }
+
+        return array_shift($acceptHeaders) ?: null;
+    }
+
+    /**
+     * Return the best format (as a string) based on a given `Accept` header,
+     * and a set of priorities. Priorities are "formats" such as `json`, `xml`,
+     * etc. or "mime types" such as `application/json`, `application/xml`, etc.
+     *
+     * @param string $acceptHeader A string containing an `Accept` header.
+     * @param array  $priorities   A set of priorities.
+     *
+     * @return string
+     */
+    public function getBestFormat($acceptHeader, array $priorities = array())
+    {
+        $mimeTypes = $this->normalizePriorities($priorities);
+
+        if (null !== $accept = $this->getBest($acceptHeader, $mimeTypes)) {
+            if (null !== $format = $this->getFormat($accept->getValue())) {
+                if (in_array($format, $priorities) || $this->isCatchAllEnabled($priorities)) {
+                    return $format;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Register a new format with its mime types.
      *
      * @param string  $format
@@ -40,96 +116,7 @@ class FormatNegotiator extends Negotiator
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function getBest($acceptHeader, array $priorities = array())
-    {
-        $acceptHeaders   = $this->parseAcceptHeader($acceptHeader);
-        $priorities      = $this->sanitizePriorities($priorities);
-        $catchAllEnabled = $this->isCatchAllEnabled($priorities);
-
-        foreach ($acceptHeaders as $accept) {
-            $mimeType = $accept->getValue();
-
-            if ('/*' !== substr($mimeType, -2)) {
-                if (in_array($mimeType, $priorities)) {
-                    return $accept;
-                }
-
-                $regex = '#^' . preg_quote($mimeType) . '#';
-
-                foreach ($priorities as $priority) {
-                    if (self::CATCH_ALL_VALUE !== $priority && 1 === preg_match($regex, $priority)) {
-                        return new AcceptHeader($priority, $accept->getQuality());
-                    }
-                }
-
-                continue;
-            }
-
-            if (false === $catchAllEnabled &&
-                self::CATCH_ALL_VALUE === $mimeType &&
-                self::CATCH_ALL_VALUE !== $value = array_shift($priorities)
-            ) {
-                return new AcceptHeader($value, $accept->getQuality());
-            }
-
-            if (false === $pos = strpos($mimeType, ';')) {
-                $pos = strpos($mimeType, '/');
-            }
-
-            $regex = '#^' . preg_quote(substr($mimeType, 0, $pos)) . '/#';
-
-            foreach ($priorities as $priority) {
-                if (self::CATCH_ALL_VALUE !== $priority && 1 === preg_match($regex, $priority)) {
-                    return new AcceptHeader($priority, $accept->getQuality());
-                }
-            }
-        }
-
-        return array_shift($acceptHeaders) ?: null;
-    }
-
-    /**
-     * Returns the best format (as astring) based on a given `Accept` header,
-     * and a set of priorities.
-     *
-     * @param string $acceptHeader
-     * @param array  $priorities
-     *
-     * @return string
-     */
-    public function getBestFormat($acceptHeader, array $priorities = array())
-    {
-        $priorities      = $this->sanitizePriorities($priorities);
-        $catchAllEnabled = $this->isCatchAllEnabled($priorities);
-
-        $mimeTypes = array();
-        foreach ($priorities as $priority) {
-            if (isset($this->formats[$priority])) {
-                foreach ($this->formats[$priority] as $mimeType) {
-                    $mimeTypes[] = $mimeType;
-                }
-            }
-        }
-
-        if ($catchAllEnabled) {
-            $mimeTypes[] = self::CATCH_ALL_VALUE;
-        }
-
-        if (null !== $accept = $this->getBest($acceptHeader, $mimeTypes)) {
-            if (null !== $format = $this->getFormat($accept->getValue())) {
-                if (in_array($format, $priorities) || $catchAllEnabled) {
-                    return $format;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Returns the format for a given mime type, or null
+     * Return the format for a given mime type, or null
      * if not found.
      *
      * @param string $mimeType
@@ -145,6 +132,61 @@ class FormatNegotiator extends Negotiator
         }
 
         return null;
+    }
+
+    /**
+     * Return an array of mime types for the given set of formats.
+     *
+     * @param array $formats A set of formats.
+     *
+     * @return array
+     */
+    public function getMimeTypes(array $formats)
+    {
+        $formats         = $this->sanitize($formats);
+        $catchAllEnabled = $this->isCatchAllEnabled($formats);
+
+        $mimeTypes = array();
+        foreach ($formats as $format) {
+            if (isset($this->formats[$format])) {
+                foreach ($this->formats[$format] as $mimeType) {
+                    $mimeTypes[] = $mimeType;
+                }
+            }
+        }
+
+        if ($catchAllEnabled) {
+            $mimeTypes[] = self::CATCH_ALL_VALUE;
+        }
+
+        return $mimeTypes;
+    }
+
+    /**
+     * Ensure that any formats are converted to mime types.
+     *
+     * @param  array $priorities
+     * @return array
+     */
+    public function normalizePriorities($priorities)
+    {
+        $priorities = $this->sanitize($priorities);
+
+        $mimeTypes = array();
+        foreach ($priorities as $priority) {
+            if (strpos($priority, '/')) {
+                $mimeTypes[] = $priority;
+                continue;
+            }
+
+            if (isset($this->formats[$priority])) {
+                foreach ($this->formats[$priority] as $mimeType) {
+                    $mimeTypes[] = $mimeType;
+                }
+            }
+        }
+
+        return $mimeTypes;
     }
 
     /**

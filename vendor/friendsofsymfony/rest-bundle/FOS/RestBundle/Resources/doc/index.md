@@ -20,6 +20,7 @@ FOSRestBundle provides several tools to assist in building REST applications:
 - [ExceptionController support](4-exception-controller-support.md)
 - [Automatic route generation: single RESTful controller](5-automatic-route-generation_single-restful-controller.md) (for simple resources)
 - [Automatic route generation: multiple RESTful controllers](6-automatic-route-generation_multiple-restful-controllers.md) (for resources with child/subresources)
+- [Manual definition of routes](7-manual-route-definition.md)
 
 ### Config reference
 Check out the [configuration reference](configuration-reference.md) for a reference on the available configuration options.
@@ -39,3 +40,7 @@ guideline:
 
 - The FOSCommentBundle uses FOSRestBundle for its api:
   https://github.com/FriendsOfSymfony/FOSCommentBundle
+
+- The Symfony2 Rest Edition provides a complete example of how to build a 
+  controller that works for both HTML as well as JSON/XML:
+  https://github.com/gimler/symfony-rest-edition

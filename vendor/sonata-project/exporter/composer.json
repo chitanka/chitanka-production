@@ -16,13 +16,15 @@
         "php": ">=5.3.0"
     },
     "require-dev": {
-        "php": ">=5.3.0",
         "symfony/routing": "*",
-        "symfony/property-access": ">=2.2, <3.0.0-dev"
+        "symfony/property-access": "~2.2",
+        "propel/propel1": "~1.6"
     },
     "suggest": {
         "ext-curl": "*",
-        "symfony/routing": "*"
+        "symfony/routing": "*",
+        "symfony/property-access": "~2.2",
+        "propel/propel1": "~1.6"
     },
     "autoload": {
         "psr-0": {

@@ -223,7 +223,7 @@ class Response
         $charset = $this->charset ?: 'UTF-8';
         if (!$headers->has('Content-Type')) {
             $headers->set('Content-Type', 'text/html; charset='.$charset);
-        } elseif (0 === strpos($headers->get('Content-Type'), 'text/') && false === strpos($headers->get('Content-Type'), 'charset')) {
+        } elseif (0 === stripos($headers->get('Content-Type'), 'text/') && false === stripos($headers->get('Content-Type'), 'charset')) {
             // add the charset
             $headers->set('Content-Type', $headers->get('Content-Type').'; charset='.$charset);
         }
@@ -321,8 +321,16 @@ class Response
             $obStatus = ob_get_status(1);
             while (($level = ob_get_level()) > 0 && $level !== $previous) {
                 $previous = $level;
-                if ($obStatus[$level - 1] && isset($obStatus[$level - 1]['del']) && $obStatus[$level - 1]['del']) {
-                    ob_end_flush();
+                if ($obStatus[$level - 1]) {
+                    if (version_compare(PHP_VERSION, '5.4', '>=')) {
+                        if (isset($obStatus[$level - 1]['flags']) && ($obStatus[$level - 1]['flags'] & PHP_OUTPUT_HANDLER_REMOVABLE)) {
+                            ob_end_flush();
+                        }
+                    } else {
+                        if (isset($obStatus[$level - 1]['del']) && $obStatus[$level - 1]['del']) {
+                            ob_end_flush();
+                        }
+                    }
                 }
             }
             flush();

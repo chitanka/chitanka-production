@@ -11,14 +11,16 @@
 
 namespace FOS\RestBundle\Controller;
 
+use FOS\RestBundle\View\ExceptionWrapperHandlerInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\TemplateReference;
+use Symfony\Component\HttpKernel\Exception\FlattenException as HttpFlattenException;
+use Symfony\Component\Debug\Exception\FlattenException as DebugFlattenException;
 use Symfony\Component\DependencyInjection\ContainerAware;
-use Symfony\Component\HttpKernel\Exception\FlattenException;
 use Symfony\Component\HttpKernel\Log\DebugLoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-use FOS\Rest\Util\Codes;
+use FOS\RestBundle\Util\Codes;
 use FOS\RestBundle\View\ViewHandler;
 use FOS\RestBundle\View\View;
 use FOS\RestBundle\Util\ExceptionWrapper;
@@ -38,21 +40,39 @@ class ExceptionController extends ContainerAware
      */
     protected function createExceptionWrapper(array $parameters)
     {
-        return new ExceptionWrapper($parameters);
+        /** @var ExceptionWrapperHandlerInterface $exceptionWrapperHandler */
+        $exceptionWrapperHandler = $this->container->get('fos_rest.view.exception_wrapper_handler');
+        return $exceptionWrapperHandler->wrap($parameters);
     }
 
     /**
      * Converts an Exception to a Response.
      *
-     * @param Request              $request   Request
-     * @param FlattenException     $exception A FlattenException instance
-     * @param DebugLoggerInterface $logger    A DebugLoggerInterface instance
-     * @param string               $format    The format to use for rendering (html, xml, ...)
+     * @param Request                                       $request   Request
+     * @param HttpFlattenException|DebugFlattenException    $exception A HttpFlattenException|DebugFlattenException instance
+     * @param DebugLoggerInterface                          $logger    A DebugLoggerInterface instance
+     * @param string                                        $format    The format to use for rendering (html, xml, ...)
      *
      * @return Response Response instance
      */
-    public function showAction(Request $request, FlattenException $exception, DebugLoggerInterface $logger = null, $format = 'html')
+    public function showAction(Request $request, $exception, DebugLoggerInterface $logger = null, $format = 'html')
     {
+        /**
+         * Validates that the exception that is handled by the Exception controller is either a DebugFlattenException
+         * or HttpFlattenException.
+         * Type hinting has been removed due to a BC change in symfony/symfony 2.3.5.
+         *
+         * @see https://github.com/FriendsOfSymfony/FOSRestBundle/pull/565
+         */
+        if (!$exception instanceof DebugFlattenException && !$exception instanceof HttpFlattenException) {
+            throw new \InvalidArgumentException(sprintf(
+                'ExceptionController::showAction can only accept some exceptions (%s, %s), "%s" given',
+                "Symfony\Component\HttpKernel\Exception\FlattenException",
+                "Symfony\Component\Debug\Exception\FlattenException",
+                get_class($exception)
+            ));
+        }
+
         $format = $this->getFormat($request, $format);
         if (null === $format) {
             $message = 'No matching accepted Response format could be determined, while handling: ';
@@ -75,7 +95,7 @@ class ExceptionController extends ContainerAware
             $view->setFormat($format);
 
             if ($viewHandler->isFormatTemplating($format)) {
-                $view->setTemplate($this->findTemplate($format, $code));
+                $view->setTemplate($this->findTemplate($request, $format, $code, $this->container->get('kernel')->isDebug()));
             }
 
             $response = $viewHandler->handle($view);
@@ -91,17 +111,22 @@ class ExceptionController extends ContainerAware
     /**
      * Get and clean any content that was already outputted
      *
+     * This code comes from Symfony and should be synchronized on a regular basis
+     * see src/Symfony/Bundle/TwigBundle/Controller/ExceptionController.php
+     *
      * @return string
      */
     protected function getAndCleanOutputBuffering()
     {
-        // the count variable avoids an infinite loop on
-        // some Windows configurations where ob_get_level()
-        // never reaches 0
-        $count = 100;
-        $startObLevel = $this->container->get('request')->headers->get('X-Php-Ob-Level', -1);;
+        $startObLevel = $this->container->get('request')->headers->get('X-Php-Ob-Level', -1);
+
+        // ob_get_level() never returns 0 on some Windows configurations, so if
+        // the level is the same two times in a row, the loop should be stopped.
+        $previousObLevel = null;
         $currentContent = '';
-        while (ob_get_level() > $startObLevel && --$count) {
+
+        while (($obLevel = ob_get_level()) > $startObLevel && $obLevel !== $previousObLevel) {
+            $previousObLevel = $obLevel;
             $currentContent .= ob_get_clean();
         }
 
@@ -111,8 +136,8 @@ class ExceptionController extends ContainerAware
     /**
      * Extract the exception message
      *
-     * @param FlattenException $exception    A FlattenException instance
-     * @param array            $exceptionMap
+     * @param HttpFlattenException|DebugFlattenException $exception    A HttpFlattenException|DebugFlattenException instance
+     * @param array                                      $exceptionMap
      *
      * @return string Message
      */
@@ -139,7 +164,7 @@ class ExceptionController extends ContainerAware
     /**
      * Extract the exception message
      *
-     * @param FlattenException $exception A FlattenException instance
+     * @param HttpFlattenException|DebugFlattenException $exception A HttpFlattenException|DebugFlattenException instance
      *
      * @return string Message
      */
@@ -154,7 +179,7 @@ class ExceptionController extends ContainerAware
     /**
      * Determine the status code to use for the response
      *
-     * @param FlattenException $exception A FlattenException instance
+     * @param HttpFlattenException|DebugFlattenException $exception A HttpFlattenException|DebugFlattenException instance
      *
      * @return integer An HTTP response code
      */
@@ -176,13 +201,10 @@ class ExceptionController extends ContainerAware
      */
     protected function getFormat(Request $request, $format)
     {
-        $priorities = $this->container->getParameter('fos_rest.default_priorities');
-        $preferExtension = $this->container->getParameter('fos_rest.prefer_extension');
         $formatNegotiator = $this->container->get('fos_rest.format_negotiator');
-
-        $format = $formatNegotiator->getBestFormat($request, $priorities, $preferExtension) ?: $format;
+        $format = $formatNegotiator->getBestFormat($request) ?: $format;
         $request->attributes->set('_format', $format);
-        
+
         return $format;
     }
 
@@ -192,16 +214,16 @@ class ExceptionController extends ContainerAware
      * Overwrite it in a custom ExceptionController class to add additionally parameters
      * that should be passed to the view layer.
      *
-     * @param ViewHandler          $viewHandler    The view handler instance
-     * @param string               $currentContent The current content in the output buffer
-     * @param integer              $code           An HTTP response code
-     * @param FlattenException     $exception      A FlattenException instance
-     * @param DebugLoggerInterface $logger         A DebugLoggerInterface instance
-     * @param string               $format         The format to use for rendering (html, xml, ...)
+     * @param ViewHandler                                       $viewHandler    The view handler instance
+     * @param string                                            $currentContent The current content in the output buffer
+     * @param integer                                           $code           An HTTP response code
+     * @param HttpFlattenException|DebugFlattenException        $exception      A HttpFlattenException|DebugFlattenException instance
+     * @param DebugLoggerInterface                              $logger         A DebugLoggerInterface instance
+     * @param string                                            $format         The format to use for rendering (html, xml, ...)
      *
      * @return array Template parameters
      */
-    protected function getParameters(ViewHandler $viewHandler, $currentContent, $code, FlattenException $exception, DebugLoggerInterface $logger = null, $format = 'html')
+    protected function getParameters(ViewHandler $viewHandler, $currentContent, $code, $exception, DebugLoggerInterface $logger = null, $format = 'html')
     {
         $parameters  = array(
             'status' => 'error',
@@ -225,16 +247,18 @@ class ExceptionController extends ContainerAware
      * Note this method needs to be overridden in case another
      * engine than Twig should be supported;
      *
-     * @param string  $format The format to use for rendering (html, xml, ...)
-     * @param integer $code   An HTTP response code
+     * This code is inspired by TwigBundle and should be synchronized on a regular basis
+     * see src/Symfony/Bundle/TwigBundle/Controller/ExceptionController.php
+     *
+     * @param Request $request
+     * @param string  $format
+     * @param integer $code       An HTTP response status code
+     * @param Boolean $debug
      *
      * @return TemplateReference
      */
-    protected function findTemplate($format, $code)
+    protected function findTemplate(Request $request, $format, $code, $debug)
     {
-        $templating = $this->container->get('templating');
-        $debug = $this->container->get('kernel')->isDebug();
-
         $name = $debug ? 'exception' : 'error';
         if ($debug && 'html' == $format) {
             $name = 'exception_full';
@@ -243,16 +267,19 @@ class ExceptionController extends ContainerAware
         // when not in debug, try to find a template for the specific HTTP status code and format
         if (!$debug) {
             $template = new TemplateReference('TwigBundle', 'Exception', $name.$code, $format, 'twig');
-            if ($templating->exists($template)) {
+            if ($this->container->get('templating')->exists($template)) {
                 return $template;
             }
         }
 
         // try to find a template for the given format
         $template = new TemplateReference('TwigBundle', 'Exception', $name, $format, 'twig');
-        if ($templating->exists($template)) {
+        if ($this->container->get('templating')->exists($template)) {
             return $template;
         }
+
+        // default to a generic HTML exception
+        $request->setRequestFormat('html');
 
         return new TemplateReference('TwigBundle', 'Exception', $name, 'html', 'twig');
     }

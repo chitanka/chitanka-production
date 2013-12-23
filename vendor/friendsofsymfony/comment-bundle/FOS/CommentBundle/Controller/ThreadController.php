@@ -13,7 +13,7 @@ namespace FOS\CommentBundle\Controller;
 
 use FOS\CommentBundle\Model\CommentInterface;
 use FOS\CommentBundle\Model\ThreadInterface;
-use FOS\Rest\Util\Codes;
+use FOS\RestBundle\Util\Codes;
 use FOS\RestBundle\View\RouteRedirectView;
 use FOS\RestBundle\View\View;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -230,13 +230,19 @@ class ThreadController extends Controller
     {
         $thread = $this->container->get('fos_comment.manager.thread')->findThreadById($id);
         $comment = $this->container->get('fos_comment.manager.comment')->findCommentById($commentId);
+        $parent = null;
 
         if (null === $thread || null === $comment || $comment->getThread() !== $thread) {
             throw new NotFoundHttpException(sprintf("No comment with id '%s' found for thread with id '%s'", $commentId, $id));
         }
 
+        $ancestors = $comment->getAncestors();
+        if (count($ancestors) > 0) {
+            $parent = $this->getValidCommentParent($thread, $ancestors[count($ancestors) - 1]);
+        }
+
         $view = View::create()
-            ->setData(array('comment' => $comment, 'thread' => $thread))
+            ->setData(array('comment' => $comment, 'thread' => $thread, 'parent' => $parent, 'depth' => $comment->getDepth()))
             ->setTemplate(new TemplateReference('FOSCommentBundle', 'Thread', 'comment'));
 
         return $this->getViewHandler()->handle($view);
@@ -297,9 +303,9 @@ class ThreadController extends Controller
         $form->bind($request);
 
         if ($form->isValid()) {
-            $manager->saveComment($comment);
-
-            return $this->getViewHandler()->handle($this->onRemoveThreadCommentSuccess($form, $id));
+            if ($manager->saveComment($comment) !== false) {
+                return $this->getViewHandler()->handle($this->onRemoveThreadCommentSuccess($form, $id));
+            }
         }
 
         return $this->getViewHandler()->handle($this->onRemoveThreadCommentError($form, $id));
@@ -360,9 +366,9 @@ class ThreadController extends Controller
         $form->bind($request);
 
         if ($form->isValid()) {
-            $commentManager->saveComment($comment);;
-
-            return $this->getViewHandler()->handle($this->onEditCommentSuccess($form, $id, $comment->getParent()));
+            if ($commentManager->saveComment($comment) !== false) {
+                return $this->getViewHandler()->handle($this->onEditCommentSuccess($form, $id, $comment->getParent()));
+            }
         }
 
         return $this->getViewHandler()->handle($this->onEditCommentError($form, $id, $comment->getParent()));
@@ -476,9 +482,9 @@ class ThreadController extends Controller
         $form->bind($request);
 
         if ($form->isValid()) {
-            $commentManager->saveComment($comment);
-
-            return $this->getViewHandler()->handle($this->onCreateCommentSuccess($form, $id, $parent));
+            if ($commentManager->saveComment($comment) !== false) {
+                return $this->getViewHandler()->handle($this->onCreateCommentSuccess($form, $id, $parent));
+            }
         }
 
         return $this->getViewHandler()->handle($this->onCreateCommentError($form, $id, $parent));

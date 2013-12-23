@@ -12,47 +12,107 @@
 namespace FOS\RestBundle\Util;
 
 use Symfony\Component\HttpFoundation\Request;
-use Negotiation\FormatNegotiator as BaseFormatNegotiator;
+use Symfony\Component\HttpFoundation\RequestMatcherInterface;
 
-class FormatNegotiator implements FormatNegotiatorInterface
+use Negotiation\FormatNegotiator as BaseFormatNegotiator;
+use Negotiation\AcceptHeader;
+
+class FormatNegotiator implements MediaTypeNegotiatorInterface
 {
+    /**
+     * @var array
+     */
+    private $map = array();
+
     public function __construct()
     {
         $this->formatNegotiator = new BaseFormatNegotiator();
     }
 
     /**
+     * @param RequestMatcherInterface $requestMatcher A RequestMatcherInterface instance
+     * @param array                   $options        An array of options
+     */
+    public function add(RequestMatcherInterface $requestMatcher, array $options = array())
+    {
+        $this->map[] = array($requestMatcher, $options);
+    }
+
+    /**
      * Detect the request format based on the priorities and the Accept header
      *
-     * Note: Request "_format" parameter is considered the preferred Accept header
-     *
      * @param   Request         $request          The request
-     * @param   array           $priorities       Ordered array of formats (highest priority first)
-     * @param   Boolean|String  $preferExtension  If to consider the extension last or first, optionally
-     *                                            a q-value to use for the mimetype of the format (2.0 is the default)
-     *
      * @return  void|string                       The format string
      */
-    public function getBestFormat(Request $request, array $priorities, $preferExtension = false)
+    public function getBestFormat(Request $request)
     {
-        $acceptHeader = $request->headers->get('Accept');
+        $mediaType = $this->getBestMediaType($request);
+        if (null === $mediaType) {
+            return null;
+        }
 
-        if ($preferExtension) {
-            $extension = $request->get('_format');
-            if (null !== $extension && $request->getMimeType($extension)) {
-                if ($acceptHeader) {
-                    $acceptHeader.= ',';
+        return $this->getFormat($mediaType);
+    }
+
+    /**
+     * Detect the request format based on the priorities and the Accept header
+     *
+     * @param   Request         $request          The request
+     * @return  void|string                       The format string
+     */
+    public function getBestMediaType(Request $request)
+    {
+        foreach ($this->map as $elements) {
+            if (null === $elements[0] || $elements[0]->matches($request)) {
+                $options = $elements[1];
+            }
+
+            if (empty($options['priorities'])) {
+                if (!empty($options['fallback_format'])) {
+                    return $request->getMimeType($options['fallback_format']);
                 }
 
-                if (is_bool($preferExtension)) {
-                    $preferExtension = '2.0';
+                continue;
+            }
+
+            $acceptHeader = $request->headers->get('Accept');
+
+            if ($options['prefer_extension']) {
+                // ensure we only need to compute $extensionHeader once
+                if (!isset($extensionHeader)) {
+                    if (preg_match('/.*\.([a-z0-9]+)$/', $request->getPathInfo(), $matches)) {
+                        $extension = $matches[1];
+                    }
+
+                    // $extensionHeader will now be either a non empty string or an empty string
+                    $extensionHeader = isset($extension) ? (string) $request->getMimeType($extension) : '';
+                    if ($acceptHeader && $extensionHeader) {
+                        $extensionHeader = ','.$extensionHeader;
+                    }
+                }
+                if ($extensionHeader) {
+                    $acceptHeader.= $extensionHeader.'; q='.$options['prefer_extension'];
+                }
+            }
+
+            $mimeTypes = $this->formatNegotiator->normalizePriorities($options['priorities']);
+            $mediaType = $this->formatNegotiator->getBest($acceptHeader, $mimeTypes);
+            if ($mediaType instanceof AcceptHeader && !$mediaType->isMediaRange()) {
+                return $mediaType->getValue();
+            }
+
+            if (isset($options['fallback_format'])) {
+                // if false === fallback_format then we fail here instead of considering more rules
+                if (false === $options['fallback_format']) {
+                    return null;
                 }
 
-                $acceptHeader.= $request->getMimeType($extension).'; q='.$preferExtension;
+                // stop looking at rules since we have a fallback defined
+                return $request->getMimeType($options['fallback_format']);
             }
         }
 
-        return $this->formatNegotiator->getBestFormat($acceptHeader, $priorities);
+        return null;
     }
 
     /**
@@ -77,6 +137,6 @@ class FormatNegotiator implements FormatNegotiatorInterface
      */
     public function getFormat($mimeType)
     {
-        $this->formatNegotiator->getFormat($mimeType);
+        return $this->formatNegotiator->getFormat($mimeType);
     }
 }

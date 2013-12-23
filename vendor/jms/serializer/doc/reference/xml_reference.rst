@@ -2,7 +2,7 @@ XML Reference
 -------------
 ::
 
-    <!-- MyBundle\Resources\config\serializer\ClassName.xml -->
+    <!-- MyBundle\Resources\config\serializer\Fully.Qualified.ClassName.xml -->
     <?xml version="1.0" encoding="UTF-8" ?>
     <serializer>
         <class name="Fully\Qualified\ClassName" exclusion-policy="ALL" xml-root-name="foo-bar" exclude="true"
@@ -32,6 +32,7 @@ XML Reference
                 <type><![CDATA[]]></type>
                 <xml-list inline="true" entry-name="foobar" />
                 <xml-map inline="true" key-attribute-name="foo" entry-name="bar" />
+                <xml-element cdata="false" />
             </property>
             <callback-method name="foo" type="pre-serialize" />
             <callback-method name="bar" type="post-serialize" />

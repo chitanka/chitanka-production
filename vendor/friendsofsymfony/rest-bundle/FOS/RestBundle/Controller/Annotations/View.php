@@ -16,7 +16,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 /**
  * View annotation class.
  * @Annotation
- * @Target("METHOD")
+ * @Target({"METHOD","CLASS"})
  */
 class View extends Template
 {
@@ -34,6 +34,16 @@ class View extends Template
      * @var array
      */
     protected $serializerGroups;
+
+    /**
+     * @var Boolean
+     */
+    protected $populateDefaultVars = true;
+
+    /**
+     * @var bool
+     */
+    protected $serializerEnableMaxDepthChecks;
 
     /**
      * Returns the annotation alias name.
@@ -96,5 +106,37 @@ class View extends Template
     public function getSerializerGroups()
     {
         return $this->serializerGroups;
+    }
+
+    /**
+     * @param Boolean $populateDefaultVars
+     */
+    public function setPopulateDefaultVars($populateDefaultVars)
+    {
+        $this->populateDefaultVars = (Boolean) $populateDefaultVars;
+    }
+
+    /**
+     * @return Boolean
+     */
+    public function isPopulateDefaultVars()
+    {
+        return $this->populateDefaultVars;
+    }
+
+    /**
+     * @param bool $serializerEnableMaxDepthChecks
+     */
+    public function setSerializerEnableMaxDepthChecks($serializerEnableMaxDepthChecks)
+    {
+        $this->serializerEnableMaxDepthChecks = $serializerEnableMaxDepthChecks;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getSerializerEnableMaxDepthChecks()
+    {
+        return $this->serializerEnableMaxDepthChecks;
     }
 }

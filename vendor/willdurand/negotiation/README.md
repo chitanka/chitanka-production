@@ -2,6 +2,8 @@ Negotiation
 ===========
 
 [![Build Status](https://travis-ci.org/willdurand/Negotiation.png?branch=master)](http://travis-ci.org/willdurand/Negotiation)
+[![Total Downloads](https://poser.pugx.org/willdurand/Negotiation/downloads.png)](https://packagist.org/packages/willdurand/Negotiation)
+[![Latest Stable Version](https://poser.pugx.org/willdurand/Negotiation/v/stable.png)](https://packagist.org/packages/willdurand/Negotiation)
 
 **Negotiation** is a standalone library without any dependencies that allows you
 to implement [content
@@ -25,6 +27,10 @@ The recommended way to install Negotiation is through
     }
 }
 ```
+
+**Protip:** you should browse the
+[`willdurand/negotiation`](https://packagist.org/packages/willdurand/negotiation)
+page to choose a stable version to use, avoid the `@stable` meta constraint.
 
 
 Usage
@@ -65,7 +71,7 @@ $format = $negotiator->getBest($acceptHeader, $priorities);
 
 The `FormatNegotiator` class also provides a `getBestFormat()` method that
 returns the best format given an `Accept` header string and a set of
-preferred/allowed formats:
+preferred/allowed formats or mime types:
 
 ``` php
 <?php
@@ -73,16 +79,39 @@ preferred/allowed formats:
 $negotiator   = new \Negotiation\FormatNegotiator();
 
 $acceptHeader = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
-$priorities   = array('html', 'json', '*/*');
+$priorities   = array('html', 'application/json', '*/*');
 
 $format = $negotiator->getBestFormat($acceptHeader, $priorities);
 // $format = html
 ```
 
-### Charset/Encoding/Language Negotiation
+#### Other Methods
 
-Charset/Encoding/Language negotiation works out of the box using the
-`Negotiator` class:
+* `registerFormat($format, array $mimeTypes, $override = false)`: registers a new
+  format with its mime types;
+* `getFormat($mimeType)`: returns the format for a given mime type, or null if
+not found;
+* `getMimeTypes(array $formats)`: returns an array of mime types for the given
+  set of formats;
+* `normalizePriorities($priorities)`: ensures that any formats are converted to
+  mime types.
+
+### Language Negotiation
+
+Language negotiation is handled by the `LanguageNegotiator` class:
+
+``` php
+<?php
+
+$negotiator = new \Negotiation\LanguageNegotiator();
+$language   = $negotiator->getBest('da, en-gb;q=0.8, en;q=0.7');
+// $language = da
+```
+
+
+### Charset/Encoding Negotiation
+
+Charset/Encoding negotiation works out of the box using the `Negotiator` class:
 
 ``` php
 <?php

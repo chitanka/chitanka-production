@@ -139,20 +139,20 @@
                 <target>Action aborted. No items were selected.</target>
             </trans-unit>
             <trans-unit id='flash_create_success'>
-                <source>flash_create_success</source>
-                <target>Item has been successfully created.</target>
+             <source>flash_create_success</source>
+              <target>Item "%name%" has been successfully created.</target>
             </trans-unit>
             <trans-unit id='flash_create_error'>
-                <source>flash_create_error</source>
-                <target>An error has occurred during item creation.</target>
+              <source>flash_create_error</source>
+              <target>An error has occurred during the creation of item "%name%".</target>
             </trans-unit>
             <trans-unit id='flash_edit_success'>
-                <source>flash_edit_success</source>
-                <target>Item has been successfully updated.</target>
+              <source>flash_edit_success</source>
+              <target>Item "%name%" has been successfully updated.</target>
             </trans-unit>
             <trans-unit id='flash_edit_error'>
-                <source>flash_edit_error</source>
-                <target>An error has occurred during item update.</target>
+              <source>flash_edit_error</source>
+              <target>An error has occurred during update of item "%name%".</target>
             </trans-unit>
             <trans-unit id='flash_batch_delete_success'>
                 <source>flash_batch_delete_success</source>
@@ -164,11 +164,11 @@
             </trans-unit>
             <trans-unit id='flash_delete_error'>
                 <source>flash_delete_error</source>
-                <target>An Error has occurred during item deletion.</target>
+                <target>An Error has occurred during deletion of item "%name%".</target>
             </trans-unit>
             <trans-unit id='flash_delete_success'>
-                <source>flash_delete_success</source>
-                <target>Item has been deleted successfully.</target>
+              <source>flash_delete_success</source>
+              <target>Item "%name%" has been deleted successfully.</target>
             </trans-unit>
             <trans-unit id="link_breadcrumb_dashboard">
                 <source>breadcrumb.link_dashboard</source>
@@ -188,7 +188,7 @@
             </trans-unit>
             <trans-unit id="title_batch_confirmation">
                 <source>title_batch_confirmation</source>
-                <target>Confirm batch action</target>
+                <target>Confirm batch action '%action%'</target>
             </trans-unit>
             <trans-unit id="message_batch_confirmation">
                 <source>message_batch_confirmation</source>
@@ -369,6 +369,22 @@
             <trans-unit id="short_object_description_placeholder">
               <source>short_object_description_placeholder</source>
               <target>No selection</target>
+            </trans-unit>
+            <trans-unit id="title_search_results">
+                <source>title_search_results</source>
+                <target>Search results: %query%</target>
+            </trans-unit>
+            <trans-unit id="search_placeholder">
+                <source>search_placeholder</source>
+                <target>Search</target>
+            </trans-unit>
+            <trans-unit id="no_results_found">
+                <source>no_results_found</source>
+                <target>no result found</target>
+            </trans-unit>
+            <trans-unit id="add_new_entry">
+                <source>add_new_entry</source>
+                <target>add new entry</target>
             </trans-unit>
         </body>
     </file>

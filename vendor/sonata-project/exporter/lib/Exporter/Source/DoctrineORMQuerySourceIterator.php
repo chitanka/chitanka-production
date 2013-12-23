@@ -16,6 +16,7 @@ use Doctrine\ORM\Query;
 use Exporter\Source\SourceIteratorInterface;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyPath;
+use Symfony\Component\PropertyAccess\Exception\UnexpectedTypeException;
 
 class DoctrineORMQuerySourceIterator implements SourceIteratorInterface
 {
@@ -30,7 +31,7 @@ class DoctrineORMQuerySourceIterator implements SourceIteratorInterface
     protected $iterator;
 
     protected $propertyPaths;
-    
+
     /**
      * @var PropertyAccess
      */
@@ -50,6 +51,9 @@ class DoctrineORMQuerySourceIterator implements SourceIteratorInterface
     {
         $this->query = clone $query;
         $this->query->setParameters($query->getParameters());
+        foreach ($query->getHints() as $name => $value) {
+            $this->query->setHint($name, $value);
+        }
 
         // Note : will be deprecated in Symfony 3.0, conserved for 2.2 compatibility
         // Use createPropertyAccessor() for 3.0
@@ -77,7 +81,12 @@ class DoctrineORMQuerySourceIterator implements SourceIteratorInterface
         $data = array();
 
         foreach ($this->propertyPaths as $name => $propertyPath) {
-            $data[$name] = $this->getValue($this->propertyAccessor->getValue($current[0], $propertyPath));
+            try {
+                $data[$name] = $this->getValue($this->propertyAccessor->getValue($current[0], $propertyPath));
+            } catch (UnexpectedTypeException $e) {
+                //non existent object in path will be ignored
+                $data[$name] = null;
+            }
         }
 
         $this->query->getEntityManager()->getUnitOfWork()->detach($current[0]);

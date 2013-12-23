@@ -7,7 +7,7 @@ Example
 .. code-block:: php
 
     <?php
-    namespace Sonta\NewsBundle\Admin;
+    namespace Sonata\NewsBundle\Admin;
 
     use Sonata\AdminBundle\Admin\Admin;
     use Sonata\AdminBundle\Form\FormMapper;
@@ -24,7 +24,7 @@ Example
                 ->add('author', 'sonata_type_model', array(), array('edit' => 'list'))
                 ->add('enabled')
                 ->add('title')
-                ->add('abtract', null, array('required' => false))
+                ->add('abstract', null, array('required' => false))
                 ->add('content')
 
                 // you can define help messages like this
@@ -40,7 +40,7 @@ Example
             if ($object->getEnabled()) {
                 // abstract cannot be empty when the post is enabled
                 $errorElement
-                    ->with('abtract')
+                    ->with('abstract')
                         ->assertNotBlank()
                         ->assertNotNull()
                     ->end()
@@ -62,7 +62,6 @@ Types available
     - array
     - checkbox
     - choice
-    - datetime
     - decimal
     - integer
     - text
@@ -239,4 +238,17 @@ defining one of these options:
                 ))
             ;
         }
+    }
+
+
+
+By default position row will be rendered, if you want to hide it - you will need to alter child 
+admin class and add hidden position field. Use code like 
+
+.. code-block:: php
+
+    protected function configureFormFields(FormMapper $formMapper)
+    {
+        $formMapper
+           ->add('position','hidden',array('attr'=>array("hidden" => true)))
     }

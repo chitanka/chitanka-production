@@ -3,8 +3,8 @@ Icu Component
 
 Contains data of the ICU library.
 
-The bundled resource files have the [resource bundle format version 1.*] [1],
-which can be read using ICU 4.0 and later. Compatibility can be tested with the
+The bundled resource files have the [resource bundle format version 2.*] [1],
+which can be read using ICU 4.4 and later. Compatibility can be tested with the
 test-compat.php script bundled in the Intl component:
 
     php path/to/Symfony/Component/Intl/Resources/bin/test-compat.php

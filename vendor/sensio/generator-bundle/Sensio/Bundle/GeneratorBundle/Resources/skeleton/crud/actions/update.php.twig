@@ -1,4 +1,3 @@
-
     /**
 {% block phpdoc_method_header %}
      * Edits an existing {{ entity }} entity.
@@ -26,11 +25,10 @@
         }
 
         $deleteForm = $this->createDeleteForm($id);
-        $editForm = $this->createForm(new {{ entity_class }}Type(), $entity);
-        $editForm->submit($request);
+        $editForm = $this->createEditForm($entity);
+        $editForm->handleRequest($request);
 
         if ($editForm->isValid()) {
-            $em->persist($entity);
             $em->flush();
 
             return $this->redirect($this->generateUrl('{{ route_name_prefix }}_edit', array('id' => $id)));

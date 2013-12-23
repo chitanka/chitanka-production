@@ -138,20 +138,14 @@ class SwiftmailerExtension extends Extension
             $definitionDecorator = new DefinitionDecorator(sprintf('swiftmailer.transport.%s.abstract', $transport));
             $container
                 ->setDefinition(sprintf('swiftmailer.mailer.%s.transport.%s', $name, $transport), $definitionDecorator)
-                ->setArguments(array(
-                    new Reference('swiftmailer.transport.buffer'),
-                    new Reference(sprintf('swiftmailer.mailer.%s.transport.eventdispatcher', $name)),
-                ))
+                ->addArgument(new Reference(sprintf('swiftmailer.mailer.%s.transport.eventdispatcher', $name)))
             ;
             $container->setAlias(sprintf('swiftmailer.mailer.%s.transport', $name), sprintf('swiftmailer.mailer.%s.transport.%s', $name, $transport));
         } elseif ('mail' === $transport) {
             $definitionDecorator = new DefinitionDecorator(sprintf('swiftmailer.transport.%s.abstract', $transport));
             $container
                 ->setDefinition(sprintf('swiftmailer.mailer.%s.transport.%s', $name, $transport), $definitionDecorator)
-                ->setArguments(array(
-                    new Reference('swiftmailer.transport.mailinvoker'),
-                    new Reference(sprintf('swiftmailer.mailer.%s.transport.eventdispatcher', $name)),
-                ))
+                ->addArgument(new Reference(sprintf('swiftmailer.mailer.%s.transport.eventdispatcher', $name)))
             ;
             $container->setAlias(sprintf('swiftmailer.mailer.%s.transport', $name), sprintf('swiftmailer.mailer.%s.transport.%s', $name, $transport));
         } elseif ('null' === $transport) {
@@ -178,8 +172,12 @@ class SwiftmailerExtension extends Extension
     {
         if (isset($mailer['spool'])) {
             $type = $mailer['spool']['type'];
-            foreach (array('path') as $key) {
-                $container->setParameter(sprintf('swiftmailer.spool.%s.%s.%s', $name, $type, $key), $mailer['spool'][$key] . '/' . $name);
+            if ('service' === $type) {
+                $container->setAlias(sprintf('swiftmailer.mailer.%s.spool.service', $name), $mailer['spool']['id']);
+            } else {
+                foreach (array('path') as $key) {
+                    $container->setParameter(sprintf('swiftmailer.spool.%s.%s.%s', $name, $type, $key), $mailer['spool'][$key] . '/' . $name);
+                }
             }
 
             $definitionDecorator = new DefinitionDecorator(sprintf('swiftmailer.spool.%s.abstract', $type));

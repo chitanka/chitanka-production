@@ -16,12 +16,15 @@
         }
     ],
     "require": {
-        "symfony/http-kernel": ">=2.2,<2.4-dev",
-        "symfony/dependency-injection": ">=2.2,<2.4-dev",
-        "symfony/templating": ">=2.2,<2.4-dev",
-        "symfony/locale": ">=2.2,<2.4-dev",
-        "twig/twig": "*",
-        "ext-intl": "*"
+        "symfony/http-kernel": "~2.2",
+        "symfony/dependency-injection": "~2.2",
+        "symfony/templating": "~2.2",
+        "symfony/locale": "~2.2",
+        "twig/twig": "*"
+    },
+    "require-dev": {
+        "sonata-project/user-bundle": "~2.2",
+        "symfony/security": "~2.2"
     },
     "autoload": {
         "psr-0": { "Sonata\\IntlBundle": "" }

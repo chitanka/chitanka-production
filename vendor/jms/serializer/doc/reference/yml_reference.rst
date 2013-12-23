@@ -2,7 +2,7 @@ YAML Reference
 --------------
 ::
 
-    # MyBundle\Resources\config\serializer\ClassName.yml
+    # MyBundle\Resources\config\serializer\Fully.Qualified.ClassName.yml
     Fully\Qualified\ClassName:
         exclusion_policy: ALL
         xml_root_name: foobar
@@ -14,6 +14,8 @@ YAML Reference
             field_name: type
             map:
                 some-value: ClassName
+        virtual_properties:
+            getSomeProperty: {}
         properties:
             some-property:
                 exclude: true
@@ -40,6 +42,8 @@ YAML Reference
                     key_attribute_name: foo
                     entry_name: bar
                 xml_attribute_map: true
+                xml_element:
+                    cdata: false
                 max_depth: 2
 
         handler_callbacks:

@@ -12,19 +12,19 @@ class Negotiator implements NegotiatorInterface
     /**
      * {@inheritDoc}
      */
-    public function getBest($acceptHeader, array $priorities = array())
+    public function getBest($header, array $priorities = array())
     {
-        $accepts = $this->parseAcceptHeader($acceptHeader);
+        $acceptHeaders = $this->parseHeader($header);
 
-        if (0 === count($accepts)) {
+        if (0 === count($acceptHeaders)) {
             return null;
         }
 
         if (0 !== count($priorities)) {
-            $priorities = $this->sanitizePriorities($priorities);
+            $priorities = $this->sanitize($priorities);
 
             $wildcardAccept = null;
-            foreach ($accepts as $accept) {
+            foreach ($acceptHeaders as $accept) {
                 if (in_array(strtolower($accept->getValue()), $priorities)) {
                     return $accept;
                 }
@@ -35,48 +35,54 @@ class Negotiator implements NegotiatorInterface
             }
 
             if (null !== $wildcardAccept) {
-                return new AcceptHeader(reset($priorities), $wildcardAccept->getQuality());
+                $value = reset($priorities);
+
+                return new AcceptHeader($value, $wildcardAccept->getQuality(), $this->parseParameters($value));
             }
         }
 
-        return reset($accepts);
+        return reset($acceptHeaders);
     }
 
     /**
-     * @param string $acceptHeader
+     * @param string $header A string that contains an `Accept|Accept-*` header.
      *
      * @return array[AcceptHeader]
      */
-    protected function parseAcceptHeader($acceptHeader)
+    protected function parseHeader($header)
     {
-        $acceptHeader = preg_replace('/\s+/', '', $acceptHeader);
-        $acceptParts  = preg_split('/\s*(?:,*("[^"]+"),*|,*(\'[^\']+\'),*|,+)\s*/',
-            $acceptHeader, 0, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
+        $acceptHeaders = array();
+
+        $header      = preg_replace('/\s+/', '', $header);
+        $acceptParts = preg_split('/\s*(?:,*("[^"]+"),*|,*(\'[^\']+\'),*|,+)\s*/',
+            $header, 0, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
         );
 
         $index    = 0;
-        $accepts  = array();
         $catchAll = null;
-        foreach ($acceptParts as $accept) {
-            $quality = 1;
-            $parts   = preg_split('/;\s*q=/i', $accept, 0, PREG_SPLIT_NO_EMPTY);
+        foreach ($acceptParts as $acceptPart) {
+            $quality    = 1.0;
+            $parts      = preg_split('/;\s*q=/i', $acceptPart, 0, PREG_SPLIT_NO_EMPTY);
+            $parameters = $this->parseParameters($acceptPart);
 
             if (2 === count($parts)) {
-                $accept  = $parts[0];
-                $quality = $parts[1];
+                $value   = $parts[0];
+                $quality = (float) $parts[1];
             } else {
-                if (self::CATCH_ALL_VALUE === $accept) {
+                $value = $acceptPart;
+
+                if (self::CATCH_ALL_VALUE === $value) {
                     $quality = 0.01;
-                } elseif ('*' === substr($accept, -1)) {
+                } elseif ('*' === substr($value, -1)) {
                     $quality = 0.02;
                 }
             }
 
-            if (self::CATCH_ALL_VALUE === $accept) {
-                $catchAll = new AcceptHeader($accept, $quality);
+            if (self::CATCH_ALL_VALUE === $value) {
+                $catchAll = new AcceptHeader($value, $quality, $parameters);
             } else {
-                $accepts[] = array(
-                    'item'  => new AcceptHeader($accept, $quality),
+                $acceptHeaders[] = array(
+                    'item'  => new AcceptHeader($value, $quality, $parameters),
                     'index' => $index
                 );
             }
@@ -84,7 +90,18 @@ class Negotiator implements NegotiatorInterface
             $index++;
         }
 
-        uasort($accepts, function ($a, $b) {
+        return $this->sortAcceptHeaders($acceptHeaders, $catchAll);
+    }
+
+    /**
+     * @param array        $acceptHeaders A set of AcceptHeader objects to sort.
+     * @param AcceptHeader $catchAll      A special AcceptHeader that represents the "catch all".
+     *
+     * @return array[AcceptHeader]
+     */
+    protected function sortAcceptHeaders(array $acceptHeaders, AcceptHeader $catchAll = null)
+    {
+        uasort($acceptHeaders, function ($a, $b) {
             $qA = $a['item']->getQuality();
             $qB = $b['item']->getQuality();
 
@@ -106,23 +123,45 @@ class Negotiator implements NegotiatorInterface
 
         // put the catch all header at the end if available
         if (null !== $catchAll) {
-            array_push($accepts, array('item' => $catchAll));
+            array_push($acceptHeaders, array('item' => $catchAll));
         }
 
         return array_map(function ($accept) {
             return $accept['item'];
-        }, array_values($accepts));
+        }, array_values($acceptHeaders));
     }
 
     /**
-     * @param array $priorities
+     * @param array $values
      *
      * @return array
      */
-    protected function sanitizePriorities(array $priorities)
+    protected function sanitize(array $values)
     {
-        return array_map(function ($priority) {
-            return preg_replace('/\s+/', '', strtolower($priority));
-        }, $priorities);
+        return array_map(function ($value) {
+            return preg_replace('/\s+/', '', strtolower($value));
+        }, $values);
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return array
+     */
+    protected function parseParameters($value)
+    {
+        $parts = explode(';', preg_replace('/\s+/', '', $value));
+        array_shift($parts);
+
+        $parameters = array();
+        foreach ($parts as $part) {
+            $part = explode('=', $part);
+
+            if ('q' !== $key = strtolower($part[0])) {
+                $parameters[$key] = $part[1];
+            }
+        }
+
+        return $parameters;
     }
 }

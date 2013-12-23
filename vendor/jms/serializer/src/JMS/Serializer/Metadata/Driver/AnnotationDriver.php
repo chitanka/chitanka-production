@@ -2,13 +2,13 @@
 
 /*
  * Copyright 2013 Johannes M. Schmitt <schmittjoh@gmail.com>
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,10 +30,12 @@ use JMS\Serializer\Annotation\XmlAttribute;
 use JMS\Serializer\Annotation\XmlList;
 use JMS\Serializer\Annotation\XmlValue;
 use JMS\Serializer\Annotation\XmlKeyValuePairs;
+use JMS\Serializer\Annotation\XmlElement;
 use JMS\Serializer\Annotation\PostSerialize;
 use JMS\Serializer\Annotation\PostDeserialize;
 use JMS\Serializer\Annotation\PreSerialize;
 use JMS\Serializer\Annotation\VirtualProperty;
+use JMS\Serializer\Metadata\XmlElementMetadata;
 use Metadata\MethodMetadata;
 use Doctrine\Common\Annotations\Reader;
 use JMS\Serializer\Annotation\Type;
@@ -169,6 +171,9 @@ class AnnotationDriver implements DriverInterface
                         $propertyMetadata->xmlAttribute = true;
                     } elseif ($annot instanceof XmlValue) {
                         $propertyMetadata->xmlValue = true;
+                        $propertyMetadata->xmlElementCData = $annot->cdata;
+                    } elseif ($annot instanceof XmlElement) {
+                        $propertyMetadata->xmlElementCData = $annot->cdata;
                     } elseif ($annot instanceof AccessType) {
                         $accessType = $annot->type;
                     } elseif ($annot instanceof ReadOnly) {

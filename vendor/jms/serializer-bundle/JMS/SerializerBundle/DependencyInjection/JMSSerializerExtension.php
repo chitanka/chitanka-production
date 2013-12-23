@@ -37,7 +37,9 @@ class JMSSerializerExtension extends ConfigurableExtension
         // Built-in handlers.
         $container->getDefinition('jms_serializer.datetime_handler')
             ->addArgument($config['handlers']['datetime']['default_format'])
-            ->addArgument($config['handlers']['datetime']['default_timezone']);
+            ->addArgument($config['handlers']['datetime']['default_timezone'])
+            ->addArgument($config['handlers']['datetime']['cdata'])
+        ;
 
         // property naming
         $container
@@ -74,8 +76,8 @@ class JMSSerializerExtension extends ConfigurableExtension
             $container->setAlias('jms_serializer.metadata.cache', new Alias($config['metadata']['cache'], false));
         }
 
-        if ($config['metadata']['infer_types_from_doctrine_metadata'] && isset($bundles['DoctrineBundle'])) {
-            $container->setAlias('jms_serializer.metadata_driver', 'jms_serializer.metadata.doctrine_type_driver');
+        if ($config['metadata']['infer_types_from_doctrine_metadata']) {
+            $container->setParameter('jms_serializer.infer_types_from_doctrine_metadata', true);
         }
 
         $container
@@ -118,6 +120,10 @@ class JMSSerializerExtension extends ConfigurableExtension
 
         if ( ! $config['enable_short_alias']) {
             $container->removeAlias('serializer');
+        }
+
+        if ( ! $container->getParameter('kernel.debug')) {
+            $container->removeDefinition('jms_serializer.stopwatch_subscriber');
         }
     }
 

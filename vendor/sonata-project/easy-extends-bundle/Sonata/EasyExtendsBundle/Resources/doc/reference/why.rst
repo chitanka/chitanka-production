@@ -13,7 +13,7 @@ Let’s have a quick Symfony2 and Doctrine tour
 A quick Doctrine tour:
 
   - Doctrine2 entities are plain PHP objects; there is no database layer information. An ``Comment::post_id`` property
-    is part of the database layer and not part of the domain layer. So a ``comment`` entity will have a `post`` property
+    is part of the database layer and not part of the domain layer. So a ``comment`` entity will have a ``post`` property
     and not a ``post_id`` property.
   - Doctrine2 entities are mapped through mapping information: yaml, xml, annotation or php code. There is one mapping
     per class. So if Blog extends SuperBlog, which extends SuperEntity, you will have 3 classes and so 3 information
@@ -53,7 +53,7 @@ Can this problem be solved with the Alternate syntax?
 -----------------------------------------------------
 
 There is actually a start of a solution, the DoctrineBundle allows us to use an alternate syntax,
-ie (‘BlogBundle:Blog’ instead of ‘Bundle\BlogBundle\Entity\Blog’). As you can guess this syntax only works
+ie (``BlogBundle:Blog`` instead of ``Bundle\BlogBundle\Entity\Blog``). As you can guess this syntax only works
 for string, inside a query for instance.
 
 So if you want to instantiate a new model, you need first to get the ClassMetadata instance, retrieve the class
@@ -69,7 +69,7 @@ A pragmatic way to solve this issue
 -----------------------------------
 
 The easiest way to solve this problem is to use global namespace inside your VB, the global namespace is the only
-namespace allowed  `Application\YourBundle\Entity`.
+namespace allowed  ``Application\YourBundle\Entity``.
 
 So inside your mapping definition or inside your VB code, you will use one final namespace: problem solved.
 How to achieve this

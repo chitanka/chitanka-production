@@ -51,6 +51,7 @@
             <argument type="service" id="twig" />
             <argument type="service" id="sonata.admin.pool" />
             <argument type="service" id="sonata.admin.helper" />
+            <argument type="service" id="validator" />
         </service>
 
         <!-- audit manager -->
@@ -58,8 +59,15 @@
             <argument type="service" id="service_container" />
         </service>
 
-        <service id="sonata.admin.exporter" class="Sonata\AdminBundle\Export\Exporter">
+        <service id="sonata.admin.exporter" class="Sonata\AdminBundle\Export\Exporter" />
 
+        <service id="sonata.admin.search.handler" class="Sonata\AdminBundle\Search\SearchHandler">
+            <argument type="service" id="sonata.admin.pool" />
+        </service>
+
+        <!-- event -->
+        <service id="sonata.admin.event.extension" class="Sonata\AdminBundle\Event\AdminEventExtension">
+            <argument type="service" id="event_dispatcher" />
         </service>
     </services>
 </container>

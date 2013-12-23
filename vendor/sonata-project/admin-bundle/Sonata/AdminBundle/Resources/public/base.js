@@ -1,8 +1,11 @@
 jQuery(document).ready(function() {
     jQuery('html').removeClass('no-js');
-    if (window.SONATA_CONFIG.CONFIRM_EXIT) {
+    if (window.SONATA_CONFIG && window.SONATA_CONFIG.CONFIRM_EXIT) {
         jQuery('.sonata-ba-form form').confirmExit();
     }
+
+    Admin.setup_select2(document);
+    Admin.setup_xeditable(document);
     Admin.add_pretty_errors(document);
     Admin.add_filters(document);
     Admin.set_object_field_value(document);
@@ -12,7 +15,54 @@ jQuery(document).ready(function() {
     Admin.setup_inline_form_errors(document);
 });
 
+jQuery(document).on('sonata-admin-append-form-element', function(e) {
+    Admin.setup_select2(e.target);
+});
+
 var Admin = {
+
+    setup_select2: function(subject) {
+        if (window.SONATA_CONFIG && window.SONATA_CONFIG.USE_SELECT2 && window.Select2) {
+            jQuery('select', subject).each(function() {
+                var select = $(this);
+
+                select.select2({
+                    width: 'resolve',
+                    minimumResultsForSearch: 10,
+                    allowClear: select.find('option[value=""]').length ? true : false
+                });
+
+                var popover = select.data('popover');
+
+                if (undefined !== popover) {
+                    select
+                        .select2('container')
+                        .popover(popover.options)
+                    ;
+                }
+            });
+        }
+    },
+
+    setup_xeditable: function(subject) {
+        jQuery('.x-editable', subject).editable({
+            emptyclass: 'editable-empty btn btn-small',
+            emptytext: '<i class="icon-edit"></i>',
+            success: function(response) {
+                if('KO' === response.status) {
+                    return response.message;
+                }
+
+                var html = jQuery(response.content);
+                Admin.setup_xeditable(html);
+
+                jQuery(this)
+                    .closest('td')
+                    .replaceWith(html)
+                ;
+            }
+        });
+    },
 
     /**
      * render log message
@@ -33,6 +83,9 @@ var Admin = {
      * @param subject
      */
     add_pretty_errors: function(subject) {
+
+        Admin.setup_select2(subject);
+
         jQuery('div.sonata-ba-field-error', subject).each(function(index, element) {
             var input = jQuery(':input', element);
 
