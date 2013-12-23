@@ -11,8 +11,7 @@ function get($name, $allowedValues) {
 	return $allowedValues[0];
 }
 
-function compileStyleFiles($rootDir, $skin, $menuPos) {
-	$cacheDir = "$rootDir/app/cache/less";
+function compileStyleFiles($cacheDir, $skin, $menuPos) {
 	if (!file_exists($cacheDir)) {
 		mkdir($cacheDir, 0777, true);
 	}
@@ -22,7 +21,7 @@ function compileStyleFiles($rootDir, $skin, $menuPos) {
 		"menu-$menuPos.less" => '',
 	);
 	$parserOptions = array(/*'compress' => true*/);
-	$cssFile = Less_Cache::Get($lessFiles);
+	$cssFile = Less_Cache::Get($lessFiles, $parserOptions);
 	return $cssFile ? $cacheDir .'/'. $cssFile : null;
 }
 
@@ -49,11 +48,13 @@ $positions = array(
 	'left',
 );
 
-$rootDir = strpos(__DIR__, '/web/bundles/') === false
-	? __DIR__.'/../../../../../..'
-	: __DIR__.'/../../../..';
-require __DIR__."/../bin/Less.php";
-$cssFile = compileStyleFiles($rootDir, get('skin', $skins), get('menu', $positions));
+$thisDir = dirname(__FILE__);
+$cacheDir = strpos($thisDir, '/web/bundles/') === false
+	? $thisDir.'/../../../../../../app/cache/less'
+	: $thisDir.'/../../../cache/less';
+require $thisDir."/../bin/Less.php";
+ini_set('memory_limit', '128M');
+$cssFile = compileStyleFiles($cacheDir, get('skin', $skins), get('menu', $positions));
 if ($cssFile) {
 	sendCssFile($cssFile);
 } else {
