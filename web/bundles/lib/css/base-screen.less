@@ -250,9 +250,6 @@ h2 a:visited {
 	margin: 0 1em;
 	padding: 0;
 }
-.p_homepage #main-content {
-	margin: 0;
-}
 
 // съобщения, информиращи потребителя за нещо
 .messages {
@@ -584,7 +581,6 @@ li img {
 .cluetip-close a,
 .idea,
 .stop,
-.frozen .progress,
 span.frozen {
 	position: relative;
 	padding-left: 1.35em;
@@ -610,7 +606,6 @@ span.frozen {
 	background-position: 0 -330px;
 }
 .stop,
-.frozen .progress,
 span.frozen {
 	background-position: 0 -462px;
 }
@@ -683,22 +678,6 @@ li.title {
 .t-fable {
 	background-image: data-uri('images/texttypes/tale.png');
 }
-
-
-// Иконки за прогрес
-.progress {
-	padding-left: 1.1em;
-	background: url('images/sprite-progress.png') no-repeat top left;
-}
-.progress-0{ background-position: 0 0;  }
-.progress-1{ background-position: 0 -65px;  }
-.progress-2{ background-position: 0 -130px;  }
-.progress-3{ background-position: 0 -195px;  }
-.progress-4{ background-position: 0 -260px;  }
-.progress-5{ background-position: 0 -325px;  }
-.progress-6{ background-position: 0 -390px;  }
-.progress-7{ background-position: 0 -455px;  }
-
 
 // Оценки по списъчните страници
 .rating {
@@ -797,23 +776,16 @@ li.title {
 // различни кутии — легенда, за авторските права, информационна
 #legend,
 #copyright,
-.infobox,
 .readercomment,
 .tabbedpanebody,
 #tooltip,
 article,
 div.fos_comment_comment_show {
 	clear: both;
-	color: @mainFgColor;
-	background-color: @tocBgColor;
 	.well;
-	.well-sm;
 }
 .annotation {
 	clear: none;
-}
-.infobox {
-	margin-bottom: 2em;
 }
 // читателските мнения
 #readercomments ul,
@@ -1404,14 +1376,6 @@ ins {
 del {
 	text-decoration: none;
 }
-.progressbar {
-	border: thin solid @mainFgColor;
-	font-weight: bold;
-}
-.progressbar .done {
-	color: @navTitleFgColor;
-	background-color: @navTitleBgColor;
-}
 
 div.thumb {
 	float: left;
@@ -1675,12 +1639,14 @@ form.loading {
 .welcome {
 	padding: 1em;
 	font-size: 1.4em;
-	text-align: center;
 	text-shadow: none;
 	color: @mainFgColor;
 	background-color: @mainBgColor;
 }
-
+.p_homepage #main-content {
+	margin: 0 auto;
+	max-width: 75em;
+}
 .p_homepage #first-heading {
 	display: none;
 }
@@ -1691,6 +1657,7 @@ article h1 {
 	font-family: Georgia, "Times New Roman", Times, serif;
 	font-style: italic;
 	font-size: 1.7em;
+	text-align: center;
 	.boxShadow(none);
 }
 article h1 {
@@ -1700,7 +1667,11 @@ article h1 {
 	display: none;
 }
 .p_homepage article {
+	margin: 0 0 1.6em 0;
 	padding: 1.5em;
+	&.collapsed {
+		margin-bottom: 0;
+	}
 }
 .box {
 	float: left;
@@ -1730,7 +1701,7 @@ article h1 {
 	width: 66%;
 }
 .p_homepage .textbox .superlist {
-	margin: 2em 0 0 1.5em;
+	margin: 0;
 }
 .p_homepage .textbox dt,
 .p_homepage .textbox dd {
@@ -1743,10 +1714,10 @@ article h1 {
 }
 button.expander {
 	display: block;
-	margin: 0 auto;
-	width: 66%;
-	border: none;
-	cursor: pointer;
+	margin: 0 auto 1.6em auto;
+	width: 100%;
+	border-width: 5px 0 0 0;
+	line-height: 1em;
 }
 button.expander:hover span {
 	text-decoration: underline;
@@ -1774,14 +1745,11 @@ button.expander:hover span {
 	font-style: italic;
 	font-size: 0.9em;
 }
-table.infobox,
 table.toccolours {
 	float: right;
 	border: thin solid @tocBordColor;
 	border-collapse: collapse;
 }
-table.infobox th,
-table.infobox td,
 table.toccolours th,
 table.toccolours td {
 	padding: 0.2em 0.5em;
@@ -1961,6 +1929,7 @@ ul.two-columns {
 	margin: 0 0 1em 1em;
 }
 .more {
+	margin-top: 0.6em;
 	text-align: right;
 }
 .more a:after {
@@ -2116,9 +2085,42 @@ a.btn {
 .popover {
 	max-width: 650px;
 }
+.well {
+	border-color: darken(@well-bg, 30%);
+}
+.fa {
+	text-indent: 0;
+}
 .multiuser {
 	color: @brand-primary;
 }
 .singleuser {
 	color: @brand-success;
+}
+td .progress {
+	margin-bottom: 0;
+}
+.dropdown-menu a {
+	text-decoration: none;
+}
+.status-scan {
+	color: #FF0000;
+}
+.status-waiting {
+	color: #FFCC00;
+}
+.status-edit {
+	color: #C9E800;
+}
+.status-format {
+	color: orange;
+}
+.status-forcheck {
+	color: orange;
+}
+.status-checked {
+	color: #00FF00;
+}
+.status-done {
+	color: #00CC00;
 }

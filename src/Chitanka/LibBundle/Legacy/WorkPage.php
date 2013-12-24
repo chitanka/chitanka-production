@@ -60,7 +60,19 @@ class WorkPage extends Page {
 			'my' => 'Мое участие',
 			'waiting' => 'Търси се коректор',
 		),
-		$progressBarWidth = '20',
+		$statusClasses = array(
+			self::STATUS_0 => 'fa fa-square-o status-plan',
+			self::STATUS_1 => 'fa fa-square status-scan',
+			self::STATUS_2 => 'fa fa-circle-o status-waiting',
+			self::STATUS_3 => 'fa fa-dot-circle-o status-edit',
+			self::STATUS_4 => 'fa fa-code status-format',
+			self::STATUS_5 => 'fa fa-question-circle status-forcheck',
+			self::STATUS_6 => 'fa fa-check-circle status-checked',
+			self::STATUS_7 => 'fa fa-circle status-done',
+			'all' => 'fa fa-tasks',
+			'my' => 'fa fa-user',
+			'waiting' => 'fa fa-search-plus status-waiting',
+		),
 
 		$fileWhiteList = array(
 			'sfb', 'fb2', 'txt',
@@ -106,10 +118,6 @@ class WorkPage extends Page {
 		$this->showProgressbar = true;
 		$this->viewList = $this->request->value(self::FF_VIEW_LIST,
 			$this->defViewList, null, $this->viewLists);
-
-		foreach ($this->statuses as $st => $title) {
-			$this->viewTypes["st-$st"] = $title;
-		}
 
 		if ( !empty($this->subaction) && !empty($this->viewTypes[$this->subaction]) ) {
 			$this->title .= ' — ' . $this->viewTypes[$this->subaction];
@@ -634,7 +642,7 @@ HTML;
 
 
 	public function makeStatus($code) {
-		return "<span class='progress progress-$code'>{$this->statuses[$code]}</span>";
+		return "<i class='{$this->statusClasses[$code]}'></i> {$this->statuses[$code]}";
 	}
 
 
@@ -657,14 +665,13 @@ HTML;
 		if ( !$this->showProgressbar ) {
 			return $perc;
 		}
-		$bar = str_repeat(' ', $this->progressBarWidth);
-		$bar = substr_replace($bar, $perc, $this->progressBarWidth/2-1, strlen($perc));
-		$curProgressWidth = ceil($this->progressBarWidth * $progressInPerc / 100);
-		// done bar end
-		$bar = substr_replace($bar, '</span>', $curProgressWidth, 0);
-		$bar = strtr($bar, array(' ' => '&#160;'));
-
-		return "<pre style='display:inline'><span class='progressbar'><span class='done'>$bar</span></pre>";
+		return <<<HTML
+<div class="progress">
+	<div class="progress-bar" role="progressbar" aria-valuenow="$progressInPerc" aria-valuemin="0" aria-valuemax="100" style="width: $progressInPerc%;">
+		<span>$progressInPerc%</span>
+	</div>
+</div>
+HTML;
 	}
 
 
@@ -682,11 +689,21 @@ HTML;
 		$links = array();
 		foreach ($this->viewTypes as $type => $title) {
 			$class = $this->subaction == $type ? 'selected' : '';
-			$links[] = sprintf('<li><a href="%s" class="%s" title="Преглед на произведенията по критерий „%s“">%s</a></li>',
+			$links[] = sprintf('<li><a href="%s" class="%s" title="Преглед на произведенията по критерий „%s“">%s %s</a></li>',
 				$this->controller->generateUrl('workroom', array(
 					self::FF_SUBACTION => $type
 				)),
-				$class, $title, $title);
+				$class, $title, "<i class='{$this->statusClasses[$type]}'></i>", $title);
+		}
+		$links[] = '<li role="presentation" class="divider"></li>';
+		foreach ($this->statuses as $code => $statusTitle) {
+			$type = "st-$code";
+			$class = $this->subaction == $type ? 'selected' : '';
+			$links[] = sprintf('<li><a href="%s" class="%s" title="Преглед на произведенията по критерий „%s“">%s %s</a></li>',
+				$this->controller->generateUrl('workroom', array(
+					self::FF_SUBACTION => $type
+				)),
+				$class, $statusTitle, "<i class='{$this->statusClasses[$code]}'></i>", $statusTitle);
 		}
 
 		return '<div class="btn-group">
@@ -998,7 +1015,7 @@ FIELDS;
 		foreach ($statuses as $code => $text) {
 			if ( !is_null($max) && $code > $max) break;
 			$sel = $selected == $code ? ' selected="selected"' : '';
-			$field .= "\n\t<option value='$code'$sel class='progress progress-$code'>$text</option>";
+			$field .= "<option value='$code'$sel>$text</option>";
 		}
 
 		return $field;
