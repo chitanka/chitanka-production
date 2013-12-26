@@ -8,12 +8,7 @@ body {
 	line-height: 1.5em;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
 	padding: .4em 0 .2em;
 	line-height: 1.3em;
 	font-weight: normal;
@@ -22,22 +17,19 @@ h1, hgroup h2 {
 	color: @headerFgColor;
 	background-color: @headerBgColor;
 	border-bottom: none;
-	border-radius: @border-radius-base;
 	text-shadow: .1em .05em .1em @headerShadowColor;
 	text-align: center;
 }
-h1 p,
-h2 p,
-h3 p,
-h4 p,
-h5 p,
-h6 p {
-	text-align: center;
-	text-indent: 0;
+h1, h2, h3, h4, h5, h6 {
+	p {
+		text-align: center;
+		text-indent: 0;
+	}
 }
 h1 {
 	margin-top: 0;
 	font-size: 1.5em;
+	border-radius: @border-radius-base;
 }
 h2 {
 	font-size: 1.4em;
@@ -295,7 +287,6 @@ h2 a:visited {
 	padding-left: .6em;
 	border: none;
 	border-radius: @border-radius-base @border-radius-base 0 0;
-	.boxShadow(none);
 	font-size: 1em;
 }
 #navigation h3,
@@ -303,7 +294,7 @@ h2 a:visited {
 	color: @navTitleFgColor;
 	background-color: @navTitleBgColor;
 	font-weight: bold;
-	text-shadow: .1em .1em .1em @navTitleShadowColor;
+	text-shadow: 1px 0px 1px @navTitleShadowColor;
 }
 #navigation h4 {
 	margin: .1em 0 .3em;
@@ -539,7 +530,6 @@ dd.country {
 .book-content h6 {
 	margin: 0;
 	padding: .3em 0 0 2em;
-	.boxShadow(none);
 	font-size: 1.1em;
 	text-align: left;
 	background-color: inherit;
@@ -727,7 +717,6 @@ li.title {
 	font-size: 1.1em;
 	font-weight: bold;
 	text-shadow: none;
-	.boxShadow(none);
 }
 // неподредени списъци в кутията за съдържание
 #toc ul, #toc ol {
@@ -1623,8 +1612,12 @@ form.loading {
 		h1, h2 {
 			margin: 0;
 		}
+		h1 {
+			border-radius: @border-radius-base @border-radius-base 0 0;
+		}
 		h2 {
 			padding-top: 0;
+			border-radius: 0 0 @border-radius-base @border-radius-base;
 			span {
 				font-size: 85%;
 			}
@@ -1654,7 +1647,6 @@ article h1 {
 	font-style: italic;
 	font-size: 1.7em;
 	text-align: center;
-	.boxShadow(none);
 }
 article h1 {
 	font-size: 1.3em;
@@ -1726,41 +1718,40 @@ button.expander:hover span {
 }
 .wikiinfo {
 	position: relative;
-}
-.wikiinfo h2 {
-	clear: both;
-}
-// edit section links
-.mw-editsection {
-	display: none;
-}
-.intro {
-	opacity: .6;
-	margin-bottom: 1em;
-	border-bottom: thin solid @fieldsetBordColor;
-	font-style: italic;
-	font-size: 0.9em;
-}
-table.toccolours {
-	float: right;
-	border: thin solid @tocBordColor;
-	border-collapse: collapse;
-}
-table.toccolours th,
-table.toccolours td {
-	padding: 0.2em 0.5em;
+	.intro {
+		opacity: .6;
+		margin-bottom: 1em;
+		border-bottom: thin solid @fieldsetBordColor;
+		font-style: italic;
+		font-size: 0.9em;
+	}
+	h2 {
+		clear: both;
+	}
+	.editsection {
+		float: right;
+	}
+	.new {
+		padding-left: 0;
+		background: inherit;
+	}
+	.othermeaning-box {
+		display: none;
+	}
+	table.toccolours {
+		float: right;
+		border: thin solid @tocBordColor;
+		border-collapse: collapse;
+		th, td {
+			padding: 0.2em 0.5em;
+		}
+	}
 }
 .wikidata h2 {
 	clear: both;
 }
-.wikiinfo .editsection {
-	float: right;
-}
-.wikiinfo .new {
-	padding-left: 0;
-	background: inherit;
-}
-.wikiinfo .othermeaning-box {
+// edit section links in wiki articles
+.mw-editsection {
 	display: none;
 }
 // връзки към епизоди в книга-игра
@@ -2086,6 +2077,7 @@ a.btn {
 }
 .fa {
 	text-indent: 0;
+	font-variant: normal; // for Chrome
 }
 .multiuser {
 	color: @brand-primary;
