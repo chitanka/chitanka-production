@@ -333,7 +333,7 @@ option[selected=selected],
 // полето с името на библиотеката
 #logo {
 	position: relative;
-	margin: @contentMarginTop 0 .2em 0;
+	margin: @contentMarginTop 0 .5em 0;
 	text-align: center;
 	//width: 12em;
 	overflow: hidden;
@@ -389,6 +389,9 @@ option[selected=selected],
 	a {
 		text-decoration: none;
 	}
+}
+.user-tools-toggle {
+	font-size: @font-size-base;
 }
 
 // формуляра за търсене
@@ -1861,12 +1864,13 @@ ul.two-columns {
 	text-align: center;
 }
 
-.history-wrapper h3 {
-	text-align: left;
-}
-.history-wrapper .toc {
-	float: right;
-	margin: 0 0 1em 1em;
+.history-wrapper {
+	position: relative;
+	.feed-standalone {
+		position: absolute;
+		top: -2.2em;
+		right: .2em;
+	}
 }
 .more {
 	margin-top: 0.6em;
@@ -1901,10 +1905,10 @@ ul.two-columns {
 	margin-left: 2em;
 }
 
-.with-actions li:hover .delete-form button,
-.delete-form button:focus,
-.delete-form button:hover {
-	background: data-uri('images/002-delete.png') no-repeat 0 0;
+.with-actions li:hover .delete-form button .fa,
+.delete-form button:focus .fa,
+.delete-form button:hover .fa {
+	display: inline;
 }
 .bookmark-form button {
 	background-image: data-uri('images/bookmark.png');
@@ -1923,19 +1927,16 @@ ul.two-columns {
 .image-form {
 	display: inline;
 }
-.image-form button span {
+.image-form button span,
+.image-form button .fa {
 	display: none;
 }
 .image-form button {
-	margin-top: 2px;
-	vertical-align: top;
 	height: 16px;
 	width: 16px;
+	vertical-align: top;
 	border: none;
 	border-radius: 0;
-	.boxShadow(none);
-	cursor: pointer;
-	padding-left: 12px;
 	background-color: transparent;
 }
 .user-actions {
@@ -1992,7 +1993,7 @@ a.btn {
 td .progress {
 	margin-bottom: 0;
 }
-.dropdown-menu a {
+.dropdown a {
 	text-decoration: none;
 }
 .status-scan {
@@ -2015,4 +2016,13 @@ td .progress {
 }
 .status-done {
 	color: #00CC00;
+}
+// for visual aid during development
+#env-dev {
+	position: absolute;
+	top: 0;
+	left: 0;
+	opacity: 0.2;
+	font-size: 60%;
+	line-height: 1em;
 }
