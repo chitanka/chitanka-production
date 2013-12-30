@@ -555,15 +555,12 @@ li img {
 }
 
 // връзки за определени действия и състояния
-.edit,
 .delete,
 .new,
 .ok,
-.read,
 .feed,
 .zoom,
 .close,
-.cluetip-close a,
 .idea,
 .stop,
 span.frozen {
@@ -574,12 +571,8 @@ span.frozen {
 .delete {
 	background-position: 0 -66px;
 }
-.ok,
-.read {
+.ok {
 	background-position: 1px -262px;
-}
-.edit {
-	background-position: 0 0px;
 }
 .new {
 	background-position: 0 -132px;
@@ -597,8 +590,7 @@ span.frozen {
 .is_frozen {
 	opacity: .6;
 }
-.close,
-.cluetip-close a {
+.close {
 	background-position: 0 -396px;
 }
 .idea {
@@ -736,9 +728,8 @@ span.frozen {
 	padding: .2em 0;
 	border: thin solid @navTitleBgColor;
 }
-// различни кутии — легенда, за авторските права, информационна
+// различни кутии
 #legend,
-#copyright,
 .readercomment,
 .tabbedpanebody,
 article,
@@ -795,7 +786,6 @@ div.fos_comment_comment_reply {
 	margin-top: 3em;
 }
 
-#copyright ul,// неподредени списъци в кутията за авторските права
 .superlist ul,// списъци със заглавия
 ul.superlist {
 	list-style-type: none;
@@ -829,22 +819,13 @@ ul.superlist {
 .read:hover {
 	text-decoration: underline;
 }
+.read:before {
+    color: #00CC00;
+    content: "\F00C"; // fa-check
+    font-family: FontAwesome;
+}
 
 // връзки за сваляне
-/*a.dl {
-	text-transform: uppercase;
-	text-decoration: none;
-	font-size: 1.4ex;
-}
-a.dl:hover {
-	text-decoration: underline;
-}
-.buttonmenu a.dl:hover {
-	text-decoration: none;
-}
-.navbody a.dl {
-	display: block;
-}*/
 .dl {
 	position: relative;
 	padding-left: 20px;
@@ -893,8 +874,6 @@ a.dl:hover {
 .superlist .action:focus {
 	opacity: 1;
 }
-
-
 
 // менюта, обикновено чрез списъци
 .menu {
@@ -1071,24 +1050,6 @@ th {
 	background-color: @evenBgColor;
 }
 
-// сортуруеми таблици
-th.header {
-	padding-left: 1.1em;
-	background-image: url('images/sprite-sort.png');
-	background-repeat: no-repeat;
-	background-position: 4px -112px;
-	cursor: pointer;
-}
-th.headerSortUp {
-	background-position: 5px -24px;
-	text-decoration: underline;
-}
-th.headerSortDown {
-	background-position: 5px -68px;
-	text-decoration: underline;
-}
-
-
 // невидими знаци (табулации, интервали), които трябва да бъдат видими
 .visible-ws {
 	color: @mainBgColor;
@@ -1100,10 +1061,7 @@ th.headerSortDown {
 .buttonmenu a span,
 .buttonmenu .selected span,
 // do this as a foreground image to support css on/img off
-.edit span,
 .rating span,
-.cluetip-close a span,
-.texttype span,
 .dl-list span {
 	display: none;
 }
@@ -1270,8 +1228,7 @@ div.poem-middle .subheader {
 // text or book covers
 .cover {
 	float: left;
-	margin: 0 1em 1em 0;
-	padding: .3ex;
+	margin-right: 1em;
 }
 .post {
 	clear: both;
@@ -1307,6 +1264,7 @@ del {
 	text-decoration: none;
 }
 
+// in texts
 div.thumb {
 	float: left;
 	margin: .5em 1em 1em 0;
@@ -1316,35 +1274,13 @@ div.thumb {
 	background-color: @tocBgColor;
 	text-align: center;
 }
+// in texts
 span.image-title {
 	display: block;
 	text-align: center;
 	font-style: italic;
 }
 
-div.tabbedpane {
-	margin-top: 1em;
-}
-div.tab {
-	float: left;
-	margin-left: .5em;
-	padding: .2em .5em .1em .5em;
-	border: solid @tocBordColor;
-	border-width: thin thin 0 thin;
-}
-div.tabbedpanebody {
-	clear: both;
-	border: thin solid @tocBordColor;
-	padding: 0 .5em .5em .5em;
-}
-
-.purl {
-	float: right;
-	margin-top: 1em;
-	overflow: auto;
-	border-top: thin solid @tocBordColor;
-	font-size: .9em;
-}
 // за таблици
 .fieldname-left {
 	text-align: right;
@@ -1401,7 +1337,6 @@ div.tabbedpanebody {
 	padding-right: 18px;
 	background: url('images/loading.gif') right center no-repeat;
 }
-
 form.loading {
 	background-position: center center !important;
 	opacity: 0.3;
@@ -1417,21 +1352,6 @@ form.loading {
 	line-height: 3em;
 	text-align: center;
 	font-size: 1.5em;
-}
-// cluetip
-
-#cluetip {
-	padding: .2em .5em;
-	border: medium outset @fieldsetBordColor;
-	color: @mainFgColor;
-	background-color: @mainBgColor;
-}
-#cluetip h3 {
-	margin: .2em 0 .1em 0;
-	padding: .1em;
-}
-.cluetip-title .cluetip-close {
-	float: left;
 }
 
 .clouds {
@@ -1873,7 +1793,6 @@ ul.two-columns {
 	padding: 0;
 	text-align: center;
 }
-
 .bookshelf li {
 	display: inline-block;
 	margin: 0 2em 1em 0;
@@ -1972,6 +1891,10 @@ a.btn {
 	text-indent: 0;
 	font-variant: normal; // for Chrome
 }
+.dropdown a {
+	text-decoration: none;
+}
+// workroom
 .multiuser {
 	color: @brand-primary;
 }
@@ -1980,9 +1903,6 @@ a.btn {
 }
 td .progress {
 	margin-bottom: 0;
-}
-.dropdown a {
-	text-decoration: none;
 }
 .status-scan {
 	color: #FF0000;

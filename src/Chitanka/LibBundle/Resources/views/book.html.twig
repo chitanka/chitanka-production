@@ -9,7 +9,7 @@
 				<i itemprop="name">{{ book.title }}</i>
 			</a>
 				{% if book.has_anno %}
-					<a class="book-clue" data-href="{{ path('book_show', {'id': book.id, '_format': 'clue'}) }}"><i class="fa fa-info-circle"></i></a>
+					<a class="book-clue" data-href="{{ path('book_show', {'id': book.id, '_format': 'clue'}) }}"><span class="fa fa-info-circle"></span></a>
 				{% endif %}
 				{% if book.subtitle is not empty %}
 					<br>
@@ -60,15 +60,15 @@
 {% endmacro %}
 
 {% macro cover(book, width) %}
-	<img class="cover thumbnail" src="{{ asset(book.has_cover ? cover(book.id, width) : cover(0, width, 'png')) }}" alt="Корица" width="{{ width }}" itemprop="image">
+	<img class="cover thumbnail" src="{{ asset(book.has_cover ? cover(book.id, width) : cover(0, width, 'png')) }}" alt="Корица" itemprop="image">
 {% endmacro %}
 
 {% macro cover_div(book, width) %}
 	<div class="cover thumbnail">
 		{% if book.has_cover %}
-			<a href="{{ asset(cover(book.id, 'max')) }}"><img src="{{ asset(cover(book.id, width)) }}" alt="Корица" width="{{ width }}" itemprop="image"></a>
+			<a href="{{ asset(cover(book.id, 'max')) }}"><img src="{{ asset(cover(book.id, width)) }}" alt="Корица" itemprop="image"></a>
 		{% else %}
-			<img src="{{ asset(cover(0, width, 'png')) }}" alt="Корица" width="{{ width }}" itemprop="image">
+			<img src="{{ asset(cover(0, width, 'png')) }}" alt="Корица" itemprop="image">
 		{% endif %}
 	</div>
 {% endmacro %}
