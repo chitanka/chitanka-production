@@ -725,9 +725,9 @@ HTML;
 		foreach ($this->tabs as $type => $text) {
 			$text = "<span class='{$this->tabImgs[$type]}'></span> $text";
 			$class = '';
+			$url = '#';
 			if ($this->workType == $type) {
 				$class = 'active';
-				$url = '#';
 			} else if ($this->thisUserCanDeleteEntry()) {
 				$route = 'workroom_entry_new';
 				$params = array('workType' => $type);
@@ -1297,7 +1297,7 @@ EOS;
 		<span class="fa fa-warning"></span>
 	</div>
 	<div class="media-body">
-		Разрешено е да се добавят само книги, издадени на български преди 2011 г. Изключение се прави за онези текстове, които са пратени от авторите си, както и за фен-преводи.
+		Разрешено е да се добавят само книги, издадени на български преди 2012 г. Изключение се прави за онези текстове, които са пратени от авторите си, както и за фен-преводи.
 	</div>
 </div>
 EOS;
