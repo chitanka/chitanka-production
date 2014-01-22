@@ -357,6 +357,7 @@ option[selected=selected],
 	border-radius: 0;
 }
 #project-links-navbar {
+	padding: 0 @contentSpacingSide;
 	font-size: 0.9em;
 	background-image: linear-gradient(to top, @navbar-default-border, @navbar-default-bg 50%, @navbar-default-bg 100%);
 	a {
@@ -410,13 +411,13 @@ option[selected=selected],
 	top: @contentMarginTop;
 	text-decoration: none;
 	&.hide-toggle {
-		opacity: 0.2;
+		opacity: 0.1;
 	}
 	&:hover {
 		opacity: 1;
 	}
 	.fa-ban {
-		opacity: 0.5;
+		opacity: 0.4;
 	}
 }
 
@@ -1072,6 +1073,8 @@ div.example {
 // Обхваща текста на произведение
 .text-content-main {
 	clear: both;
+	max-width: 50em;
+	font-size: 120%;
 	h2, h3, h4, h5, h6, .subheader {
 		clear: both;
 		font-variant: small-caps;
@@ -1079,9 +1082,6 @@ div.example {
 	}
 	h2 {
 		border-bottom: 1px solid @nav-tabs-border-color;
-	}
-	p {
-		font-size: 115%;
 	}
 	pre {
 		margin-left: 25px;

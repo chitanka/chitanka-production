@@ -333,6 +333,71 @@ class Sfblib_SfbConverter
 		return $objCount . '-' . $noteNr;
 	}
 
+	public static function addMissingCommandDelimiters($content)
+	{
+		$fixedContent = '';
+		$commands = array(
+			self::HEADER,
+			self::POEM_HEADER,
+			self::TABLE_HEADER,
+			self::SUBHEADER,
+			self::TITLE_1,
+			self::TITLE_2,
+			self::TITLE_3,
+			self::TITLE_4,
+			self::TITLE_5,
+			self::ANNO_S,
+			self::INFO_S,
+			self::DEDICATION_S,
+			self::EPIGRAPH_S,
+			self::NOTICE_S,
+			self::POEM_S,
+			self::CITE_S,
+			self::PREFORMATTED_S,
+			self::TABLE_S,
+			self::STYLE_S,
+			self::RAW_S,
+			self::NOTICE_OL,
+			self::PREFORMATTED_OL,
+			self::AUTHOR_OL,
+			self::DATE_OL,
+			self::PARAGRAPH,
+		);
+		$endCommands = array(
+			self::ANNO_E,
+			self::INFO_E,
+			self::DEDICATION_E,
+			self::EPIGRAPH_E,
+			self::NOTICE_E,
+			self::POEM_E,
+			self::CITE_E,
+			self::PREFORMATTED_E,
+			self::TABLE_E,
+			self::STYLE_E,
+			self::RAW_E,
+		);
+		$delim = self::CMD_DELIM;
+		foreach (explode(self::EOL, $content) as $line) {
+			if ($line === '' || strpos($line, $delim) !== false || in_array($line, $endCommands)) {
+				$fixedContent .= $line . self::EOL;
+				continue;
+			}
+			if (strpos($line, ' ') === false) {
+				$fixedContent .= $delim . $line . self::EOL;
+				continue;
+			}
+			list($command, $rest) = explode(' ', $line, 2);
+			if (in_array($command, $commands)) {
+				$fixedContent .= $command . $delim . $rest . self::EOL;
+				continue;
+			}
+			if ($command[0] != self::JUMP_ID) {
+				$fixedContent .= $delim . $command . ' ' . $rest . self::EOL;
+				continue;
+			}
+		}
+		return rtrim($fixedContent) . self::EOL;
+	}
 
 	/** TODO remove */
 	public function setCurRef($nr)

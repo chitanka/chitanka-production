@@ -388,7 +388,7 @@ class Sfblib_SfbToFb2Converter extends Sfblib_SfbConverter
 	}
 	public function addAuthor($name, $raw = true)
 	{
-		$this->authors[] = $raw ? $this->preparePersonName($name) : $name;
+		$this->authors[] = $raw && $name[0] != '(' ? $this->preparePersonName($name) : $name;
 	}
 	public function setTitle($title)
 	{
