@@ -406,7 +406,7 @@ EOS;
 
 		if ( $value != $default && $this->save_settings ) {
 			$fields = array( $page_field => $value );
-			$this->user->setPageFields( $this->action, $fields );
+			//$this->user->setPageFields( $this->action, $fields );
 		}
 		return $value;
 	}
