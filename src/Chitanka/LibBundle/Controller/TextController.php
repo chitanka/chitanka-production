@@ -243,6 +243,15 @@ class TextController extends Controller
 		return $this->legacyPage('Comment');
 	}
 
+	public function similarAction($id) {
+		$text = $this->getTextRepository()->find($id);
+		$alikes = $text->getAlikes();
+		$this->view = array(
+			'text' => $text,
+			'similar_texts' => $alikes ? $this->getTextRepository()->getByIds(array_slice($alikes, 0, 30)) : array(),
+		);
+		return $this->display('similar');
+	}
 
 	public function ratingAction(Request $request, $id)
 	{
@@ -484,7 +493,9 @@ class TextController extends Controller
 
 		$this->textIds = $textId;
 		$this->zf = new ZipFile;
-		$this->zipFileName = 'chitanka-' . $this->get('request')->get('filename');
+		if ( ($requestedFilename = $this->get('request')->get('filename')) ) {
+			$this->zipFileName = "chitanka-$requestedFilename";
+		}
 		// track here how many times a filename occurs
 		$this->_fnameCount = array();
 
@@ -685,7 +696,9 @@ class TextController extends Controller
 	protected function createDlFile($textIds, $format, $dlkey = null)
 	{
 		$textIds = $this->normalizeTextIds($textIds);
-		if (is_null($dlkey)) $dlkey = ".$format";
+		if ($dlkey === null) {
+			$dlkey = ".$format";
+		}
 
 		$dlCache = CacheManager::getDl($textIds, $dlkey);
 		if ( $dlCache ) {
@@ -699,7 +712,6 @@ class TextController extends Controller
 		$setZipFileName = $fileCount == 1 && empty($this->zipFileName);
 
 		foreach ($textIds as $textId) {
-			#$this->user->markTextAsDl($textId);
 			$method = 'add' . ucfirst($format) . 'ToDlFileFrom';
 			$method .= CacheManager::dlCacheExists($textId, ".$format") ? 'Cache' : 'New';
 			if ( ! $this->$method($textId) ) {
