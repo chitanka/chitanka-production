@@ -151,16 +151,18 @@ class TextAdmin extends Admin
 				->add('content_file', 'file', array('required' => false))
 				->add('headlevel', null, array('required' => false))
 				->add('revision_comment', 'text', array('required' => false))
-//				->add('userContribs', 'sonata_type_collection', array(
-//					'by_reference' => false,
-//					'required' => false,
-//				), array(
-//					'edit' => 'inline',
-//					'inline' => 'table',
-//					'sortable' => 'date',
-//				))
 				->add('source', null, array('required' => false))
 				->add('removed_notice')
+			->end()
+			->with('Contributions')
+				->add('userContribs', 'sonata_type_collection', array(
+					'by_reference' => false,
+					'required' => false,
+				), array(
+					'edit' => 'inline',
+					//'inline' => 'table',
+					'sortable' => 'date',
+				))
 			->end()
 			->setHelps(array(
 				'sernr2' => $this->trans('help.text.sernr2'),
@@ -210,6 +212,11 @@ class TextAdmin extends Admin
 		foreach ($text->getTextTranslators() as $textTranslator) {
 			if ($textTranslator->getPerson()) {
 				$textTranslator->setText($text);
+			}
+		}
+		foreach ($text->getUserContribs() as $userContrib) {
+			if (!$userContrib->getText()) {
+				$userContrib->setText($text);
 			}
 		}
 		if ($text->getRevisionComment()) {
