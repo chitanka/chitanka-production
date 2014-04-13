@@ -10,7 +10,6 @@
         <parameter key="form.factory.class">Symfony\Component\Form\FormFactory</parameter>
         <parameter key="form.extension.class">Symfony\Component\Form\Extension\DependencyInjection\DependencyInjectionExtension</parameter>
         <parameter key="form.type_guesser.validator.class">Symfony\Component\Form\Extension\Validator\ValidatorTypeGuesser</parameter>
-        <parameter key="property_accessor.class">Symfony\Component\PropertyAccess\PropertyAccessor</parameter>
     </parameters>
 
     <services>
@@ -24,7 +23,7 @@
                 We don't need to be able to add more extensions.
                  * more types can be registered with the form.type tag
                  * more type extensions can be registered with the form.type_extension tag
-                 * more type_guessers can be registered with the form.type.type_guesser tag
+                 * more type_guessers can be registered with the form.type_guesser tag
                 -->
                 <argument type="service" id="form.extension" />
             </argument>
@@ -53,9 +52,6 @@
             <tag name="form.type_guesser" />
             <argument type="service" id="validator.mapping.class_metadata_factory" />
         </service>
-
-        <!-- PropertyAccessor -->
-        <service id="property_accessor" class="%property_accessor.class%" />
 
         <!-- CoreExtension -->
         <service id="form.type.form" class="Symfony\Component\Form\Extension\Core\Type\FormType">

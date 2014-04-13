@@ -65,6 +65,7 @@ fos_rest:
             # Prototype
             name:                 []
     body_listener:
+        throw_exception_on_unsupported_content_type: false
         decoders:
 
             # Prototype
@@ -89,3 +90,4 @@ fos_rest:
             version_regex:        '/(v|version)=(?P<version>[0-9\.]+)/'
 ```
 
+[Return to the index](index.md) or continue with the [Full default annotations](annotations-reference.md).

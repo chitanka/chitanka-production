@@ -33,7 +33,7 @@ abstract class Controller extends SymfonyController {
 	*/
 	protected $responseHeaders = array();
 
-	private $_em = null;
+	private $em;
 
 	protected function legacyPage($page, $controller = ':legacy')
 	{
@@ -111,9 +111,10 @@ abstract class Controller extends SymfonyController {
 	protected function getDisplayVariables()
 	{
 		return array(
-			'menu' => $this->container->getParameter('menu'),
 			'_user' => $this->getUser(),
+			'navlinks' => $this->renderNavLinks(),
 			'navextra' => array(),
+			'footer_links' => $this->renderFooterLinks(),
 			'current_route' => $this->getCurrentRoute(),
 			'script_library' => $this->container->getParameter('script_library'),
 			'global_info_message' => $this->container->getParameter('global_info_message'),
@@ -121,6 +122,23 @@ abstract class Controller extends SymfonyController {
 			'environment' => $this->container->get('kernel')->getEnvironment(),
 			'ajax' => $this->getRequest()->isXmlHttpRequest(),
 		);
+	}
+
+	protected function renderNavLinks() {
+		return $this->renderLayoutComponent('sidebar-menu', 'LibBundle::navlinks.html.twig');
+	}
+
+	protected function renderFooterLinks() {
+		return $this->renderLayoutComponent('footer-menu', 'LibBundle::footer_links.html.twig');
+	}
+
+	protected function renderLayoutComponent($wikiPage, $fallbackTemplate) {
+		$wikiPagePath = $this->getParameter('content_dir')."/wiki/special/$wikiPage.html";
+		if (file_exists($wikiPagePath)) {
+			list(, $content) = explode("\n\n", file_get_contents($wikiPagePath));
+			return $content;
+		}
+		return $this->renderView($fallbackTemplate);
 	}
 
 	protected function getStylesheet()
@@ -176,14 +194,14 @@ abstract class Controller extends SymfonyController {
 	/** @return \Doctrine\ORM\EntityManager */
 	public function getEntityManager()
 	{
-		if (is_null($this->_em)) {
+		if (!isset($this->em)) {
 			// TODO do this in the configuration
-			$this->_em = $this->get('doctrine.orm.entity_manager');
-			$this->_em->getConfiguration()->addCustomHydrationMode('id', 'Chitanka\LibBundle\Hydration\IdHydrator');
-			$this->_em->getConfiguration()->addCustomHydrationMode('key_value', 'Chitanka\LibBundle\Hydration\KeyValueHydrator');
+			$this->em = $this->get('doctrine.orm.entity_manager');
+			$this->em->getConfiguration()->addCustomHydrationMode('id', 'Chitanka\LibBundle\Hydration\IdHydrator');
+			$this->em->getConfiguration()->addCustomHydrationMode('key_value', 'Chitanka\LibBundle\Hydration\KeyValueHydrator');
 		}
 
-		return $this->_em;
+		return $this->em;
 	}
 
 
@@ -315,6 +333,10 @@ abstract class Controller extends SymfonyController {
 
 	protected function getWebRoot() {
 		return dirname($_SERVER['SCRIPT_NAME']);
+	}
+
+	protected function getParameter($param) {
+		return $this->container->getParameter($param);
 	}
 
 	/** @return \Chitanka\LibBundle\Entity\BookRepository */

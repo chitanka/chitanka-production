@@ -14,10 +14,8 @@ namespace Symfony\Bundle\SwiftmailerBundle\DependencyInjection;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\DependencyInjection\Variable;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\Config\FileLocator;
 
 /**
@@ -86,12 +84,13 @@ class SwiftmailerExtension extends Extension
             $container->setParameter(sprintf('swiftmailer.mailer.%s.delivery.enabled', $name), true);
         }
 
-        if (false === $mailer['port']) {
+        if (empty($mailer['port'])) {
             $mailer['port'] = 'ssl' === $mailer['encryption'] ? 465 : 25;
         }
 
         $this->configureMailerTransport($name, $mailer, $container, $transport, $isDefaultMailer);
         $this->configureMailerSpool($name, $mailer, $container, $transport, $isDefaultMailer);
+        $this->configureMailerSenderAddress($name, $mailer, $container, $isDefaultMailer);
         $this->configureMailerAntiFlood($name, $mailer, $container, $isDefaultMailer);
         $this->configureMailerDeliveryAddress($name, $mailer, $container, $isDefaultMailer);
         $this->configureMailerLogging($name, $mailer, $container, $isDefaultMailer);
@@ -116,29 +115,44 @@ class SwiftmailerExtension extends Extension
             ->setDefinition(sprintf('swiftmailer.mailer.%s.transport.eventdispatcher', $name), $definitionDecorator)
         ;
         if ('smtp' === $transport) {
+            $authDecorator = new DefinitionDecorator('swiftmailer.transport.authhandler.abstract');
+            $container
+                ->setDefinition(sprintf('swiftmailer.mailer.%s.transport.authhandler', $name), $authDecorator)
+                ->addMethodCall('setUsername', array('%swiftmailer.mailer.' . $name . '.transport.smtp.username%'))
+                ->addMethodCall('setPassword', array('%swiftmailer.mailer.' . $name . '.transport.smtp.password%'))
+                ->addMethodCall('setAuthMode', array('%swiftmailer.mailer.' . $name . '.transport.smtp.auth_mode%'));
+
+            $bufferDecorator = new DefinitionDecorator('swiftmailer.transport.buffer.abstract');
+            $container
+                ->setDefinition(sprintf('swiftmailer.mailer.%s.transport.buffer', $name), $bufferDecorator);
+
             $definitionDecorator = new DefinitionDecorator('swiftmailer.transport.smtp.abstract');
             $container
                 ->setDefinition(sprintf('swiftmailer.mailer.%s.transport.smtp', $name), $definitionDecorator)
                 ->setArguments(array(
-                    new Reference('swiftmailer.transport.buffer'),
-                    array(new Reference('swiftmailer.transport.authhandler')),
+                    new Reference(sprintf('swiftmailer.mailer.%s.transport.buffer', $name)),
+                    array(new Reference(sprintf('swiftmailer.mailer.%s.transport.authhandler', $name))),
                     new Reference(sprintf('swiftmailer.mailer.%s.transport.eventdispatcher', $name)),
                 ))
                 ->addMethodCall('setHost', array('%swiftmailer.mailer.' . $name . '.transport.smtp.host%'))
                 ->addMethodCall('setPort', array('%swiftmailer.mailer.' . $name . '.transport.smtp.port%'))
                 ->addMethodCall('setEncryption', array('%swiftmailer.mailer.' . $name . '.transport.smtp.encryption%'))
-                ->addMethodCall('setUsername', array('%swiftmailer.mailer.' . $name . '.transport.smtp.username%'))
-                ->addMethodCall('setPassword', array('%swiftmailer.mailer.' . $name . '.transport.smtp.password%'))
-                ->addMethodCall('setAuthMode', array('%swiftmailer.mailer.' . $name . '.transport.smtp.auth_mode%'))
                 ->addMethodCall('setTimeout', array('%swiftmailer.mailer.' . $name . '.transport.smtp.timeout%'))
                 ->addMethodCall('setSourceIp', array('%swiftmailer.mailer.' . $name . '.transport.smtp.source_ip%'))
             ;
             $container->setAlias(sprintf('swiftmailer.mailer.%s.transport', $name), sprintf('swiftmailer.mailer.%s.transport.%s', $name, $transport));
         } elseif ('sendmail' === $transport) {
+            $bufferDecorator = new DefinitionDecorator('swiftmailer.transport.buffer.abstract');
+            $container
+                ->setDefinition(sprintf('swiftmailer.mailer.%s.transport.buffer', $name), $bufferDecorator);
+
             $definitionDecorator = new DefinitionDecorator(sprintf('swiftmailer.transport.%s.abstract', $transport));
             $container
                 ->setDefinition(sprintf('swiftmailer.mailer.%s.transport.%s', $name, $transport), $definitionDecorator)
-                ->addArgument(new Reference(sprintf('swiftmailer.mailer.%s.transport.eventdispatcher', $name)))
+                ->setArguments(array(
+                    new Reference(sprintf('swiftmailer.mailer.%s.transport.buffer', $name)),
+                    new Reference(sprintf('swiftmailer.mailer.%s.transport.eventdispatcher', $name))
+                ))
             ;
             $container->setAlias(sprintf('swiftmailer.mailer.%s.transport', $name), sprintf('swiftmailer.mailer.%s.transport.%s', $name, $transport));
         } elseif ('mail' === $transport) {
@@ -232,6 +246,7 @@ class SwiftmailerExtension extends Extension
             $container->getDefinition(sprintf('swiftmailer.mailer.%s.plugin.impersonate', $name))->addTag(sprintf('swiftmailer.%s.plugin', $name));
             if (true === $isDefaultMailer) {
                 $container->setAlias('swiftmailer.plugin.impersonate', sprintf('swiftmailer.mailer.%s.plugin.impersonate', $name));
+                $container->setParameter('swiftmailer.sender_address', $container->getParameter(sprintf('swiftmailer.mailer.%s.sender_address', $name)));
             }
         } else {
             $container->setParameter(sprintf('swiftmailer.mailer.%s.plugin.impersonate', $name), null);

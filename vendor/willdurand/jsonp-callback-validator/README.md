@@ -1,11 +1,16 @@
 JsonpCallbackValidator
 ======================
 
-**JsonpCallbackValidator** allows you to **validate a JSONP callback** in order
-to prevent XSS attacks.
-
 [![Build
 Status](https://travis-ci.org/willdurand/JsonpCallbackValidator.png?branch=master)](https://travis-ci.org/willdurand/JsonpCallbackValidator)
+[![Total
+Downloads](https://poser.pugx.org/willdurand/jsonp-callback-validator/downloads.png)](https://packagist.org/packages/willdurand/jsonp-callback-validator)
+[![Latest Stable
+Version](https://poser.pugx.org/willdurand/jsonp-callback-validator/v/stable.png)](https://packagist.org/packages/willdurand/jsonp-callback-validator)
+
+
+**JsonpCallbackValidator** allows you to **validate a JSONP callback** in order
+to prevent XSS attacks.
 
 
 Usage
@@ -21,6 +26,15 @@ $validator->validate('(function xss(x){evil()})');
 // returns `false`
 ```
 
+Or as a static method:
+
+```php
+\JsonpCallbackValidator::validate('JSONP.callback');
+// returns `true`
+
+\JsonpCallbackValidator::validate('(function xss(x){evil()})');
+// returns `false`
+```
 
 Installation
 ------------
@@ -50,7 +64,7 @@ Setup the test suite using Composer:
 
 Run it using PHPUnit:
 
-    $ bin/phpunit
+    $ ./vendor/bin/phpunit
 
 
 Contributing

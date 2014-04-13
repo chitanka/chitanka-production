@@ -30,7 +30,7 @@ abstract class AbstractComparisonValidator extends ConstraintValidator
             return;
         }
 
-        if (!$this->compareValues($value, $constraint->value, $constraint)) {
+        if (!$this->compareValues($value, $constraint->value)) {
             $this->context->addViolation($constraint->message, array(
                 '{{ value }}' => $this->valueToString($constraint->value),
                 '{{ compared_value }}' => $this->valueToString($constraint->value),
@@ -60,6 +60,10 @@ abstract class AbstractComparisonValidator extends ConstraintValidator
      */
     private function valueToString($value)
     {
+        if (is_object($value) && method_exists($value, '__toString')) {
+            return (string) $value;
+        }
+
         if ($value instanceof \DateTime) {
             return $value->format('Y-m-d H:i:s');
         }

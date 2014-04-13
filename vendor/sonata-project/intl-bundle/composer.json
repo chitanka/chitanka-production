@@ -1,0 +1,37 @@
+{
+    "name": "sonata-project/intl-bundle",
+    "type": "symfony-bundle",
+    "description": "Symfony SonataIntlBundle",
+    "keywords": ["sonata", "intl", "date", "time", "number"],
+    "homepage": "http://sonata-project.org/bundles/intl",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Thomas Rabaix",
+            "email": "thomas.rabaix@sonata-project.org"
+        },
+        {
+            "name": "Sonata Community",
+            "homepage": "https://github.com/sonata-project/SonataIntlBundle/contributors"
+        }
+    ],
+    "require": {
+        "symfony/http-kernel": "~2.2",
+        "symfony/dependency-injection": "~2.2",
+        "symfony/templating": "~2.2",
+        "symfony/locale": "~2.2",
+        "twig/twig": "*"
+    },
+    "require-dev": {
+        "sonata-project/user-bundle": "~2.2",
+        "symfony/security": "~2.2"
+    },
+    "autoload": {
+        "psr-4": { "Sonata\\IntlBundle\\": "" }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "2.2.x-dev"
+        }
+    }
+}

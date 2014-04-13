@@ -91,10 +91,6 @@ class UploadedFile extends File
      */
     public function __construct($path, $originalName, $mimeType = null, $size = null, $error = null, $test = false)
     {
-        if (!ini_get('file_uploads')) {
-            throw new FileException(sprintf('Unable to create UploadedFile because "file_uploads" is disabled in your php.ini file (%s)', get_cfg_var('cfg_file_path')));
-        }
-
         $this->originalName = $this->getName($originalName);
         $this->mimeType = $mimeType ?: 'application/octet-stream';
         $this->size = $size;
@@ -108,7 +104,7 @@ class UploadedFile extends File
      * Returns the original file name.
      *
      * It is extracted from the request from which the file has been uploaded.
-     * Then is should not be considered as a safe value.
+     * Then it should not be considered as a safe value.
      *
      * @return string|null The original name
      *
@@ -123,7 +119,7 @@ class UploadedFile extends File
      * Returns the original file extension
      *
      * It is extracted from the original file name that was uploaded.
-     * Then is should not be considered as a safe value.
+     * Then it should not be considered as a safe value.
      *
      * @return string The extension
      */
@@ -181,7 +177,7 @@ class UploadedFile extends File
      * Returns the file size.
      *
      * It is extracted from the request from which the file has been uploaded.
-     * Then is should not be considered as a safe value.
+     * Then it should not be considered as a safe value.
      *
      * @return integer|null The file size
      *
@@ -252,7 +248,7 @@ class UploadedFile extends File
             return $target;
         }
 
-        throw new FileException($this->getErrorMessage($this->getError()));
+        throw new FileException($this->getErrorMessage());
     }
 
     /**
@@ -290,11 +286,9 @@ class UploadedFile extends File
     /**
      * Returns an informative upload error message.
      *
-     * @param int $code The error code returned by an upload attempt
-     *
      * @return string The error message regarding the specified error code
      */
-    private function getErrorMessage($errorCode)
+    public function getErrorMessage()
     {
         static $errors = array(
             UPLOAD_ERR_INI_SIZE   => 'The file "%s" exceeds your upload_max_filesize ini directive (limit is %d kb).',
@@ -303,12 +297,13 @@ class UploadedFile extends File
             UPLOAD_ERR_NO_FILE    => 'No file was uploaded.',
             UPLOAD_ERR_CANT_WRITE => 'The file "%s" could not be written on disk.',
             UPLOAD_ERR_NO_TMP_DIR => 'File could not be uploaded: missing temporary directory.',
-            UPLOAD_ERR_EXTENSION  => 'File upload was stopped by a php extension.',
+            UPLOAD_ERR_EXTENSION  => 'File upload was stopped by a PHP extension.',
         );
 
+        $errorCode = $this->error;
         $maxFilesize = $errorCode === UPLOAD_ERR_INI_SIZE ? self::getMaxFilesize() / 1024 : 0;
         $message = isset($errors[$errorCode]) ? $errors[$errorCode] : 'The file "%s" was not uploaded due to an unknown error.';
 
-       return sprintf($message, $this->getClientOriginalName(), $maxFilesize);
+        return sprintf($message, $this->getClientOriginalName(), $maxFilesize);
     }
 }

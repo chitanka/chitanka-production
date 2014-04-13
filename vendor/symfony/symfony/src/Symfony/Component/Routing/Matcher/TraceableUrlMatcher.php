@@ -14,7 +14,6 @@ namespace Symfony\Component\Routing\Matcher;
 use Symfony\Component\Routing\Exception\ExceptionInterface;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
-use Symfony\Component\Routing\Matcher\UrlMatcher;
 
 /**
  * TraceableUrlMatcher helps debug path info matching by tracing the match.
@@ -89,6 +88,15 @@ class TraceableUrlMatcher extends UrlMatcher
                     $this->allow = array_merge($this->allow, $req);
 
                     $this->addTrace(sprintf('Method "%s" does not match the requirement ("%s")', $this->context->getMethod(), implode(', ', $req)), self::ROUTE_ALMOST_MATCHES, $name, $route);
+
+                    continue;
+                }
+            }
+
+            // check condition
+            if ($condition = $route->getCondition()) {
+                if (!$this->getExpressionLanguage()->evaluate($condition, array('context' => $this->context, 'request' => $this->request))) {
+                    $this->addTrace(sprintf('Condition "%s" does not evaluate to "true"', $condition), self::ROUTE_ALMOST_MATCHES, $name, $route);
 
                     continue;
                 }

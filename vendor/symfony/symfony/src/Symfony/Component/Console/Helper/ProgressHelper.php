@@ -227,22 +227,7 @@ class ProgressHelper extends Helper
      */
     public function advance($step = 1, $redraw = false)
     {
-        if (null === $this->startTime) {
-            throw new \LogicException('You must start the progress bar before calling advance().');
-        }
-
-        if (0 === $this->current) {
-            $redraw = true;
-        }
-
-        $prevPeriod = intval($this->current / $this->redrawFreq);
-
-        $this->current += $step;
-
-        $currPeriod = intval($this->current / $this->redrawFreq);
-        if ($redraw || $prevPeriod !== $currPeriod || $this->max === $this->current) {
-            $this->display();
-        }
+        $this->setCurrent($this->current + $step, $redraw);
     }
 
     /**
@@ -300,6 +285,18 @@ class ProgressHelper extends Helper
     }
 
     /**
+     * Removes the progress bar from the current line.
+     *
+     * This is useful if you wish to write some output
+     * while a progress bar is running.
+     * Call display() to show the progress bar again.
+     */
+    public function clear()
+    {
+        $this->overwrite($this->output, '');
+    }
+
+    /**
      * Finishes the progress output.
      */
     public function finish()
@@ -352,7 +349,7 @@ class ProgressHelper extends Helper
         $vars    = array();
         $percent = 0;
         if ($this->max > 0) {
-            $percent = (double) $this->current / $this->max;
+            $percent = (float) $this->current / $this->max;
         }
 
         if (isset($this->formatVars['bar'])) {

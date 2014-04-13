@@ -121,6 +121,7 @@ class FOSRestExtension extends Extension
         if (!empty($config['body_listener'])) {
             $loader->load('body_listener.xml');
 
+            $container->setParameter($this->getAlias().'.throw_exception_on_unsupported_content_type', $config['body_listener']['throw_exception_on_unsupported_content_type']);
             $container->setParameter($this->getAlias().'.decoders', $config['body_listener']['decoders']);
         }
 
@@ -131,7 +132,8 @@ class FOSRestExtension extends Extension
                 $matcher = $this->createRequestMatcher(
                     $container,
                     $rule['path'],
-                    $rule['host']
+                    $rule['host'],
+                    $rule['methods']
                 );
 
                 unset($rule['path'], $rule['host']);
@@ -248,9 +250,9 @@ class FOSRestExtension extends Extension
         }
     }
 
-    protected function createRequestMatcher(ContainerBuilder $container, $path = null, $host = null)
+    protected function createRequestMatcher(ContainerBuilder $container, $path = null, $host = null, $methods = null)
     {
-        $arguments = array($path, $host);
+        $arguments = array($path, $host, $methods);
         $serialized = serialize($arguments);
         $id = $this->getAlias().'.request_matcher.'.md5($serialized).sha1($serialized);
 

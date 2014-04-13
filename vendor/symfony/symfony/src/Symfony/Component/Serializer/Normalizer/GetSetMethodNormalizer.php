@@ -41,9 +41,9 @@ class GetSetMethodNormalizer extends SerializerAwareNormalizer implements Normal
     protected $camelizedAttributes = array();
 
     /**
-     * Set normalization callbacks
+     * Set normalization callbacks.
      *
-     * @param array $callbacks help normalize the result
+     * @param callable[] $callbacks help normalize the result
      *
      * @throws InvalidArgumentException if a non-callable callback is set
      */
@@ -99,6 +99,9 @@ class GetSetMethodNormalizer extends SerializerAwareNormalizer implements Normal
                     $attributeValue = call_user_func($this->callbacks[$attributeName], $attributeValue);
                 }
                 if (null !== $attributeValue && !is_scalar($attributeValue)) {
+                    if (!$this->serializer instanceof NormalizerInterface) {
+                        throw new \LogicException(sprintf('Cannot normalize attribute "%s" because injected serializer is not a normalizer', $attributeName));
+                    }
                     $attributeValue = $this->serializer->normalize($attributeValue, $format);
                 }
 

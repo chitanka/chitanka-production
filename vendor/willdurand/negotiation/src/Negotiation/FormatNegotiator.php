@@ -5,7 +5,7 @@ namespace Negotiation;
 /**
  * @author William Durand <william.durand1@gmail.com>
  */
-class FormatNegotiator extends Negotiator
+class FormatNegotiator extends Negotiator implements FormatNegotiatorInterface
 {
     // https://github.com/symfony/symfony/blob/master/src/Symfony/Component/HttpFoundation/Request.php
     protected $formats = array(
@@ -28,9 +28,14 @@ class FormatNegotiator extends Negotiator
         $acceptHeaders   = $this->parseHeader($header);
         $priorities      = $this->sanitize($priorities);
         $catchAllEnabled = $this->isCatchAllEnabled($priorities);
+        $catchAllHeader  = null;
 
         foreach ($acceptHeaders as $accept) {
             $mimeType = $accept->getValue();
+
+            if (self::CATCH_ALL_VALUE === $mimeType) {
+                $catchAllHeader = $accept;
+            }
 
             if ('/*' !== substr($mimeType, -2)) {
                 if (in_array($mimeType, $priorities)) {
@@ -68,18 +73,30 @@ class FormatNegotiator extends Negotiator
             }
         }
 
-        return array_shift($acceptHeaders) ?: null;
+        // if client sends `*/*` in Accept header, and nothing has been negotiated before
+        // then, return the first priority value if available
+        if (null !== $catchAllHeader) {
+            $value = array_shift($priorities);
+
+            if (null !== $value && self::CATCH_ALL_VALUE !== $value) {
+                return new AcceptHeader(
+                    $value,
+                    $catchAllHeader->getQuality(),
+                    $this->parseParameters($catchAllHeader->getValue())
+                );
+            }
+        }
+
+        // if `$priorities` is empty or contains a catch-all mime type
+        if ($catchAllEnabled) {
+            return array_shift($acceptHeaders) ?: null;
+        }
+
+        return null;
     }
 
     /**
-     * Return the best format (as a string) based on a given `Accept` header,
-     * and a set of priorities. Priorities are "formats" such as `json`, `xml`,
-     * etc. or "mime types" such as `application/json`, `application/xml`, etc.
-     *
-     * @param string $acceptHeader A string containing an `Accept` header.
-     * @param array  $priorities   A set of priorities.
-     *
-     * @return string
+     * {@inheritDoc}
      */
     public function getBestFormat($acceptHeader, array $priorities = array())
     {
@@ -97,11 +114,7 @@ class FormatNegotiator extends Negotiator
     }
 
     /**
-     * Register a new format with its mime types.
-     *
-     * @param string  $format
-     * @param array   $mimeTypes
-     * @param boolean $override
+     * {@inheritDoc}
      */
     public function registerFormat($format, array $mimeTypes, $override = false)
     {
@@ -116,15 +129,14 @@ class FormatNegotiator extends Negotiator
     }
 
     /**
-     * Return the format for a given mime type, or null
-     * if not found.
-     *
-     * @param string $mimeType
-     *
-     * @return string|null
+     * {@inheritDoc}
      */
     public function getFormat($mimeType)
     {
+        if (false !== $pos = strpos($mimeType, ';')) {
+            $mimeType = substr($mimeType, 0, $pos);
+        }
+
         foreach ($this->formats as $format => $mimeTypes) {
             if (in_array($mimeType, (array) $mimeTypes)) {
                 return $format;
@@ -135,38 +147,7 @@ class FormatNegotiator extends Negotiator
     }
 
     /**
-     * Return an array of mime types for the given set of formats.
-     *
-     * @param array $formats A set of formats.
-     *
-     * @return array
-     */
-    public function getMimeTypes(array $formats)
-    {
-        $formats         = $this->sanitize($formats);
-        $catchAllEnabled = $this->isCatchAllEnabled($formats);
-
-        $mimeTypes = array();
-        foreach ($formats as $format) {
-            if (isset($this->formats[$format])) {
-                foreach ($this->formats[$format] as $mimeType) {
-                    $mimeTypes[] = $mimeType;
-                }
-            }
-        }
-
-        if ($catchAllEnabled) {
-            $mimeTypes[] = self::CATCH_ALL_VALUE;
-        }
-
-        return $mimeTypes;
-    }
-
-    /**
-     * Ensure that any formats are converted to mime types.
-     *
-     * @param  array $priorities
-     * @return array
+     * {@inheritDoc}
      */
     public function normalizePriorities($priorities)
     {
@@ -192,7 +173,7 @@ class FormatNegotiator extends Negotiator
     /**
      * @param array $priorities
      *
-     * return boolean
+     * @return boolean
      */
     private function isCatchAllEnabled(array $priorities)
     {

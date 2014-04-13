@@ -30,6 +30,13 @@ class IbanValidator extends ConstraintValidator
             return;
         }
 
+        // An IBAN without a country code is not an IBAN.
+        if (0 === preg_match('/[A-Z]/', $value)) {
+            $this->context->addViolation($constraint->message, array('{{ value }}' => $value));
+
+            return;
+        }
+
         $teststring = preg_replace('/\s+/', '', $value);
 
         if (strlen($teststring) < 4) {
@@ -43,7 +50,7 @@ class IbanValidator extends ConstraintValidator
             .strval(ord($teststring{1}) - 55)
             .substr($teststring, 2, 2);
 
-        $teststring = preg_replace_callback('/[A-Za-z]/', function ($letter) {
+        $teststring = preg_replace_callback('/[A-Z]/', function ($letter) {
             return intval(ord(strtolower($letter[0])) - 87);
         }, $teststring);
 

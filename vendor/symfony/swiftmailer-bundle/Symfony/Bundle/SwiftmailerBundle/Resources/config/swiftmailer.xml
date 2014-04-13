@@ -19,7 +19,6 @@
 
         <parameter key="swiftmailer.transport.smtp.class">Swift_Transport_EsmtpTransport</parameter>
 
-        <parameter key="swiftmailer.plugin.redirecting.class">Swift_Plugins_RedirectingPlugin</parameter>
         <parameter key="swiftmailer.plugin.blackhole.class">Swift_Plugins_BlackholePlugin</parameter>
 
         <parameter key="swiftmailer.spool.file.class">Swift_FileSpool</parameter>
@@ -35,9 +34,7 @@
             <argument type="service" id="swiftmailer.transport" />
         </service>
 
-        <service id="swiftmailer.transport.sendmail.abstract" class="%swiftmailer.transport.sendmail.class%" abstract="true" public="false">
-            <argument type="service" id="swiftmailer.transport.buffer" />
-        </service>
+        <service id="swiftmailer.transport.sendmail.abstract" class="%swiftmailer.transport.sendmail.class%" abstract="true" public="false" />
 
         <service id="swiftmailer.transport.mail.abstract" class="%swiftmailer.transport.mail.class%" abstract="true" public="false">
             <argument type="service" id="swiftmailer.transport.mailinvoker" />
@@ -50,11 +47,11 @@
 
         <service id="swiftmailer.transport.mailinvoker" class="Swift_Transport_SimpleMailInvoker" public="false" />
 
-        <service id="swiftmailer.transport.buffer" class="Swift_Transport_StreamBuffer" public="false">
+        <service id="swiftmailer.transport.buffer.abstract" class="Swift_Transport_StreamBuffer" abstract="true" public="false">
             <argument type="service" id="swiftmailer.transport.replacementfactory" />
         </service>
 
-        <service id="swiftmailer.transport.authhandler" class="Swift_Transport_Esmtp_AuthHandler" public="false">
+        <service id="swiftmailer.transport.authhandler.abstract" class="Swift_Transport_Esmtp_AuthHandler" abstract="true" public="false">
             <argument type="collection">
                 <argument type="service"><service class="Swift_Transport_Esmtp_Auth_CramMd5Authenticator" public="false" /></argument>
                 <argument type="service"><service class="Swift_Transport_Esmtp_Auth_LoginAuthenticator" public="false" /></argument>

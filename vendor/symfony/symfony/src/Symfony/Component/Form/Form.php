@@ -556,7 +556,7 @@ class Form implements \IteratorAggregate, FormInterface
                 }
 
                 foreach ($this->children as $name => $child) {
-                    if (isset($submittedData[$name]) || $clearMissing) {
+                    if (array_key_exists($name, $submittedData) || $clearMissing) {
                         $child->submit(isset($submittedData[$name]) ? $submittedData[$name] : null, $clearMissing);
                         unset($submittedData[$name]);
 
@@ -1010,7 +1010,23 @@ class Form implements \IteratorAggregate, FormInterface
             $parent = $this->parent->createView();
         }
 
-        return $this->config->getType()->createView($this, $parent);
+        $type = $this->config->getType();
+        $options = $this->config->getOptions();
+
+        // The methods createView(), buildView() and finishView() are called
+        // explicitly here in order to be able to override either of them
+        // in a custom resolved form type.
+        $view = $type->createView($this, $parent);
+
+        $type->buildView($view, $this, $options);
+
+        foreach ($this->children as $name => $child) {
+            $view->children[$name] = $child->createView($view);
+        }
+
+        $type->finishView($view, $this, $options);
+
+        return $view;
     }
 
     /**
