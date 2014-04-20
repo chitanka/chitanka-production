@@ -68,7 +68,7 @@ class CacheFile {
 		if ( ! file_exists($dir)) {
 			mkdir($dir, 0777, true);
 		}
-		file_put_contents($this->name, gzdeflate($content));
+		file_put_contents($this->name, gzdeflate(ltrim($content)));
 	}
 	public function read() {
 		$content = file_get_contents($this->name);
@@ -96,17 +96,23 @@ class CacheFile {
 	}
 }
 
+$isCacheable = isCacheable();
+if ($isCacheable) {
+	$requestUri = $_SERVER['REQUEST_URI'];
+	if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
+		$requestUri .= '.ajax';
+	}
+	$cache = new Cache($requestUri, __DIR__.'/../app/cache/simple_http_cache');
+	if (null !== ($cachedContent = $cache->get())) {
+		header("Cache-Control: public, max-age=".$cachedContent['ttl']);
+		echo $cachedContent['data'];
+		return;
+	}
+}
+
 // uncomment to enter maintenance mode
 // DO NOT remove next line - it is used by the auto-update command
 //exitWithMessage('maintenance');
-
-$cache = new Cache($_SERVER['REQUEST_URI'], __DIR__.'/../app/cache/simple_http_cache');
-
-if (isCacheable() && null !== ($cachedContent = $cache->get())) {
-	header("Cache-Control: public, max-age=".$cachedContent['ttl']);
-	echo $cachedContent['data'];
-	return;
-}
 
 use Symfony\Component\ClassLoader\ApcClassLoader;
 use Symfony\Component\HttpFoundation\Request;
@@ -115,18 +121,19 @@ use Symfony\Component\HttpFoundation\Request;
 umask(0000);
 
 $rootDir = __DIR__.'/..';
-require_once $rootDir.'/app/bootstrap.php.cache';
+$loader = require $rootDir.'/app/bootstrap.php.cache';
 
 try {
 	// Use APC for autoloading to improve performance
-	$loader = new ApcClassLoader('chitanka', $loader);
-	$loader->register(true);
+	$apcLoader = new ApcClassLoader('chitanka', $loader);
+	$loader->unregister();
+	$apcLoader->register(true);
 } catch (\RuntimeException $e) {
 	// APC not enabled
 }
 
-require_once $rootDir.'/app/AppKernel.php';
-//require_once $rootDir.'/app/AppCache.php';
+require $rootDir.'/app/AppKernel.php';
+//require $rootDir.'/app/AppCache.php';
 
 register_shutdown_function(function(){
 	$error = error_get_last();
@@ -143,9 +150,12 @@ register_shutdown_function(function(){
 $kernel = new AppKernel('prod', false);
 $kernel->loadClassCache();
 //$kernel = new AppCache($kernel);
+
+// When using the HttpCache, we need to call the method explicitly instead of relying on the configuration parameter
+//Request::enableHttpMethodParameterOverride();
 $request = Request::createFromGlobals();
 $response = $kernel->handle($request);
-if (isCacheable() && $response->isOk()) {
+if ($isCacheable && $response->isOk()) {
 	try {
 		$cache->set($response->getContent(), $response->getTtl());
 	} catch (\RuntimeException $e) {

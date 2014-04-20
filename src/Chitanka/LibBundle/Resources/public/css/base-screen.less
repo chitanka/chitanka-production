@@ -101,12 +101,15 @@ em em {
 	font-weight: bold;
 }
 pre {
-	margin: 0;
+	margin: 0 0 (@line-height-computed / 2);
 	line-height: 1.3em;
 	overflow: auto;
-}
-pre p {
-	display: inline;
+	p {
+		display: inline;
+	}
+	code {
+		border: none;
+	}
 }
 blockquote {
 	margin: 2.5em 2em;
@@ -150,14 +153,12 @@ code {
 img {
 	border: none;
 	vertical-align: middle;
+	max-width: 100%;
 }
 .image {
 	margin: 1em auto;
 	text-align: center;
 	text-indent: 0;
-}
-.image img {
-	max-width: 100%;
 }
 .float-left,
 .floatleft {
@@ -1225,11 +1226,11 @@ div.poem-middle .subheader {
 
 // текст, който е вмъкнат
 ins {
-	text-decoration: none;
+//	text-decoration: none;
 }
 // текст, който е изтрит
 del {
-	text-decoration: none;
+//	text-decoration: none;
 }
 .action-add {
 	color: green;
