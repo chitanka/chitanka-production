@@ -14,18 +14,20 @@ class Cache {
 	private $file;
 	private $request;
 	private $debug = false;
+	private $logFile;
 
-	public function __construct($requestUri, $cacheDir) {
+	public function __construct($requestUri, $cacheDir, $logDir = '') {
 		$hash = md5($requestUri);
 		$this->file = new CacheFile("$cacheDir/$hash[0]/$hash[1]/$hash[2]/$hash");
 		$this->request = $requestUri;
+		$this->logFile = "$logDir/cache.log";
 	}
 
 	public function get() {
 		if ( ! $this->file->exists()) {
 			return null;
 		}
-		$ttl = $this->file->getRemainingTtl();
+		$ttl = $this->file->getTtl();
 		if ($ttl <= 0) {
 			$this->purge();
 			return null;
@@ -36,12 +38,17 @@ class Cache {
 			'ttl' => $ttl,
 		);
 	}
+	/**
+	 * Set cache content with a given time to live.
+	 * @param string $content
+	 * @param int $ttl Time to live (in seconds)
+	 */
 	public function set($content, $ttl) {
-		if ( ! $ttl) {
+		if (!$ttl) {
+			$this->log("/// CACHE SKIP");
 			return;
 		}
-		$this->file->write($content);
-		$this->file->setTtl($ttl);
+		$this->file->write($content, $ttl);
 		$this->log("+++ CACHE MISS ($ttl)");
 	}
 	private function purge() {
@@ -50,7 +57,7 @@ class Cache {
 	}
 	private function log($msg) {
 		if ($this->debug) {
-			error_log("$msg - $this->request");
+			file_put_contents($this->logFile, "$msg - $this->request\n", FILE_APPEND);
 		}
 	}
 }
@@ -63,36 +70,33 @@ class CacheFile {
 	public function exists() {
 		return file_exists($this->name);
 	}
-	public function write($content) {
-		$dir = dirname($this->name);
-		if ( ! file_exists($dir)) {
+	public function write($content, $ttl) {
+		if ( ! file_exists($dir = dirname($this->name))) {
 			mkdir($dir, 0777, true);
 		}
 		file_put_contents($this->name, gzdeflate(ltrim($content)));
+		$this->setTtl($ttl);
 	}
 	public function read() {
 		$content = file_get_contents($this->name);
-		if (empty($content)) {
+		if (empty($content) || $content[0] == '<'/* not compressed */) {
 			return $content;
 		}
 		return gzinflate($content);
 	}
 	public function delete() {
 		unlink($this->name);
-		unlink("$this->name.ttl");
 	}
-	public function setTtl($value) {
-		file_put_contents("$this->name.ttl", $value);
+	/**
+	 * The time to live is set implicitly through the last modification time, e.g.
+	 * if a file has TTL of 1 hour, its modification time is set to 1 hour in the future
+	 */
+	private function setTtl($ttl) {
+		touch($this->name, time() + $ttl);
 	}
 	public function getTtl() {
-		return file_get_contents("$this->name.ttl");
-	}
-	public function getRemainingTtl() {
-		$origTtl = $this->getTtl() + rand(0, 30) /* guard for race conditions */;
-		return $origTtl - $this->getAge();
-	}
-	public function getAge() {
-		return time() - filemtime($this->name);
+		return filemtime($this->name) - time()
+			+ rand(0, 30) /* guard for race conditions */;
 	}
 }
 
@@ -102,7 +106,7 @@ if ($isCacheable) {
 	if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
 		$requestUri .= '.ajax';
 	}
-	$cache = new Cache($requestUri, __DIR__.'/../app/cache/simple_http_cache');
+	$cache = new Cache($requestUri, __DIR__.'/../app/cache/simple_http_cache', __DIR__.'/../app/logs');
 	if (null !== ($cachedContent = $cache->get())) {
 		header("Cache-Control: public, max-age=".$cachedContent['ttl']);
 		echo $cachedContent['data'];
