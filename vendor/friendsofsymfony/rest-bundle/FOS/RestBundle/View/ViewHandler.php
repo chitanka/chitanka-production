@@ -13,7 +13,6 @@ namespace FOS\RestBundle\View;
 
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
-
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,7 +20,6 @@ use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\TemplateReference;
-
 use FOS\RestBundle\Util\Codes;
 
 /**
@@ -35,37 +33,51 @@ use FOS\RestBundle\Util\Codes;
 class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInterface
 {
     /**
-     * @var array key format, value a callable that returns a Response instance
+     * Key format, value a callable that returns a Response instance.
+     *
+     * @var array
      */
     protected $customHandlers = array();
 
     /**
-     * @var array the supported formats as keys and if the given formats uses templating is denoted by a true value
+     * The supported formats as keys and if the given formats
+     * uses templating is denoted by a true value.
+     *
+     * @var array
      */
     protected $formats;
 
     /**
-     * @param int HTTP response status code for a failed validation
+     *  HTTP response status code for a failed validation.
+     *
+     * @var int
      */
     protected $failedValidationCode;
 
     /**
-     * @param int HTTP response status code when the view data is null
+     * HTTP response status code when the view data is null.
+     *
+     * @var int
      */
     protected $emptyContentCode;
 
     /**
-     * @param int Whether or not to serialize null view data
+     * Whether or not to serialize null view data.
+     *
+     * @var int
      */
     protected $serializeNull;
 
     /**
-     * @var array if to force a redirect for the given key format, with value being the status code to use
+     * If to force a redirect for the given key format,
+     * with value being the status code to use.
+     *
+     * @var array
      */
     protected $forceRedirects;
 
     /**
-     * @var string default engine (twig, php ..)
+     * @var string
      */
     protected $defaultEngine;
 
@@ -80,7 +92,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     protected $exclusionStrategyVersion;
 
     /**
-     * @var Boolean
+     * @var bool
      */
     protected $serializeNullStrategy;
 
@@ -90,7 +102,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
      * @param array   $formats              the supported formats as keys and if the given formats uses templating is denoted by a true value
      * @param int     $failedValidationCode The HTTP response status code for a failed validation
      * @param int     $emptyContentCode     HTTP response status code when the view data is null
-     * @param Boolean $serializeNull        Whether or not to serialize null view data
+     * @param bool    $serializeNull        Whether or not to serialize null view data
      * @param array   $forceRedirects       If to force a redirect for the given key format, with value being the status code to use
      * @param string  $defaultEngine        default engine (twig, php ..)
      */
@@ -111,7 +123,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Set the default serialization groups
+     * Sets the default serialization groups.
      *
      * @param array $groups
      */
@@ -121,7 +133,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Set the default serialization version
+     * Sets the default serialization version.
      *
      * @param string $version
      */
@@ -131,9 +143,9 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * If nulls should be serialized
+     * If nulls should be serialized.
      *
-     * @param Boolean $isEnabled
+     * @param bool $isEnabled
      */
     public function setSerializeNullStrategy($isEnabled)
     {
@@ -141,11 +153,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Verifies whether the given format is supported by this view
-     *
-     * @param string $format format name
-     *
-     * @return Boolean
+     * {@inheritdoc}
      */
     public function supports($format)
     {
@@ -153,14 +161,16 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Registers a custom handler
+     * Registers a custom handler.
      *
      * The handler must have the following signature: handler(ViewHandler $viewHandler, View $view, Request $request, $format)
      * It can use the public methods of this class to retrieve the needed data and return a
      * Response object ready to be sent.
      *
-     * @param string   $format   the format that is handled
-     * @param callable $callable callable that can handle the given format
+     * @param string   $format
+     * @param callable $callable
+     *
+     * @throws \InvalidArgumentException
      */
     public function registerHandler($format, $callable)
     {
@@ -178,7 +188,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
      * the key 'form' in the View's data it will return the failed_validation
      * configuration if the form instance has errors.
      *
-     * @param View  $view view instance
+     * @param View  $view
      * @param mixed $content
      *
      * @return int HTTP status code
@@ -199,11 +209,11 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * If the given format uses the templating system for rendering
+     * If the given format uses the templating system for rendering.
      *
      * @param string $format
      *
-     * @return Boolean
+     * @return bool
      */
     public function isFormatTemplating($format)
     {
@@ -211,7 +221,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Get the router service
+     * Gets the router service.
      *
      * @return \Symfony\Component\Routing\RouterInterface
      */
@@ -221,7 +231,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Get the serializer service
+     * Gets the serializer service.
      *
      * @param View $view view instance from which the serializer should be configured
      *
@@ -234,13 +244,13 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
 
     /**
      * Gets or creates a JMS\Serializer\SerializationContext and initializes it with
-     * the view exclusion strategies, groups & versions if a new context is created
+     * the view exclusion strategies, groups & versions if a new context is created.
      *
      * @param View $view
      *
      * @return SerializationContext
      */
-    public function getSerializationContext(View $view)
+    protected function getSerializationContext(View $view)
     {
         $context = $view->getSerializationContext();
 
@@ -260,7 +270,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Get the templating service
+     * Gets the templating service.
      *
      * @return \Symfony\Bundle\FrameworkBundle\Templating\EngineInterface
      */
@@ -270,12 +280,12 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Handles a request with the proper handler
+     * Handles a request with the proper handler.
      *
-     * Decides on which handler to use based on the request format
+     * Decides on which handler to use based on the request format.
      *
      * @param View    $view
-     * @param Request $request Request object
+     * @param Request $request
      *
      * @return Response
      *
@@ -302,7 +312,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Create the Response from the view
+     * Creates the Response from the view.
      *
      * @param View   $view
      * @param string $location
@@ -329,11 +339,12 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
 
         $response->setStatusCode($code);
         $response->headers->set('Location', $location);
+
         return $response;
     }
 
     /**
-     * Render the view data with the given template
+     * Renders the view data with the given template.
      *
      * @param View   $view
      * @param string $format
@@ -360,7 +371,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Prepare view data for use by templating engine.
+     * Prepares view data for use by templating engine.
      *
      * @param View $view
      *
@@ -385,7 +396,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Handles creation of a Response using either redirection or the templating/serializer service
+     * Handles creation of a Response using either redirection or the templating/serializer service.
      *
      * @param View    $view
      * @param Request $request
@@ -416,8 +427,8 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     /**
      * Initializes a response object that represents the view and holds the view's status code.
      *
-     * @param View    $view
-     * @param string  $format
+     * @param View   $view
+     * @param string $format
      *
      * @return Response
      */
@@ -493,11 +504,10 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
 
         return $exceptionWrapperHandler->wrap(
             array(
-                 'status_code'    => $this->failedValidationCode,
-                 'message'        => 'Validation Failed',
-                 'errors'         => $form
+                 'status_code' => $this->failedValidationCode,
+                 'message'     => 'Validation Failed',
+                 'errors'      => $form
             )
         );
-
     }
 }

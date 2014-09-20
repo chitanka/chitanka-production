@@ -13,15 +13,11 @@ namespace FOS\RestBundle\Util;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestMatcherInterface;
-
 use Negotiation\FormatNegotiator as BaseFormatNegotiator;
 use Negotiation\AcceptHeader;
 
 class FormatNegotiator implements MediaTypeNegotiatorInterface
 {
-    /**
-     * @var array
-     */
     private $map = array();
 
     public function __construct()
@@ -30,8 +26,8 @@ class FormatNegotiator implements MediaTypeNegotiatorInterface
     }
 
     /**
-     * @param RequestMatcherInterface $requestMatcher A RequestMatcherInterface instance
-     * @param array                   $options        An array of options
+     * @param RequestMatcherInterface $requestMatcher
+     * @param array                   $options
      */
     public function add(RequestMatcherInterface $requestMatcher, array $options = array())
     {
@@ -39,10 +35,11 @@ class FormatNegotiator implements MediaTypeNegotiatorInterface
     }
 
     /**
-     * Detect the request format based on the priorities and the Accept header
+     * Detects the request format based on the priorities and the Accept header.
      *
-     * @param   Request         $request          The request
-     * @return  void|string                       The format string
+     * @param Request $request
+     *
+     * @return null|string
      */
     public function getBestFormat(Request $request)
     {
@@ -55,10 +52,11 @@ class FormatNegotiator implements MediaTypeNegotiatorInterface
     }
 
     /**
-     * Detect the request format based on the priorities and the Accept header
+     * Detects the request format based on the priorities and the Accept header.
      *
-     * @param   Request         $request          The request
-     * @return  void|string                       The format string
+     * @param Request $request
+     *
+     * @return null|string
      */
     public function getBestMediaType(Request $request)
     {
@@ -116,11 +114,11 @@ class FormatNegotiator implements MediaTypeNegotiatorInterface
     }
 
     /**
-     * Register a new format with its mime types.
+     * Registers a new format with its mime types.
      *
-     * @param string  $format
-     * @param array   $mimeTypes
-     * @param boolean $override
+     * @param string $format
+     * @param array  $mimeTypes
+     * @param bool   $override
      */
     public function registerFormat($format, array $mimeTypes, $override = false)
     {
@@ -128,8 +126,7 @@ class FormatNegotiator implements MediaTypeNegotiatorInterface
     }
 
     /**
-     * Returns the format for a given mime type, or null
-     * if not found.
+     * Returns the format for a given mime type, or null if not found.
      *
      * @param string $mimeType
      *

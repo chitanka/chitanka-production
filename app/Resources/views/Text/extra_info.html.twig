@@ -1,0 +1,30 @@
+	{% if text.book and text.book.hasCover %}
+		{% import 'App::book.html.twig' as booktools %}
+		{{ booktools.cover_div(text.book, 200) }}
+	{% endif %}
+
+	<ul class="list-unstyled">
+	{% for contrib in text.userContribs %}
+		{% if contrib.comment %}
+		<li>
+			{{ contrib.comment }}:
+			{% if contrib.user %}
+				<a href="{{ path('user_show', {'username': contrib.username}) }}" class="user">{{ contrib.username }}</a>
+			{% else %}
+				{{ contrib.username }}
+			{% endif %}
+			{% if contrib.humandate is not empty %}({{ contrib.humandate }}){% endif %}
+		</li>
+		{% endif %}
+	{% endfor %}
+	{% if text.source is not empty %}
+		<li>Източник: {{ text.source|link|raw }}</li>
+	{% endif %}
+	</ul>
+	<div class="text-content">
+		{{ text.fullExtraInfoForHtml(asset('/'))|raw }}
+	</div>
+{#
+	<hr>
+	<p>Последна редакция: {{ text.currev.date|humandate }}</p>
+#}

@@ -16,7 +16,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Config\Loader\Loader;
 use Symfony\Component\Config\FileLocatorInterface;
-
 use FOS\RestBundle\Routing\Loader\Reader\RestControllerReader;
 
 /**
@@ -33,19 +32,20 @@ class RestRouteLoader extends Loader
     protected $defaultFormat;
     protected $locator;
 
-        /**
+    /**
      * Initializes loader.
      *
-     * @param ContainerInterface   $container        service container
-     * @param FileLocatorInterface $locator A FileLocatorInterface instance
-     * @param ControllerNameParser $controllerParser controller name parser
-     * @param RestControllerReader $controllerReader controller reader
-     * @param string               $defaultFormat    default http format
+     * @param ContainerInterface   $container
+     * @param FileLocatorInterface $locator
+     * @param ControllerNameParser $controllerParser
+     * @param RestControllerReader $controllerReader
+     * @param string               $defaultFormat
      */
-    public function __construct(ContainerInterface $container,
-                                FileLocatorInterface $locator,
-                                ControllerNameParser $controllerParser,
-                                RestControllerReader $controllerReader, $defaultFormat = 'html'
+    public function __construct(
+        ContainerInterface $container,
+        FileLocatorInterface $locator,
+        ControllerNameParser $controllerParser,
+        RestControllerReader $controllerReader, $defaultFormat = 'html'
     ) {
         $this->container        = $container;
         $this->locator          = $locator;
@@ -65,12 +65,7 @@ class RestRouteLoader extends Loader
     }
 
     /**
-     * Loads a Routes collection by parsing Controller method names.
-     *
-     * @param string $controller Some identifier for the controller
-     * @param string $type       The resource type
-     *
-     * @return RouteCollection A RouteCollection instance
+     * {@inheritdoc}
      */
     public function load($controller, $type = null)
     {
@@ -84,12 +79,7 @@ class RestRouteLoader extends Loader
     }
 
     /**
-     * Returns true if this class supports the given resource.
-     *
-     * @param mixed  $resource A resource
-     * @param string $type     The resource type
-     *
-     * @return Boolean true if this class supports the given resource, false otherwise
+     * {@inheritdoc}
      */
     public function supports($resource, $type = null)
     {
@@ -105,6 +95,8 @@ class RestRouteLoader extends Loader
      * @param string $controller
      *
      * @return array
+     *
+     * @throws \InvalidArgumentException
      */
     private function getControllerLocator($controller)
     {
@@ -116,7 +108,14 @@ class RestRouteLoader extends Loader
             $controller = $this->findClass($file);
         }
 
-        if (class_exists($controller)) {
+        if ($this->container->has($controller)) {
+            // service_id
+            $prefix = $controller . ':';
+            $this->container->enterScope('request');
+            $this->container->set('request', new Request);
+            $class = get_class($this->container->get($controller));
+            $this->container->leaveScope('request');
+        } elseif (class_exists($controller)) {
             // full class name
             $class  = $controller;
             $prefix = $class . '::';
@@ -131,13 +130,6 @@ class RestRouteLoader extends Loader
                     sprintf('Can\'t locate "%s" controller.', $controller)
                 );
             }
-        } elseif ($this->container->has($controller)) {
-            // service_id
-            $prefix = $controller . ':';
-            $this->container->enterScope('request');
-            $this->container->set('request', new Request);
-            $class = get_class($this->container->get($controller));
-            $this->container->leaveScope('request');
         }
 
         if (empty($class)) {

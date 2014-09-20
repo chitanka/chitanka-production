@@ -1,8 +1,0 @@
-{% extends 'LibBundle::layout.rss.twig' %}
-
-{% block title 'Препоръчани книги' %}
-{% block content %}
-	{% for book in books %}
-		{% include 'LibBundle:FeaturedBook:book.rss.twig' %}
-	{% endfor %}
-{% endblock %}

@@ -14,6 +14,7 @@ namespace FOS\RestBundle\Request;
 use FOS\RestBundle\Controller\Annotations\QueryParam;
 use FOS\RestBundle\Controller\Annotations\Param;
 use FOS\RestBundle\Controller\Annotations\RequestParam;
+use FOS\RestBundle\Util\ViolationFormatterInterface;
 use Doctrine\Common\Util\ClassUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -30,20 +31,11 @@ use Symfony\Component\Validator\ValidatorInterface;
  */
 class ParamFetcher implements ParamFetcherInterface
 {
-    /**
-     * @var ParamReader
-     */
     private $paramReader;
-
-    /**
-     * @var Request
-     */
     private $request;
-
-    /**
-     * @var array
-     */
     private $params;
+    private $validator;
+    private $violationFormatter;
 
     /**
      * @var callable
@@ -51,22 +43,19 @@ class ParamFetcher implements ParamFetcherInterface
     private $controller;
 
     /**
-     * @var ValidatorInterface
-     */
-    private $validator;
-
-    /**
      * Initializes fetcher.
      *
-     * @param ParamReader        $paramReader Query param reader
-     * @param Request            $request     Active request
-     * @param ValidatorInterface $validator   The validator service
+     * @param ParamReader                 $paramReader
+     * @param Request                     $request
+     * @param ValidatorInterface          $validator
+     * @param ViolationFormatterInterface $violationFormatter
      */
-    public function __construct(ParamReader $paramReader, Request $request, ValidatorInterface $validator)
+    public function __construct(ParamReader $paramReader, Request $request, ViolationFormatterInterface $violationFormatter, ValidatorInterface $validator = null)
     {
-        $this->paramReader = $paramReader;
-        $this->request     = $request;
-        $this->validator   = $validator;
+        $this->paramReader        = $paramReader;
+        $this->request            = $request;
+        $this->violationFormatter = $violationFormatter;
+        $this->validator          = $validator;
     }
 
     /**
@@ -149,19 +138,26 @@ class ParamFetcher implements ParamFetcherInterface
     }
 
     /**
-     * @param Param   $config config
-     * @param string  $param  param to clean
-     * @param boolean $strict is strict
+     * @param Param  $config
+     * @param string $param
+     * @param bool   $strict
+     *
+     * @return string
      *
      * @throws BadRequestHttpException
-     * @return string
+     * @throws \RuntimeException
      */
     public function cleanParamWithRequirements(Param $config, $param, $strict)
     {
         $default = $config->default;
 
-        if (null === $config->requirements || ($param === $default && null !== $default)) {
+        if (null !== $config->requirements && null === $this->validator) {
+            throw new \RuntimeException(
+                'The ParamFetcher requirements feature requires the symfony/validator component.'
+            );
+        }
 
+        if (null === $config->requirements || ($param === $default && null !== $default)) {
             return $param;
         }
 
@@ -190,9 +186,8 @@ class ParamFetcher implements ParamFetcherInterface
         $errors = $this->validator->validateValue($param, $constraint);
 
         if (0 !== count($errors)) {
-
             if ($strict) {
-                throw new BadRequestHttpException((string) $errors);
+                throw new BadRequestHttpException($this->violationFormatter->formatList($config, $errors));
             }
 
             return null === $default ? '' : $default;
@@ -230,9 +225,14 @@ class ParamFetcher implements ParamFetcherInterface
         }
 
         if (!is_array($this->controller) || empty($this->controller[0]) || !is_object($this->controller[0])) {
-            throw new \InvalidArgumentException('Controller needs to be set as a class instance (closures/functions are not supported)');
+            throw new \InvalidArgumentException(
+                'Controller needs to be set as a class instance (closures/functions are not supported)'
+            );
         }
 
-        $this->params = $this->paramReader->read(new \ReflectionClass(ClassUtils::getClass($this->controller[0])), $this->controller[1]);
+        $this->params = $this->paramReader->read(
+            new \ReflectionClass(ClassUtils::getClass($this->controller[0])),
+            $this->controller[1]
+        );
     }
 }

@@ -2,7 +2,7 @@ imports:
     - { resource: parameters_default.yml }
     - { resource: parameters.yml }
     - { resource: security.yml }
-    - { resource: services.xml }
+    - { resource: services.yml }
 
 framework:
     esi:             { enabled: true }
@@ -28,69 +28,14 @@ framework:
     fragments:       ~
     http_method_override: true
 
-services:
-    twig.extension.chitanka:
-        class: Chitanka\LibBundle\Twig\Extension
-        tags:
-            - { name: twig.extension }
-    twig.extension.text:
-        class: Twig_Extensions_Extension_Text
-        tags:
-            - { name: twig.extension }
-    twig.extension.debug:
-        class: Twig_Extensions_Extension_Debug
-        tags:
-            - { name: twig.extension }
-
-    request.listener:
-        class: Chitanka\LibBundle\Listener\RequestListener
-        tags:
-            - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest }
-
-    comment.listener:
-        class: Chitanka\LibBundle\Listener\CommentListener
-        arguments: ['@mailer', '@doctrine.orm.entity_manager']
-        tags:
-            - { name: kernel.event_listener, event: fos_comment.comment.post_persist, method: onCommentPostPersist }
-            - { name: kernel.event_listener, event: fos_comment.thread.post_persist, method: onThreadPostPersist }
-
-    doctrine.listener:
-        class: Chitanka\LibBundle\Listener\DoctrineListener
-        tags:
-            - { name: doctrine.dbal.default_event_listener }
-            #- { name: doctrine.common.event_listener }
-
-    feedback_form:
-        class: Chitanka\LibBundle\Form\Type\FeedbackType
-        tags:
-           -  { name: form.type }
-
-    text_rating_form:
-        class: Chitanka\LibBundle\Form\Type\TextRatingType
-        tags:
-           -  { name: form.type }
-
-    text_label_form:
-        class: Chitanka\LibBundle\Form\Type\TextLabelType
-        tags:
-           -  { name: form.type }
-
-    label_form:
-        class: Chitanka\LibBundle\Form\Type\LabelType
-        tags:
-           -  { name: form.type }
-
-    comment_form:
-        class: Chitanka\LibBundle\Form\Type\CommentType
-        arguments: [%fos_comment.model.comment.class%]
-        tags:
-           -  { name: form.type }
-
-
 # Twig Configuration
 twig:
     debug:            %kernel.debug%
     strict_variables: %kernel.debug%
+    globals:
+        analytics_snippet: "%analytics_snippet%"
+        script_library: %script_library%
+        global_info_message: %global_info_message%
 
 # Assetic Configuration
 assetic:
@@ -126,7 +71,7 @@ doctrine:
 #             default:
 #                 mappings:
 #                     #FOSUserBundle: ~
-#                     LibBundle: ~
+#                     App: ~
 #                     FOSCommentBundle: ~
 
 # Swiftmailer Configuration
@@ -137,7 +82,7 @@ swiftmailer:
     password:  %mailer_password%
     spool:
         type: file
-        path: "%kernel.root_dir%/spool"
+        path: "%kernel.root_dir%/../var/spool"
 
 sensio_framework_extra:
     view:
@@ -149,14 +94,14 @@ sonata_admin:
     #title_logo:
     templates:
         # default global templates
-        #layout:  LibBundle:Admin:layout.html.twig
+        #layout:  App:Admin:layout.html.twig
         ajax:    SonataAdminBundle::ajax_layout.html.twig
 
         # default actions templates, should extend a global templates
         list:    SonataAdminBundle:CRUD:list.html.twig
         show:    SonataAdminBundle:CRUD:show.html.twig
         #edit:    SonataAdminBundle:CRUD:edit.html.twig
-        edit:    LibBundle:Admin:edit.html.twig
+        edit:    App:Admin:edit.html.twig
         history: SonataAdminBundle:CRUD:history.html.twig
         preview: SonataAdminBundle:CRUD:preview.html.twig
         delete:  SonataAdminBundle:CRUD:delete.html.twig
@@ -230,8 +175,8 @@ fos_comment:
     db_driver: orm
     class:
         model:
-            comment: Chitanka\LibBundle\Entity\Comment
-            thread: Chitanka\LibBundle\Entity\Thread
+            comment: App\Entity\Comment
+            thread: App\Entity\Thread
     form:
         comment:
             type: comment_form
@@ -259,6 +204,15 @@ fos_comment:
             view:   IS_AUTHENTICATED_ANONYMOUSLY
             edit:   ROLE_ADMIN
             delete: ROLE_ADMIN
+
+eko_feed:
+    feeds:
+        workroom:
+            title:       Работно ателие — Моята библиотека
+            description: Универсална електронна библиотека
+            link:        http://chitanka.info
+            encoding:    utf-8
+            #author:     Моята библиотека
 
 parameters:
     # Облици

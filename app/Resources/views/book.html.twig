@@ -1,0 +1,78 @@
+{% macro book(book) %}
+	{% import 'App::link.html.twig' as link %}
+	<dl itemscope itemtype="http://schema.org/Book">
+		<dt>
+			<a href="{{ path('book_show', {'id': book.id ~'-'~ book.slug}) }}"
+				class="booklink"
+				data-edit="{{ path('admin_book_edit', {'id': book.id}) }}">
+				{{ _self.cover(book, 90) }}
+				<i itemprop="name">{{ book.title }}</i>
+			</a>
+				{% if book.hasAnno %}
+					<a class="book-clue" data-href="{{ path('book_show', {'id': book.id, '_format': 'clue'}) }}"><i class="fa fa-info-circle" title="Анотация"></i></a>
+				{% endif %}
+				{% if book.subtitle is not empty %}
+					<br>
+					<span itemprop="alternativeHeadline">{{ book.subtitle|replace({'\\n': '<br>'})|raw }}</span>
+				{% endif %}
+		</dt>
+		<dd>
+		{% if book.authors|length %}
+			<span class="bookauthor" itemprop="author">{{ link.persons_comma(book.authors) }}</span>
+		{% endif %}
+		{% if book.sequence is not empty %}
+			<br><span class="bookseq">{{ link.sequence(book.sequence) }}{% if book.seqnr is not empty and book.sequence.isSeqnrVisible %}, №&nbsp;{{ book.seqnr }}{% endif %}</span>
+		{% endif %}
+		{% if book.category is not empty %}
+			<br><span class="bookcat">{{ link.category(book.category) }}</span>
+		{% endif %}
+		</dd>
+		{% if book.removedNotice is empty %}
+			<dd class="download">{{ _self.download_links(book) }}</dd>
+		{% endif %}
+	</dl>
+{% endmacro %}
+
+{% macro download_link(book, format, title) %}
+	{% spaceless %}
+	<a href="{{ path('book_show', {'id': book.id ~'-'~ book.slug, '_format': format}) }}" title="{{title|default('Сваляне във формат '~format)}}" class="dl dl-{{ format|replace({'.zip': ''}) }} action"><span>{{ format }}</span></a>
+	{% endspaceless %}
+{% endmacro %}
+
+{% macro download_links(book, class) %}
+	<ul class="{{ class|default('dl-list') }}">
+		{% if "sfb" in book.formats %}
+			<li>{{ _self.download_link(book, "fb2.zip") }}</li>
+			<li>{{ _self.download_link(book, "epub") }}</li>
+			<li>{{ _self.download_link(book, "txt.zip") }}</li>
+			<li>{{ _self.download_link(book, "sfb.zip") }}</li>
+		{% endif %}
+		{% if "djvu" in book.formats %}
+			<li>{{ _self.download_link(book, "djvu") }}</li>
+		{% endif %}
+		{% if "pdf" in book.formats %}
+			<li>{{ _self.download_link(book, "pdf") }}</li>
+		{% endif %}
+		{% if "pic" in book.formats %}
+			<li>{{ _self.download_link(book, "pic", "Преглед в галерия") }}</li>
+		{% endif %}
+	</ul>
+{% endmacro %}
+
+{% macro cover(book, width) %}
+	<img class="cover thumbnail" src="{{ asset(book.hasCover ? cover(book.id, width) : cover(0, width, 'png')) }}" alt="Корица" itemprop="image">
+{% endmacro %}
+
+{% macro cover_div(book, width) %}
+	<div class="cover thumbnail">
+		{% if book.hasCover %}
+			<a href="{{ asset(cover(book.id, 'max')) }}"><img src="{{ asset(cover(book.id, width)) }}" alt="Корица" itemprop="image"></a>
+		{% else %}
+			<img src="{{ asset(cover(0, width, 'png')) }}" alt="Корица" itemprop="image">
+		{% endif %}
+	</div>
+{% endmacro %}
+
+{% macro qrcode(book) %}
+	<a href="http://bg.wikipedia.org/wiki/QR_%D0%BA%D0%BE%D0%B4" class="qrcode"><img src="{{ url('book_show', {'id': book.id ~'-'~ book.slug})|qrcode }}"></a>
+{% endmacro %}

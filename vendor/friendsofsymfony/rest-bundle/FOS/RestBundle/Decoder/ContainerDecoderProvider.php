@@ -13,18 +13,13 @@ namespace FOS\RestBundle\Decoder;
 
 use Symfony\Component\DependencyInjection\ContainerAware;
 
-use FOS\RestBundle\Decoder\DecoderProviderInterface;
-
 /**
- * Provides encoders through the Symfony2 DIC
+ * Provides encoders through the Symfony2 DIC.
  *
  * @author Igor Wiedler <igor@wiedler.ch>
  */
 class ContainerDecoderProvider extends ContainerAware implements DecoderProviderInterface
 {
-    /**
-     * @var array
-     */
     private $decoders;
 
     /**
@@ -38,9 +33,7 @@ class ContainerDecoderProvider extends ContainerAware implements DecoderProvider
     }
 
     /**
-     * @param string $format format
-     *
-     * @return boolean
+     * {@inheritdoc}
      */
     public function supports($format)
     {
@@ -48,15 +41,14 @@ class ContainerDecoderProvider extends ContainerAware implements DecoderProvider
     }
 
     /**
-     * @param string $format format
-     *
-     * @throws \InvalidArgumentException
-     * @return FOS\RestBundle\Decoder\DecoderInterface
+     * {@inheritdoc}
      */
     public function getDecoder($format)
     {
         if (!$this->supports($format)) {
-            throw new \InvalidArgumentException(sprintf("Format '%s' is not supported by ContainerDecoderProvider.", $format));
+            throw new \InvalidArgumentException(
+                sprintf("Format '%s' is not supported by ContainerDecoderProvider.", $format)
+            );
         }
 
         return $this->container->get($this->decoders[$format]);

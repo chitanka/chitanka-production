@@ -5,7 +5,7 @@ class SqlImporter {
 	private $db;
 
 	public function __construct($dsn, $dbuser, $dbpassword) {
-		$this->db = new PDO($dsn, $dbuser, $dbpassword);
+		$this->db = new \PDO($dsn, $dbuser, $dbpassword);
 	}
 
 	public function importFile($sqlFile) {
@@ -30,12 +30,19 @@ class SqlImporter {
 
 class SqlFileProcessor {
 
+	/** @var string */
 	private $filename;
 
+	/**
+	 * @param string $filename
+	 */
 	public function __construct($filename) {
 		$this->filename = $filename;
 	}
 
+	/**
+	 * @param Closure|null $callback
+	 */
 	public function walkThruQueries($callback = null) {
 		$reader = new FileLineReader($this->filename);
 		$queries = array();
@@ -47,7 +54,7 @@ class SqlFileProcessor {
 		$queryBuf = '';
 		while ($reader->hasMore()) {
 			$line = $reader->readLine();
-			if (empty($line) || $this->isComment($line) || $this->isInternMysqlQuery($line)) {
+			if (empty($line) || $this->isComment($line) || $this->isInternalMysqlQuery($line)) {
 				continue;
 			}
 			$queryBuf .= $line;
@@ -64,11 +71,19 @@ class SqlFileProcessor {
 		return $queries;
 	}
 
+	/**
+	 * @param string $line
+	 * @return bool
+	 */
 	private function isComment($line) {
 		return strpos($line, '--') === 0;
 	}
 
-	private function isInternMysqlQuery($line) {
+	/**
+	 * @param string $line
+	 * @return bool
+	 */
+	private function isInternalMysqlQuery($line) {
 		return strpos($line, '/*') === 0;
 	}
 }
@@ -76,10 +91,17 @@ class SqlFileProcessor {
 
 class FileLineReader {
 
+	/** @var bool */
 	private $isGzipped;
+	/** @var string */
 	private $filename;
+	/** @var resource */
 	private $handle;
 
+	/**
+	 * @param string $filename
+	 * @throws \Exception If the file could not be opened for reading
+	 */
 	public function __construct($filename) {
 		if (!file_exists($filename)) {
 			throw new \Exception("File '$filename' does not exist.");
@@ -87,43 +109,56 @@ class FileLineReader {
 		if (!is_readable($filename)) {
 			throw new \Exception("File '$filename' is not readable.");
 		}
-		$this->isGzipped = preg_match('/\.gz$/', $filename);
+		$this->isGzipped = preg_match('/\.gz$/', $filename) == 1;
 		$this->filename = $filename;
 		$this->handle = $this->open();
-	}
-	public function __destruct() {
-		if ($this->handle) {
-			$this->close();
-		}
-	}
-
-	public function open() {
-		$handle = $this->isGzipped ? gzopen($this->filename, 'r') : fopen($this->filename, 'r');
-		if (!$handle) {
+		if (!$this->handle) {
 			throw new \Exception("File '$this->filename' could not be opened for reading.");
 		}
-		return $this->handle = $handle;
+	}
+	public function __destruct() {
+		$this->close();
 	}
 
-	public function eof() {
-		return $this->isGzipped ? gzeof($this->handle) : feof($this->handle);
+	/**
+	 * Open the given file and return the file handle
+	 * @return resource
+	 */
+	private function open() {
+		return $this->isGzipped ? gzopen($this->filename, 'r') : fopen($this->filename, 'r');
+	}
+
+	private function eof() {
+		if ($this->handle) {
+			return $this->isGzipped ? gzeof($this->handle) : feof($this->handle);
+		}
+		return null;
 	}
 
 	public function hasMore() {
 		return !$this->eof();
 	}
 
+	/**
+	 * @param bool $trim
+	 * @return string
+	 */
 	public function readLine($trim = true) {
 		$line = $this->gets();
 		return $trim ? rtrim($line) : $line;
 	}
 
-	public function gets() {
-		return $this->isGzipped ? gzgets($this->handle) : fgets($this->handle);
+	private function gets() {
+		if ($this->handle) {
+			return $this->isGzipped ? gzgets($this->handle) : fgets($this->handle);
+		}
+		return null;
 	}
 
 	public function close() {
-		$this->isGzipped ? gzclose($this->handle) : fclose($this->handle);
-		$this->handle = null;
+		if ($this->handle) {
+			$this->isGzipped ? gzclose($this->handle) : fclose($this->handle);
+			$this->handle = null;
+		}
 	}
 }

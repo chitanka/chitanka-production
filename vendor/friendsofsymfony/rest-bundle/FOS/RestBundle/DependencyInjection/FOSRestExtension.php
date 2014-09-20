@@ -17,10 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Reference;
-
 use FOS\RestBundle\Util\Codes;
-
-use FOS\RestBundle\FOSRestBundle;
 
 class FOSRestExtension extends Extension
 {
@@ -29,6 +26,9 @@ class FOSRestExtension extends Extension
      *
      * @param array            $configs
      * @param ContainerBuilder $container
+     *
+     * @throws \InvalidArgumentException
+     * @throws \LogicException
      */
     public function load(array $configs, ContainerBuilder $container)
     {
@@ -63,8 +63,18 @@ class FOSRestExtension extends Extension
         $validator = $config['service']['validator'];
         unset($config['service']['validator']);
 
+        if (null === $config['service']['serializer']) {
+            $bundles = $container->getParameter('kernel.bundles');
+
+            if (isset($bundles['JMSSerializerBundle'])) {
+                $config['service']['serializer'] = 'jms_serializer.serializer';
+            } else {
+                throw new \InvalidArgumentException('JMSSerializerBundle is not available and no other serializer is configured. You must either enable the JMSSerializerBundle or configure a custom serializer.');
+            }
+        }
+
         foreach ($config['service'] as $key => $service) {
-            $container->setAlias($this->getAlias().'.'.$key, $config['service'][$key]);
+            $container->setAlias($this->getAlias().'.'.$key, $service);
         }
 
         if (!empty($config['serializer']['version'])) {
@@ -123,30 +133,27 @@ class FOSRestExtension extends Extension
 
             $container->setParameter($this->getAlias().'.throw_exception_on_unsupported_content_type', $config['body_listener']['throw_exception_on_unsupported_content_type']);
             $container->setParameter($this->getAlias().'.decoders', $config['body_listener']['decoders']);
+
+            $arrayNormalizer = $config['body_listener']['array_normalizer'];
+            if (null !== $arrayNormalizer) {
+                $container->getDefinition($this->getAlias().'.body_listener')
+                    ->addMethodCall('setArrayNormalizer', array(new Reference($arrayNormalizer)));
+            }
         }
 
         if (!empty($config['format_listener']['rules'])) {
             $loader->load('format_listener.xml');
 
-            foreach ($config['format_listener']['rules'] as $rule) {
-                $matcher = $this->createRequestMatcher(
-                    $container,
-                    $rule['path'],
-                    $rule['host'],
-                    $rule['methods']
-                );
-
-                unset($rule['path'], $rule['host']);
-                if (is_bool($rule['prefer_extension']) && $rule['prefer_extension']) {
-                    $rule['prefer_extension'] = '2.0';
-                }
-
-                $container->getDefinition($this->getAlias().'.format_negotiator')
-                    ->addMethodCall('add', array($matcher, $rule));
-            }
+            $container->setParameter(
+                $this->getAlias().'.format_listener.rules',
+                $config['format_listener']['rules']
+            );
 
             if (!empty($config['format_listener']['media_type']['version_regex'])) {
-                $container->setParameter($this->getAlias().'.format_listener.media_type.version_regex', $config['format_listener']['media_type']['version_regex']);
+                $container->setParameter(
+                    $this->getAlias().'.format_listener.media_type.version_regex',
+                    $config['format_listener']['media_type']['version_regex']
+                );
             } else {
                 $container->removeDefinition('fos_rest.version_listener');
             }
@@ -198,6 +205,7 @@ class FOSRestExtension extends Extension
         if (!empty($config['access_denied_listener'])) {
             $loader->load('access_denied_listener.xml');
             $container->setParameter($this->getAlias().'.access_denied_listener.formats', $config['access_denied_listener']);
+            $container->setParameter($this->getAlias().'.access_denied_listener.unauthorized_challenge', $config['unauthorized_challenge']);
         }
 
         if (!empty($config['body_converter'])) {
@@ -235,10 +243,11 @@ class FOSRestExtension extends Extension
     }
 
     /**
-     * Check if an exception is loadable.
+     * Checks if an exception is loadable.
      *
-     * @param  string                   $exception class to test
-     * @throws InvalidArgumentException if the class was not found.
+     * @param string $exception Class to test
+     *
+     * @throws \InvalidArgumentException if the class was not found.
      */
     private function testExceptionExists($exception)
     {
@@ -248,22 +257,5 @@ class FOSRestExtension extends Extension
         } catch (\ReflectionException $re) {
             throw new \InvalidArgumentException("FOSRestBundle exception mapper: Could not load class $exception. Most probably a problem with your configuration.");
         }
-    }
-
-    protected function createRequestMatcher(ContainerBuilder $container, $path = null, $host = null, $methods = null)
-    {
-        $arguments = array($path, $host, $methods);
-        $serialized = serialize($arguments);
-        $id = $this->getAlias().'.request_matcher.'.md5($serialized).sha1($serialized);
-
-        if (!$container->hasDefinition($id)) {
-            // only add arguments that are necessary
-            $container
-                ->setDefinition($id, new DefinitionDecorator($this->getAlias().'.request_matcher'))
-                ->setArguments($arguments)
-            ;
-        }
-
-        return new Reference($id);
     }
 }

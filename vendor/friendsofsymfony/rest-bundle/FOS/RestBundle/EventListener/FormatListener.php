@@ -14,7 +14,6 @@ namespace FOS\RestBundle\EventListener;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
-
 use FOS\RestBundle\Util\FormatNegotiatorInterface;
 use FOS\RestBundle\Util\MediaTypeNegotiatorInterface;
 
@@ -25,15 +24,12 @@ use FOS\RestBundle\Util\MediaTypeNegotiatorInterface;
  */
 class FormatListener
 {
-    /**
-     * @var FormatNegotiatorInterface
-     */
     private $formatNegotiator;
 
     /**
      * Initialize FormatListener.
      *
-     * @param FormatNegotiatorInterface $formatNegotiator  The content negotiator service to use
+     * @param FormatNegotiatorInterface $formatNegotiator
      */
     public function __construct(FormatNegotiatorInterface $formatNegotiator)
     {

@@ -12,6 +12,8 @@
 namespace FOS\RestBundle\EventListener;
 
 use FOS\RestBundle\Decoder\DecoderProviderInterface;
+use FOS\RestBundle\Normalizer\ArrayNormalizerInterface;
+use FOS\RestBundle\Normalizer\Exception\NormalizationException;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -24,21 +26,19 @@ use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
  */
 class BodyListener
 {
-    /**
-     * @var DecoderProviderInterface
-     */
     private $decoderProvider;
+    private $throwExceptionOnUnsupportedContentType;
 
     /**
-     * @var boolean
+     * @var ArrayNormalizerInterface
      */
-    private $throwExceptionOnUnsupportedContentType;
+    private $arrayNormalizer;
 
     /**
      * Constructor.
      *
-     * @param DecoderProviderInterface $decoderProvider Provider for fetching decoders
-     * @param boolean $throwExceptionOnUnsupportedContentType
+     * @param DecoderProviderInterface $decoderProvider
+     * @param bool                     $throwExceptionOnUnsupportedContentType
      */
     public function __construct(DecoderProviderInterface $decoderProvider, $throwExceptionOnUnsupportedContentType = false)
     {
@@ -47,18 +47,30 @@ class BodyListener
     }
 
     /**
-     * Core request handler
+     * Sets the array normalizer.
      *
-     * @param GetResponseEvent $event The event
+     * @param ArrayNormalizerInterface $arrayNormalizer
+     */
+    public function setArrayNormalizer(ArrayNormalizerInterface $arrayNormalizer)
+    {
+        $this->arrayNormalizer = $arrayNormalizer;
+    }
+
+    /**
+     * Core request handler.
+     *
+     * @param GetResponseEvent $event
+     *
      * @throws BadRequestHttpException
      * @throws UnsupportedMediaTypeHttpException
      */
     public function onKernelRequest(GetResponseEvent $event)
     {
         $request = $event->getRequest();
+        $method = $request->getMethod();
 
         if (!count($request->request->all())
-            && in_array($request->getMethod(), array('POST', 'PUT', 'PATCH', 'DELETE'))
+            && in_array($method, array('POST', 'PUT', 'PATCH', 'DELETE'))
         ) {
             $contentType = $request->headers->get('Content-Type');
 
@@ -66,25 +78,40 @@ class BodyListener
                 ? $request->getRequestFormat()
                 : $request->getFormat($contentType);
 
+            $content = $request->getContent();
+
             if (!$this->decoderProvider->supports($format)) {
-                if ($this->throwExceptionOnUnsupportedContentType) {
+                if (
+                    $this->throwExceptionOnUnsupportedContentType &&
+                    $this->isNotAnEmptyDeleteRequestWithNoSetContentType($method, $content, $contentType)
+                ) {
                     throw new UnsupportedMediaTypeHttpException("Request body format '$format' not supported");
                 }
 
                 return;
             }
 
-            $decoder = $this->decoderProvider->getDecoder($format);
-            $content = $request->getContent();
-
             if (!empty($content)) {
+                $decoder = $this->decoderProvider->getDecoder($format);
                 $data = $decoder->decode($content, $format);
                 if (is_array($data)) {
+                    if (null !== $this->arrayNormalizer) {
+                        try {
+                            $data = $this->arrayNormalizer->normalize($data);
+                        } catch (NormalizationException $e) {
+                            throw new BadRequestHttpException($e->getMessage());
+                        }
+                    }
                     $request->request = new ParameterBag($data);
                 } else {
                     throw new BadRequestHttpException('Invalid ' . $format . ' message received');
                 }
             }
         }
+    }
+
+    private function isNotAnEmptyDeleteRequestWithNoSetContentType($method, $content, $contentType)
+    {
+        return false === ('DELETE' === $method && empty($content) && null === $contentType);
     }
 }

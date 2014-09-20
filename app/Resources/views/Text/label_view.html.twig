@@ -1,0 +1,5 @@
+<li>
+	{% import 'App::link.html.twig' as link %}
+	{{ link.label(label) }}
+	{% include 'App:Text:label_delete_form.html.twig' with {'label': label} %}
+</li>

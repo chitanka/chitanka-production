@@ -1,7 +1,0 @@
-{% if book.sequence %}
-	<ol class="breadcrumb" itemprop="breadcrumb">
-		<li><a href="{{ path('sequences') }}">Поредици</a></li>
-		{% import 'LibBundle::link.html.twig' as link %}
-		<li>{{ link.sequence(book.sequence) }}</li>
-	</ol>
-{% endif %}

@@ -15,13 +15,9 @@ use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\TemplateReference;
-
 use Sensio\Bundle\FrameworkExtraBundle\EventListener\TemplateListener;
-
 use JMS\Serializer\SerializationContext;
-
 use FOS\RestBundle\View\View;
-
 use FOS\RestBundle\Util\Codes;
 
 /**
@@ -31,15 +27,12 @@ use FOS\RestBundle\Util\Codes;
  */
 class ViewResponseListener extends TemplateListener
 {
-    /**
-     * @var Symfony\Component\DependencyInjection\ContainerInterface
-     */
     protected $container;
 
     /**
      * Constructor.
      *
-     * @param ContainerInterface $container The service container instance
+     * @param ContainerInterface $container
      */
     public function __construct(ContainerInterface $container)
     {
@@ -50,7 +43,7 @@ class ViewResponseListener extends TemplateListener
      * Guesses the template name to render and its variables and adds them to
      * the request object.
      *
-     * @param FilterControllerEvent $event A FilterControllerEvent instance
+     * @param FilterControllerEvent $event
      */
     public function onKernelController(FilterControllerEvent $event)
     {
@@ -67,7 +60,7 @@ class ViewResponseListener extends TemplateListener
      * Renders the parameters and template and initializes a new response object with the
      * rendered content.
      *
-     * @param GetResponseForControllerResultEvent $event A GetResponseForControllerResultEvent instance
+     * @param GetResponseForControllerResultEvent $event
      */
     public function onKernelView(GetResponseForControllerResultEvent $event)
     {

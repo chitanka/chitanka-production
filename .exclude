@@ -2,8 +2,8 @@
 .gitignore
 tmp/*
 app/config/parameters.yml
-app/cache/*
-app/logs/*
+var/cache/*
+var/log/*
 web/content
 web/cache/*
 web/tor/*
@@ -14,7 +14,7 @@ web/index_temp.php
 .last
 .lock
 update/*/*
-app/spool/*
+var/spool/*
 .DS_Store
 .exclude
 .include

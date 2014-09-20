@@ -1,4 +1,6 @@
 <?php
+$rootDir = __DIR__.'/..';
+
 function exitWithMessage($template = 'error', $retryAfter = 300) {
 	header('HTTP/1.0 503 Service Temporarily Unavailable');
 	header('Status: 503 Service Temporarily Unavailable');
@@ -8,7 +10,7 @@ function exitWithMessage($template = 'error', $retryAfter = 300) {
 }
 
 function isCacheable() {
-	return $_SERVER['REQUEST_METHOD'] == 'GET' && !array_key_exists('mlt', $_COOKIE);
+	return $_SERVER['REQUEST_METHOD'] == 'GET' && !isset($_COOKIE['mlt']);
 }
 class Cache {
 	private $file;
@@ -70,6 +72,11 @@ class CacheFile {
 	public function exists() {
 		return file_exists($this->name);
 	}
+
+	/**
+	 * @param string $content
+	 * @param integer $ttl
+	 */
 	public function write($content, $ttl) {
 		if ( ! file_exists($dir = dirname($this->name))) {
 			mkdir($dir, 0777, true);
@@ -90,6 +97,7 @@ class CacheFile {
 	/**
 	 * The time to live is set implicitly through the last modification time, e.g.
 	 * if a file has TTL of 1 hour, its modification time is set to 1 hour in the future
+	 * @param integer $ttl
 	 */
 	private function setTtl($ttl) {
 		touch($this->name, time() + $ttl);
@@ -100,13 +108,12 @@ class CacheFile {
 	}
 }
 
-$isCacheable = isCacheable();
-if ($isCacheable) {
+if (isCacheable()) {
 	$requestUri = $_SERVER['REQUEST_URI'];
 	if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
 		$requestUri .= '.ajax';
 	}
-	$cache = new Cache($requestUri, __DIR__.'/../app/cache/simple_http_cache', __DIR__.'/../app/logs');
+	$cache = new Cache($requestUri, "$rootDir/var/cache/simple_http_cache", "$rootDir/var/logs");
 	if (null !== ($cachedContent = $cache->get())) {
 		header("Cache-Control: public, max-age=".$cachedContent['ttl']);
 		echo $cachedContent['data'];
@@ -124,7 +131,6 @@ use Symfony\Component\HttpFoundation\Request;
 // allow generated files (cache, logs) to be world-writable
 umask(0000);
 
-$rootDir = __DIR__.'/..';
 $loader = require $rootDir.'/app/bootstrap.php.cache';
 
 try {
@@ -139,7 +145,7 @@ try {
 require $rootDir.'/app/AppKernel.php';
 //require $rootDir.'/app/AppCache.php';
 
-register_shutdown_function(function(){
+register_shutdown_function(function() {
 	$error = error_get_last();
 	if ($error['type'] == E_ERROR) {
 		if (preg_match('/parameters\.yml.+does not exist/', $error['message'])) {
@@ -159,10 +165,11 @@ $kernel->loadClassCache();
 //Request::enableHttpMethodParameterOverride();
 $request = Request::createFromGlobals();
 $response = $kernel->handle($request);
-if ($isCacheable && $response->isOk()) {
+if (isset($cache) && $response->isOk()) {
 	try {
 		$cache->set($response->getContent(), $response->getTtl());
 	} catch (\RuntimeException $e) {
+		// do nothing for now; possibly log it in the future
 	}
 }
 $response->send();

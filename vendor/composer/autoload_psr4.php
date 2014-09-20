@@ -14,5 +14,8 @@ return array(
     'Sonata\\Cache\\' => array($vendorDir . '/sonata-project/cache/lib'),
     'Sonata\\BlockBundle\\' => array($vendorDir . '/sonata-project/block-bundle'),
     'Sonata\\AdminBundle\\' => array($vendorDir . '/sonata-project/admin-bundle'),
+    'Sfblib\\' => array($vendorDir . '/chitanka/sfb-converter/lib'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
+    'Eko\\FeedBundle\\' => array($vendorDir . '/eko/feedbundle'),
+    'App\\' => array($baseDir . '/app'),
 );
