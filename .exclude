@@ -18,3 +18,5 @@ var/spool/*
 .DS_Store
 .exclude
 .include
+# for BC
+app/console
