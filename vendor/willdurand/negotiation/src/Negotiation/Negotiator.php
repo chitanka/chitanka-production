@@ -15,27 +15,24 @@ class Negotiator implements NegotiatorInterface
     public function getBest($header, array $priorities = array())
     {
         $acceptHeaders = $this->parseHeader($header);
-        $best          = reset($acceptHeaders);
 
         if (0 === count($acceptHeaders)) {
             return null;
         }
 
-        if (0 !== count($priorities)) {
-            $value = $this->match($acceptHeaders, $priorities);
-
-            if (!empty($value)) {
-                $best = new AcceptHeader($value, 1.0, $this->parseParameters($value));
-            }
+        if (0 === count($priorities)) {
+            return reset($acceptHeaders);
         }
 
-        return $best;
+        $value = $this->match($acceptHeaders, $priorities);
+
+        return empty($value) ? null : new AcceptHeader($value, 1.0, $this->parseParameters($value));
     }
 
     /**
      * @param string $header A string that contains an `Accept|Accept-*` header.
      *
-     * @return array[AcceptHeader]
+     * @return AcceptHeader[]
      */
     protected function parseHeader($header)
     {
@@ -85,7 +82,7 @@ class Negotiator implements NegotiatorInterface
      * @param array        $acceptHeaders A set of AcceptHeader objects to sort.
      * @param AcceptHeader $catchAll      A special AcceptHeader that represents the "catch all".
      *
-     * @return array[AcceptHeader]
+     * @return AcceptHeader[]
      */
     protected function sortAcceptHeaders(array $acceptHeaders, AcceptHeader $catchAll = null)
     {
@@ -163,8 +160,9 @@ class Negotiator implements NegotiatorInterface
      *
      * @return string|null Header string matched
      */
-    protected function match(array $acceptHeaders, array $priorities  = array())
+    protected function match(array $acceptHeaders, array $priorities = array())
     {
+        $wildcardAccept      = null;
         $sanitizedPriorities = $this->sanitize($priorities);
 
         foreach ($acceptHeaders as $accept) {

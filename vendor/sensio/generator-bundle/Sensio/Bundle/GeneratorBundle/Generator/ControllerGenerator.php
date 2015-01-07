@@ -102,7 +102,7 @@ class ControllerGenerator extends Generator
             }
 
             $content .= sprintf(
-                "\n%s:\n    pattern: %s\n    defaults: { _controller: %s }\n",
+                "\n%s:\n    path:     %s\n    defaults: { _controller: %s }\n",
                 $name,
                 $action['route'],
                 $controller
@@ -124,7 +124,7 @@ EOT;
 
             $route = $sxe->addChild('route');
             $route->addAttribute('id', $name);
-            $route->addAttribute('pattern', $action['route']);
+            $route->addAttribute('path', $action['route']);
 
             $default = $route->addChild('default', $controller);
             $default->addAttribute('key', '_controller');
@@ -146,7 +146,7 @@ EOT;
                 $content = substr($content, 0, $pointer);
                 $content .= sprintf("%s->add('%s', new Route('%s', array(", $collection[1], $name, $action['route']);
                 $content .= sprintf("\n    '_controller' => '%s',", $controller);
-                $content .= "\n)));\n\nreturn ".$collection[1];
+                $content .= "\n)));\n\nreturn ".$collection[1].";";
             } else {
                 // new file
                 $content = <<<EOT
@@ -158,7 +158,7 @@ use Symfony\Component\Routing\Route;
 EOT;
                 $content .= sprintf("\n\$collection->add('%s', new Route('%s', array(", $name, $action['route']);
                 $content .= sprintf("\n    '_controller' => '%s',", $controller);
-                $content .= "\n)));\n\nreturn \$collection";
+                $content .= "\n)));\n\nreturn \$collection;";
             }
         }
 

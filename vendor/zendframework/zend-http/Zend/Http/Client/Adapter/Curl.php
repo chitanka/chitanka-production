@@ -10,10 +10,8 @@
 namespace Zend\Http\Client\Adapter;
 
 use Traversable;
-use Zend\Http\Client;
 use Zend\Http\Client\Adapter\AdapterInterface as HttpAdapter;
 use Zend\Http\Client\Adapter\Exception as AdapterException;
-use Zend\Http\Request;
 use Zend\Stdlib\ArrayUtils;
 
 /**
@@ -338,7 +336,7 @@ class Curl implements HttpAdapter, StreamInterface
         $curlHttp = ($httpVersion == 1.1) ? CURL_HTTP_VERSION_1_1 : CURL_HTTP_VERSION_1_0;
 
         // mark as HTTP request and set HTTP method
-        curl_setopt($this->curl, $curlHttp, true);
+        curl_setopt($this->curl, CURLOPT_HTTP_VERSION, $curlHttp);
         curl_setopt($this->curl, $curlMethod, $curlValue);
 
         if ($this->outputStream) {
@@ -391,6 +389,9 @@ class Curl implements HttpAdapter, StreamInterface
             // This is a PUT by a setRawData string, not by file-handle
             curl_setopt($this->curl, CURLOPT_POSTFIELDS, $body);
         } elseif ($method == 'PATCH') {
+            curl_setopt($this->curl, CURLOPT_POSTFIELDS, $body);
+        } elseif ($method == 'DELETE' && $body) {
+            // DELETE requests can also have a body
             curl_setopt($this->curl, CURLOPT_POSTFIELDS, $body);
         }
 

@@ -104,7 +104,7 @@ class PoolingShardConnection extends Connection
         }
 
         if ( ! ($params['shardChoser'] instanceof ShardChoser)) {
-            throw new \InvalidArgumentException("The 'shardChoser' configuration is not a valid instance of Doctrine\DBAL\Sharding\ShardChoser\ShardChoser"); 
+            throw new \InvalidArgumentException("The 'shardChoser' configuration is not a valid instance of Doctrine\DBAL\Sharding\ShardChoser\ShardChoser");
         }
 
         $this->connections[0] = array_merge($params, $params['global']);
@@ -161,7 +161,7 @@ class PoolingShardConnection extends Connection
         $this->_conn = $this->activeConnections[$this->activeShardId] = $this->connectTo($this->activeShardId);
 
         if ($this->_eventManager->hasListeners(Events::postConnect)) {
-            $eventArgs = new \Doctrine\DBAL\Event\ConnectionEventArgs($this);
+            $eventArgs = new ConnectionEventArgs($this);
             $this->_eventManager->dispatchEvent(Events::postConnect, $eventArgs);
         }
 

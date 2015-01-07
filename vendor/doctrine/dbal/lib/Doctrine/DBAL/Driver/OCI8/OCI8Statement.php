@@ -121,7 +121,7 @@ class OCI8Statement implements \IteratorAggregate, Statement
                 $i += $len-1; // jump ahead
                 $stmtLen = strlen($statement); // adjust statement length
                 ++$count;
-            } else if ($statement[$i] == "'" || $statement[$i] == '"') {
+            } elseif ($statement[$i] == "'" || $statement[$i] == '"') {
                 $inLiteral = ! $inLiteral; // switch state!
             }
         }
@@ -149,7 +149,7 @@ class OCI8Statement implements \IteratorAggregate, Statement
             $lob->writeTemporary($variable, OCI_TEMP_BLOB);
 
             return oci_bind_by_name($this->_sth, $column, $lob, -1, OCI_B_BLOB);
-        } else if ($length !== null) {
+        } elseif ($length !== null) {
             return oci_bind_by_name($this->_sth, $column, $variable, $length);
         }
 
@@ -289,7 +289,11 @@ class OCI8Statement implements \IteratorAggregate, Statement
     {
         $row = oci_fetch_array($this->_sth, OCI_NUM | OCI_RETURN_NULLS | OCI_RETURN_LOBS);
 
-        return isset($row[$columnIndex]) ? $row[$columnIndex] : false;
+        if (false === $row) {
+            return false;
+        }
+
+        return isset($row[$columnIndex]) ? $row[$columnIndex] : null;
     }
 
     /**

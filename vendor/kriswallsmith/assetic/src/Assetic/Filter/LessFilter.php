@@ -3,7 +3,7 @@
 /*
  * This file is part of the Assetic package, an OpenSky project.
  *
- * (c) 2010-2013 OpenSky Project Inc
+ * (c) 2010-2014 OpenSky Project Inc
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -106,30 +106,30 @@ class LessFilter extends BaseNodeFilter implements DependencyExtractorInterface
 var less = require('less');
 var sys  = require(process.binding('natives').util ? 'util' : 'sys');
 
-new(less.Parser)(%s).parse(%s, function(e, tree) {
-    if (e) {
-        less.writeError(e);
+less.render(%s, %s, function(error, css) {
+    if (error) {
+        less.writeError(error);
         process.exit(2);
     }
-
     try {
-        sys.print(tree.toCSS(%s));
+        if (typeof css == 'string') {
+            sys.print(css);
+        } else {
+            sys.print(css.css);
+        }
     } catch (e) {
-        less.writeError(e);
+        less.writeError(error);
         process.exit(3);
     }
 });
 
 EOF;
 
-        $root = $asset->getSourceRoot();
-        $path = $asset->getSourcePath();
-
         // parser options
         $parserOptions = $this->parserOptions;
-        if ($root && $path) {
-            $parserOptions['paths'] = array(dirname($root.'/'.$path));
-            $parserOptions['filename'] = basename($path);
+        if ($dir = $asset->getSourceDirectory()) {
+            $parserOptions['paths'] = array($dir);
+            $parserOptions['filename'] = basename($asset->getSourcePath());
         }
 
         foreach ($this->loadPaths as $loadPath) {
@@ -140,9 +140,8 @@ EOF;
 
         $pb->add($this->nodeBin)->add($input = tempnam(sys_get_temp_dir(), 'assetic_less'));
         file_put_contents($input, sprintf($format,
-            json_encode($parserOptions),
             json_encode($asset->getContent()),
-            json_encode($this->treeOptions)
+            json_encode(array_merge($parserOptions, $this->treeOptions))
         ));
 
         $proc = $pb->getProcess();

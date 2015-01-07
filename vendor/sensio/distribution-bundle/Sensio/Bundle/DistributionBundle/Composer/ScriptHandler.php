@@ -43,11 +43,11 @@ class ScriptHandler
     {
         $options = self::getOptions($event);
 
-        if (getenv('SENSIOLABS_DISABLE_NEW_DIRECTORY_STRUCTURE') || !$event->getIO()->askConfirmation('Would you like to use Symfony 3 directory structure? [y/N] ', false)) {
+        if (!getenv('SENSIOLABS_ENABLE_NEW_DIRECTORY_STRUCTURE') || !$event->getIO()->askConfirmation('Would you like to use Symfony 3 directory structure? [y/N] ', false)) {
             return;
         }
 
-        $rootDir = __DIR__ . '/../../../../../../..';
+        $rootDir = getcwd();
         $appDir = $options['symfony-app-dir'];
         $webDir = $options['symfony-web-dir'];
         $binDir = self::$options['symfony-bin-dir'] = 'bin';
@@ -163,7 +163,9 @@ class ScriptHandler
         $appDir = $options['symfony-app-dir'];
         $fs = new Filesystem();
 
-        if (!self::useNewDirectoryStructure($options)) {
+        $newDirectoryStructure = self::useNewDirectoryStructure($options);
+
+        if (!$newDirectoryStructure) {
             if (!self::hasDirectory($event, 'symfony-app-dir', $appDir, 'install the requirements files')) {
                 return;
             }
@@ -180,6 +182,7 @@ class ScriptHandler
             }
             $fs->copy(__DIR__.'/../Resources/skeleton/app/SymfonyRequirements.php', $varDir.'/SymfonyRequirements.php', true);
             $fs->copy(__DIR__.'/../Resources/skeleton/app/check.php', $binDir.'/symfony_requirements', true);
+            $fs->remove(array($appDir.'/check.php', $appDir.'/SymfonyRequirements.php', true));
 
             $fs->dumpFile($binDir.'/symfony_requirements', '#!/usr/bin/env php'.PHP_EOL.str_replace(".'/SymfonyRequirements.php'", ".'/".$fs->makePathRelative($varDir, $binDir)."SymfonyRequirements.php'", file_get_contents($binDir.'/symfony_requirements')), 0755);
         }
@@ -189,7 +192,11 @@ class ScriptHandler
         // if the user has already removed the config.php file, do nothing
         // as the file must be removed for production use
         if ($fs->exists($webDir.'/config.php')) {
-            $fs->copy(__DIR__.'/../Resources/skeleton/web/config.php', $webDir.'/config.php', true);
+            if (!$newDirectoryStructure) {
+                $fs->copy(__DIR__.'/../Resources/skeleton/web/config.php', $webDir.'/config.php', true);
+            } else {
+                $fs->dumpFile($webDir.'/config.php', str_replace('/../app/SymfonyRequirements.php', '/'.$fs->makePathRelative($varDir, $webDir).'SymfonyRequirements.php', file_get_contents(__DIR__.'/../Resources/skeleton/web/config.php')));
+            }
         }
     }
 
@@ -212,7 +219,7 @@ class ScriptHandler
 
     public static function installAcmeDemoBundle(CommandEvent $event)
     {
-        $rootDir = __DIR__ . '/../../../../../../..';
+        $rootDir = getcwd();
         $options = self::getOptions($event);
 
         if (file_exists($rootDir.'/src/Acme/DemoBundle')) {
@@ -263,14 +270,19 @@ EOF;
         $fs->dumpFile($routingFile, $routingData);
 
         $securityData = <<<EOF
+# you can read more about security in the related section of the documentation
+# http://symfony.com/doc/current/book/security.html
 security:
+    # http://symfony.com/doc/current/book/security.html#encoding-the-user-s-password
     encoders:
         Symfony\Component\Security\Core\User\User: plaintext
 
+    # http://symfony.com/doc/current/book/security.html#hierarchical-roles
     role_hierarchy:
         ROLE_ADMIN:       ROLE_USER
         ROLE_SUPER_ADMIN: [ROLE_USER, ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
 
+    # http://symfony.com/doc/current/book/security.html#where-do-users-come-from-user-providers
     providers:
         in_memory:
             memory:
@@ -278,17 +290,23 @@ security:
                     user:  { password: userpass, roles: [ 'ROLE_USER' ] }
                     admin: { password: adminpass, roles: [ 'ROLE_ADMIN' ] }
 
+    # the main part of the security, where you can set up firewalls
+    # for specific sections of your app
     firewalls:
+        # disables authentication for assets and the profiler, adapt it according to your needs
         dev:
             pattern:  ^/(_(profiler|wdt)|css|images|js)/
             security: false
-
+        # the login page has to be accessible for everybody
         demo_login:
             pattern:  ^/demo/secured/login$
             security: false
 
+        # secures part of the application
         demo_secured_area:
             pattern:    ^/demo/secured/
+            # it's important to notice that in this case _demo_security_check and _demo_login
+            # are route names and that they are specified in the AcmeDemoBundle
             form_login:
                 check_path: _demo_security_check
                 login_path: _demo_login
@@ -299,6 +317,9 @@ security:
             #http_basic:
             #    realm: "Secured Demo Area"
 
+    # with these settings you can restrict or allow access for different parts
+    # of your application based on roles, ip, host or methods
+    # http://symfony.com/doc/current/book/security.html#security-book-access-control-matching-options
     access_control:
         #- { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY, requires_channel: https }
 EOF;
@@ -373,13 +394,14 @@ namespace { return \$loader; }
 
     protected static function executeCommand(CommandEvent $event, $consoleDir, $cmd, $timeout = 300)
     {
-        $php = escapeshellarg(self::getPhp());
+        $php = escapeshellarg(self::getPhp(false));
+        $phpArgs = implode(' ', array_map('escapeshellarg', self::getPhpArguments()));
         $console = escapeshellarg($consoleDir.'/console');
         if ($event->getIO()->isDecorated()) {
             $console .= ' --ansi';
         }
 
-        $process = new Process($php.' '.$console.' '.$cmd, null, null, null, $timeout);
+        $process = new Process($php.($phpArgs ? ' '.$phpArgs : '').' '.$console.' '.$cmd, null, null, null, $timeout);
         $process->run(function ($type, $buffer) use ($event) { $event->getIO()->write($buffer, false); });
         if (!$process->isSuccessful()) {
             throw new \RuntimeException(sprintf('An error occurred when executing the "%s" command.', escapeshellarg($cmd)));
@@ -388,7 +410,8 @@ namespace { return \$loader; }
 
     protected static function executeBuildBootstrap(CommandEvent $event, $bootstrapDir, $autoloadDir, $timeout = 300)
     {
-        $php = escapeshellarg(self::getPhp());
+        $php = escapeshellarg(self::getPhp(false));
+        $phpArgs = implode(' ', array_map('escapeshellarg', self::getPhpArguments()));
         $cmd = escapeshellarg(__DIR__.'/../Resources/bin/build_bootstrap.php');
         $bootstrapDir = escapeshellarg($bootstrapDir);
         $autoloadDir = escapeshellarg($autoloadDir);
@@ -397,7 +420,7 @@ namespace { return \$loader; }
             $useNewDirectoryStructure = escapeshellarg('--use-new-directory-structure');
         }
 
-        $process = new Process($php.' '.$cmd.' '.$bootstrapDir.' '.$autoloadDir.' '.$useNewDirectoryStructure, null, null, null, $timeout);
+        $process = new Process($php.($phpArgs ? ' '.$phpArgs : '').' '.$cmd.' '.$bootstrapDir.' '.$autoloadDir.' '.$useNewDirectoryStructure, getcwd(), null, null, $timeout);
         $process->run(function ($type, $buffer) use ($event) { $event->getIO()->write($buffer, false); });
         if (!$process->isSuccessful()) {
             throw new \RuntimeException('An error occurred when generating the bootstrap file.');
@@ -427,6 +450,7 @@ namespace { return \$loader; }
 /web/bundles/
 /app/config/parameters.yml
 /var/bootstrap.php.cache
+/var/SymfonyRequirements.php
 /var/cache/*
 /var/logs/*
 !var/cache/.gitkeep
@@ -450,16 +474,14 @@ EOF;
         <server name="KERNEL_DIR" value="$appDir/" />
     </php>
 EOF;
-        $phpunit = str_replace(array('<directory>../src/', '"bootstrap.php.cache"', $phpunitKernelBefore), array('<directory>src/', '"'.$varDir.'/bootstrap.php.cache"', $phpunitKernelAfter),  file_get_contents($rootDir.'/phpunit.xml.dist'));
+        $phpunit = str_replace(array('<directory>../src', '"bootstrap.php.cache"', $phpunitKernelBefore), array('<directory>src', '"'.$varDir.'/bootstrap.php.cache"', $phpunitKernelAfter),  file_get_contents($rootDir.'/phpunit.xml.dist'));
         $composer = str_replace("\"symfony-app-dir\": \"app\",", "\"symfony-app-dir\": \"app\",\n        \"symfony-bin-dir\": \"bin\",\n        \"symfony-var-dir\": \"var\",", file_get_contents($rootDir.'/composer.json'));
-        $travis = str_replace("\nscript: phpunit -c app", '', file_get_contents($rootDir.'/.travis.yml'));
 
         $fs->dumpFile($webDir.'/app.php', str_replace($appDir.'/bootstrap.php.cache', $varDir.'/bootstrap.php.cache', file_get_contents($webDir.'/app.php')));
         $fs->dumpFile($webDir.'/app_dev.php', str_replace($appDir.'/bootstrap.php.cache', $varDir.'/bootstrap.php.cache', file_get_contents($webDir.'/app_dev.php')));
         $fs->dumpFile($binDir.'/console', str_replace(array(".'/bootstrap.php.cache'", ".'/AppKernel.php'"), array(".'/".$fs->makePathRelative($varDir, $binDir)."bootstrap.php.cache'", ".'/".$fs->makePathRelative($appDir, $binDir)."AppKernel.php'"), file_get_contents($binDir.'/console')));
         $fs->dumpFile($rootDir.'/phpunit.xml.dist', $phpunit);
         $fs->dumpFile($rootDir.'/composer.json', $composer);
-        $fs->dumpFile($rootDir.'/.travis.yml', $travis);
 
         $fs->dumpFile($rootDir.'/.gitignore', $gitignore);
 
@@ -477,14 +499,30 @@ EOF;
         return $options;
     }
 
-    protected static function getPhp()
+    protected static function getPhp($includeArgs = true)
     {
-        $phpFinder = new PhpExecutableFinder;
-        if (!$phpPath = $phpFinder->find()) {
+        $phpFinder = new PhpExecutableFinder();
+        if (!$phpPath = $phpFinder->find($includeArgs)) {
             throw new \RuntimeException('The php executable could not be found, add it to your PATH environment variable and try again');
         }
 
         return $phpPath;
+    }
+
+    protected static function getPhpArguments()
+    {
+        $arguments = array();
+
+        $phpFinder = new PhpExecutableFinder();
+        if (method_exists($phpFinder, 'findArguments')) {
+            $arguments = $phpFinder->findArguments();
+        }
+
+        if (false !== $ini = php_ini_loaded_file()) {
+            $arguments[] = '--php-ini='.$ini;
+        }
+
+        return $arguments;
     }
 
     /**
@@ -500,7 +538,6 @@ EOF;
         $options = self::getOptions($event);
 
         if (self::useNewDirectoryStructure($options)) {
-            $varDir = $options['symfony-var-dir'];
             if (!self::hasDirectory($event, 'symfony-bin-dir', $options['symfony-bin-dir'], $actionName)) {
                 return;
             }

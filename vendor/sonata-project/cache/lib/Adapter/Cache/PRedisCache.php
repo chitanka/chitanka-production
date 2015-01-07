@@ -11,7 +11,6 @@
 namespace Sonata\Cache\Adapter\Cache;
 
 use Predis\Client;
-use Sonata\Cache\CacheAdapterInterface;
 use Sonata\Cache\CacheElement;
 
 class PRedisCache extends BaseCacheHandler
@@ -32,7 +31,7 @@ class PRedisCache extends BaseCacheHandler
     public function __construct(array $parameters = array(), array $options = array())
     {
         $this->prefix  = $parameters;
-        $this->servers = $options;
+        $this->options = $options;
     }
 
     /**
@@ -48,7 +47,14 @@ class PRedisCache extends BaseCacheHandler
      */
     public function flush(array $keys = array())
     {
-        return $this->getClient()->del($this->computeCacheKeys($keys));
+        $this->getClient()->del($this->computeCacheKeys($keys));
+
+        // http://redis.io/commands/del
+        // it is not possible to know is the command succeed as the del command returns
+        // the number of row deleted.
+        // we can flush an non existant row
+
+        return true;
     }
 
     /**

@@ -2,86 +2,68 @@
 
 namespace Knp\Menu;
 
+use Knp\Menu\Factory\CoreExtension;
+use Knp\Menu\Factory\ExtensionInterface;
+
 /**
  * Factory to create a menu from a tree
  */
 class MenuFactory implements FactoryInterface
 {
+    /**
+     * @var array[]
+     */
+    private $extensions = array();
+
+    /**
+     * @var ExtensionInterface[]
+     */
+    private $sorted;
+
+    public function __construct()
+    {
+        $this->addExtension(new CoreExtension(), -10);
+    }
+
     public function createItem($name, array $options = array())
     {
+        foreach ($this->getExtensions() as $extension) {
+            $options = $extension->buildOptions($options);
+        }
+
         $item = new MenuItem($name, $this);
 
-        $options = array_merge(
-            array(
-                'uri' => null,
-                'label' => null,
-                'attributes' => array(),
-                'linkAttributes' => array(),
-                'childrenAttributes' => array(),
-                'labelAttributes' => array(),
-                'extras' => array(),
-                'display' => true,
-                'displayChildren' => true,
-            ),
-            $options
-        );
-
-        $item
-            ->setUri($options['uri'])
-            ->setLabel($options['label'])
-            ->setAttributes($options['attributes'])
-            ->setLinkAttributes($options['linkAttributes'])
-            ->setChildrenAttributes($options['childrenAttributes'])
-            ->setLabelAttributes($options['labelAttributes'])
-            ->setExtras($options['extras'])
-            ->setDisplay($options['display'])
-            ->setDisplayChildren($options['displayChildren'])
-        ;
-
-        return $item;
-    }
-
-    /**
-     * Create a menu item from a NodeInterface
-     *
-     * @param NodeInterface $node
-     * @return MenuItem
-     */
-    public function createFromNode(NodeInterface $node)
-    {
-        $item = $this->createItem($node->getName(), $node->getOptions());
-
-        foreach ($node->getChildren() as $childNode) {
-            $item->addChild($this->createFromNode($childNode));
+        foreach ($this->getExtensions() as $extension) {
+            $extension->buildItem($item, $options);
         }
 
         return $item;
     }
 
     /**
-     * Creates a new menu item (and tree if $data['children'] is set).
+     * Adds a factory extension
      *
-     * The source is an array of data that should match the output from MenuItem->toArray().
-     *
-     * @param  array $data The array of data to use as a source for the menu tree
-     * @param  string $name The name of the source (if not set in data['name'])
-     * @return MenuItem
+     * @param ExtensionInterface $extension
+     * @param integer            $priority
      */
-    public function createFromArray(array $data, $name = null)
+    public function addExtension(ExtensionInterface $extension, $priority = 0)
     {
-        $name = isset($data['name']) ? $data['name'] : $name;
-        if (isset($data['children'])) {
-            $children = $data['children'];
-            unset($data['children']);
-        } else {
-            $children = array();
+        $this->extensions[$priority][] = $extension;
+        $this->sorted = null;
+    }
+
+    /**
+     * Sorts the internal list of extensions by priority.
+     *
+     * @return ExtensionInterface[]
+     */
+    private function getExtensions()
+    {
+        if (null === $this->sorted) {
+            krsort($this->extensions);
+            $this->sorted = !empty($this->extensions) ? call_user_func_array('array_merge', $this->extensions) : array();
         }
 
-        $item = $this->createItem($name, $data);
-        foreach ($children as $name => $child) {
-            $item->addChild($this->createFromArray($child, $name));
-        }
-
-        return $item;
+        return $this->sorted;
     }
 }

@@ -11,7 +11,6 @@
 
 namespace Sonata\Cache\Adapter\Cache;
 
-use Sonata\Cache\CacheAdapterInterface;
 use Sonata\Cache\CacheElement;
 
 /**
@@ -72,13 +71,13 @@ class ApcCache extends BaseCacheHandler
     public function flushAll()
     {
         if ($this->currentOnly) {
-            return apc_clear_cache('user');
+            return apc_clear_cache('user') && apc_clear_cache();
         }
 
         $result = true;
 
         foreach ($this->servers as $server) {
-            if (count(explode('.', $server['ip']) == 3)) {
+            if (count(explode('.', $server['ip'])) == 3) {
                 $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
             } else {
                 $socket = socket_create(AF_INET6, SOCK_STREAM, SOL_TCP);

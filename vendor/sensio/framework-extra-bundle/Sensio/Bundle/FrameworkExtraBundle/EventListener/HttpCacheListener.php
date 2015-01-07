@@ -1,14 +1,5 @@
 <?php
 
-namespace Sensio\Bundle\FrameworkExtraBundle\EventListener;
-
-use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
-use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
-
 /*
  * This file is part of the Symfony framework.
  *
@@ -18,10 +9,20 @@ use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
  * with this source code in the file LICENSE.
  */
 
+namespace Sensio\Bundle\FrameworkExtraBundle\EventListener;
+
+use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
+use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
+use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
+
 /**
  * HttpCacheListener handles HTTP cache headers.
  *
- * It can be configured via the @Cache annotation.
+ * It can be configured via the Cache annotation.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
@@ -88,16 +89,29 @@ class HttpCacheListener implements EventSubscriberInterface
 
         $response = $event->getResponse();
 
-        if (!$response->isSuccessful()) {
+        // http://tools.ietf.org/html/draft-ietf-httpbis-p4-conditional-12#section-3.1
+        if (!in_array($response->getStatusCode(), array(200, 203, 300, 301, 302, 304, 404, 410))) {
             return;
         }
 
-        if (null !== $configuration->getSMaxAge()) {
-            $response->setSharedMaxAge($configuration->getSMaxAge());
+        if (null !== $age = $configuration->getSMaxAge()) {
+            if (!is_numeric($age)) {
+                $now = microtime(true);
+
+                $age = ceil(strtotime($configuration->getSMaxAge(), $now) - $now);
+            }
+
+            $response->setSharedMaxAge($age);
         }
 
-        if (null !== $configuration->getMaxAge()) {
-            $response->setMaxAge($configuration->getMaxAge());
+        if (null !== $age = $configuration->getMaxAge()) {
+            if (!is_numeric($age)) {
+                $now = microtime(true);
+
+                $age = ceil(strtotime($configuration->getMaxAge(), $now) - $now);
+            }
+
+            $response->setMaxAge($age);
         }
 
         if (null !== $configuration->getExpires()) {

@@ -1,20 +1,21 @@
 <?php
 
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Sensio\Bundle\FrameworkExtraBundle\Templating;
 
+use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Templating\TemplateReference;
 use Doctrine\Common\Util\ClassUtils;
-
-/*
- * This file is part of the Symfony framework.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * This source file is subject to the MIT license that is bundled
- * with this source code in the file LICENSE.
- */
 
 /**
  * The TemplateGuesser class handles the guessing of template name based on controller
@@ -60,15 +61,20 @@ class TemplateGuesser
         }
 
         $bundle = $this->getBundleForClass($className);
-        while ($bundleName = $bundle->getName()) {
-            if (null === $parentBundleName = $bundle->getParent()) {
-                $bundleName = $bundle->getName();
 
-                break;
+        if ($bundle) {
+            while ($bundleName = $bundle->getName()) {
+                if (null === $parentBundleName = $bundle->getParent()) {
+                    $bundleName = $bundle->getName();
+
+                    break;
+                }
+
+                $bundles = $this->kernel->getBundle($parentBundleName, false);
+                $bundle = array_pop($bundles);
             }
-
-            $bundles = $this->kernel->getBundle($parentBundleName, false);
-            $bundle = array_pop($bundles);
+        } else {
+            $bundleName = null;
         }
 
         return new TemplateReference($bundleName, $matchController[1], $matchAction[1], $request->getRequestFormat(), $engine);
@@ -77,9 +83,8 @@ class TemplateGuesser
     /**
      * Returns the Bundle instance in which the given class name is located.
      *
-     * @param  string                    $class  A fully qualified controller class name
-     * @param  Bundle                    $bundle A Bundle instance
-     * @throws \InvalidArgumentException
+     * @param  string $class  A fully qualified controller class name
+     * @return Bundle|null $bundle A Bundle instance
      */
     protected function getBundleForClass($class)
     {
@@ -95,7 +100,5 @@ class TemplateGuesser
             }
             $reflectionClass = $reflectionClass->getParentClass();
         } while ($reflectionClass);
-
-        throw new \InvalidArgumentException(sprintf('The "%s" class does not belong to a registered bundle.', $class));
     }
 }

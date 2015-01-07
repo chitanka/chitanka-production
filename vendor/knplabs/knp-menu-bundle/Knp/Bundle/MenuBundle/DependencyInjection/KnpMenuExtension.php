@@ -12,7 +12,7 @@ class KnpMenuExtension extends Extension
     /**
      * Handles the knp_menu configuration.
      *
-     * @param array $configs The configurations being loaded
+     * @param array            $configs   The configurations being loaded
      * @param ContainerBuilder $container
      */
     public function load(array $configs, ContainerBuilder $container)
@@ -38,5 +38,10 @@ class KnpMenuExtension extends Extension
         }
 
         $container->setParameter('knp_menu.default_renderer', $config['default_renderer']);
+    }
+
+    public function getNamespace()
+    {
+        return 'http://knplabs.com/schema/dic/menu';
     }
 }

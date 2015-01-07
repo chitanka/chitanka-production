@@ -71,14 +71,15 @@ class HipChatHandler extends SocketHandler
      * @param Boolean $bubble Whether the messages that are handled can bubble up the stack or not
      * @param Boolean $useSSL Whether to connect via SSL.
      * @param string  $format The format of the messages (default to text, can be set to html if you have html in the messages)
+     * @param string  $host   The HipChat server hostname.
      */
-    public function __construct($token, $room, $name = 'Monolog', $notify = false, $level = Logger::CRITICAL, $bubble = true, $useSSL = true, $format = 'text')
+    public function __construct($token, $room, $name = 'Monolog', $notify = false, $level = Logger::CRITICAL, $bubble = true, $useSSL = true, $format = 'text', $host = 'api.hipchat.com')
     {
         if (!$this->validateStringLength($name, static::MAXIMUM_NAME_LENGTH)) {
             throw new \InvalidArgumentException('The supplied name is too long. HipChat\'s v1 API supports names up to 15 UTF-8 characters.');
         }
 
-        $connectionString = $useSSL ? 'ssl://api.hipchat.com:443' : 'api.hipchat.com:80';
+        $connectionString = $useSSL ? 'ssl://'.$host.':443' : $host.':80';
         parent::__construct($connectionString, $level, $bubble);
 
         $this->token = $token;
@@ -165,7 +166,7 @@ class HipChatHandler extends SocketHandler
      *
      * @param array $record
      */
-    public function write(array $record)
+    protected function write(array $record)
     {
         parent::write($record);
         $this->closeSocket();
@@ -209,7 +210,6 @@ class HipChatHandler extends SocketHandler
     {
         $batchRecord = null;
         $batchRecords = array();
-        $batchedMessages = array();
         $messages = array();
         $formattedMessages = array();
         $level = 0;

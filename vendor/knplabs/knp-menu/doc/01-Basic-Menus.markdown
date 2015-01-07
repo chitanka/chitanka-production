@@ -21,6 +21,7 @@ For example:
 ```php
 <?php
 
+use Knp\Menu\Matcher\Matcher;
 use Knp\Menu\MenuFactory;
 use Knp\Menu\Renderer\ListRenderer;
 
@@ -30,7 +31,7 @@ $menu->addChild('Home', array('uri' => '/'));
 $menu->addChild('Comments', array('uri' => '#comments'));
 $menu->addChild('Symfony2', array('uri' => 'http://symfony-reloaded.org/'));
 
-$renderer = new ListRenderer();
+$renderer = new ListRenderer(new Matcher());
 echo $renderer->render($menu);
 ```
 
@@ -67,7 +68,7 @@ be turned off by passing the `true` as the second argument to the renderer.
 
 // ...
 
-$renderer = new ListRenderer(null, true);
+$renderer = new ListRenderer(new Matcher(), array('compressed' => true));
 echo $renderer->render($menu);
 ```
 
@@ -79,7 +80,7 @@ You can also compress (or not compress) on a menu-by-menu basis by using the
 
 // ...
 
-$renderer = new ListRenderer();
+$renderer = new ListRenderer(new Matcher());
 echo $renderer->render($menu, array('compressed' => true));
 ```
 
@@ -93,7 +94,6 @@ it implements ArrayAccess, Countable and Iterator:
 <?php
 
 use Knp\Menu\MenuFactory;
-use Knp\Menu\Renderer\ListRenderer;
 
 $factory = new MenuFactory();
 $menu = $factory->createItem('My menu');
@@ -230,6 +230,8 @@ Most renderers also support several other options, which can be passed as
 the second argument to the `render()` method:
 
 * `depth`
+* `matchingDepth`: The depth of the scan to determine whether an item
+  is an ancestor of the current item.
 * `currentAsLink` (default: `true`)
 * `currentClass` (default: `current`)
 * `ancestorClass` (default: `current_ancestor`)
@@ -237,6 +239,9 @@ the second argument to the `render()` method:
 * `lastClass` (default:  `last`)
 * `compressed` (default: `false`)
 * `allow_safe_labels` (default: `false`)
+* `clear_matcher` (default `true`): whether to clear the internal cache of the matcher after rendering
+* `leaf_class` (default: `null`): class for leaf elements in your html tree
+* `branch_class` (default: `null`): class for branch elements in your html tree
 
 >**NOTE**
 >When setting the `allow_safe_labels` option to `true`, you can specify that
@@ -247,47 +252,59 @@ the second argument to the `render()` method:
 The Current Menu Item
 ---------------------
 
-If the URI of a menu item matches the current URL, a `current` class will
-be added to the `li` around that item, as well as a `current_ancestor` around
-any of its parent `li` elements.
-
-But this is not done magically. In order for this to work, you must set the
-current URI on the root menu item:
+If the menu item is matched as current, a `current` class will be added to
+the `li` around that item, as well as a `current_ancestor` around any of
+its parent `li` elements. This state can either be forced on the item by
+setting it explicitly or matched using several voters.
 
 ```php
 <?php
 
+use Knp\Menu\Matcher\Matcher;
+use Knp\Menu\Matcher\Voter\UriVoter;
 use Knp\Menu\MenuFactory;
 use Knp\Menu\Renderer\ListRenderer;
 
 $factory = new MenuFactory();
 $menu = $factory->createItem('My menu');
 
-// set the current URL
-$menu->setCurrentUri('/my_comments');
-// $menu->setCurrentUri($_REQUEST['PATH_INFO]);
+// set the current state explicitly
+$menu['current_item']->setCurrent(true);
+$menu['non_current_item']->setCurrent(false);
 
-// ...
+// Use the voter
+$menu['other_item']->setCurrent(null); // default value for items
+
+$matcher = new Matcher();
+$matcher->addVoter(new UriVoter($_SERVER['REQUEST_URI']));
+
+$renderer = new ListRenderer($matcher);
 ```
 
-Alternatively, you can manually set which menu item should be marked as current,
-independent of the current URL:
+The library provides 3 implementations of the VoterInterface:
+
+ * `Knp\Menu\Matcher\Voter\UriVoter` matching against the uri of the item
+ * `Knp\Menu\Matcher\Voter\RouteVoter` matching the `_route` attribute of a
+ * `Knp\Menu\Matcher\Voter\RegexVoter` matching against the uri of the item using a regular expression
+   Symfony Request object against the `routes` extra of the item
+
+Here are some examples for instantiation of voters:
 
 ```php
 <?php
-// ...
 
-$menu['Comments']->setCurrent(true);
+$regexVoter = new \Knp\Menu\Matcher\Voter\RegexVoter('/^StartOfUri/');
 
-// ...
+$routeVoter = new \Knp\Menu\Silex\Voter\RouteVoter('the_route_i_want_to_test');
+$routeVoter->setRequest($symfonyRequest);
 ```
 
 Creating a Menu from a Tree structure
 -------------------------------------
 
 You can create a menu easily from a Tree structure (a nested set for example) by
-making it implement ``Knp\Menu\NodeInterface``. You will then be able
-to create the menu easily (assuming ``$node`` is the root node of your structure):
+making it implement `Knp\Menu\NodeInterface`. You will then be able
+to create the menu easily (assuming `$node` is the root node of your structure):
 
 ```php
 <?php

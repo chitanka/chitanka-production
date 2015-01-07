@@ -85,7 +85,7 @@ Now, the property can be edited by setting a type for each type:
 sonata_type_boolean
 ^^^^^^^^^^^^^^^^^^^
 
-The ``boolean`` type is a specialized ``ChoiceType``, where the list of choices is locked to *no* and *no*.
+The ``boolean`` type is a specialized ``ChoiceType``, where the list of choices is locked to *yes* and *no*.
 
 Note that for backward compatibility reasons, it will set your value to *1* for *yes* and to *2* for *no*.
 If you want to map to a boolean value, just set the option ``transform`` to true. For instance, you need to do so when mapping to a doctrine boolean.
@@ -134,6 +134,52 @@ The type has one extra parameter:
 .. note::
 
     For more information, you can check the official `ChoiceType documentation <http://symfony.com/doc/current/reference/forms/types/choice.html>`_.
+
+sonata_type_collection
+^^^^^^^^^^^^^^^^^^^^^^
+
+The ``Collection Type`` is meant to handle creation and editing of model
+collections. Rows can be added and deleted, and your model abstraction layer may
+allow you to edit fields inline. You can use ``type_options`` to pass values
+to the underlying forms.
+
+.. code-block:: php
+
+    class AcmeProductAdmin extends Admin
+    {
+        protected function configureFormFields(FormMapper $formMapper)
+        {
+            $formMapper
+                ->add('sales', 'sonata_type_collection', array(
+                    // Prevents the "Delete" option from being displayed
+                    'type_options' => array('delete' => false)
+                ), array(
+                    'edit' => 'inline',
+                    'inline' => 'table',
+                    'sortable' => 'position',
+                ))
+            ;
+        }
+    }
+
+The available options (which can be passed as a third parameter to ``FormMapper::add()``) are:
+
+btn_add and btn_catalogue:
+  The label on the ``add`` button can be customized
+  with this parameters. Setting it to ``false`` will hide the
+  corresponding button. You can also specify a custom translation catalogue
+  for this label, which defaults to ``SonataAdminBundle``.
+
+type_options:
+  This array is passed to the underlying forms.
+
+pre_bind_data_callback:
+  This closure will be executed during the preBind method (``FormEvent::PRE_BIND`` | ``FormEvent::PRE_SUBMIT``)
+  to build the data given to the form based on the value retrieved. Use this if you need to generate your forms based
+  on the submitted data.
+
+**TIP**: A jQuery event is fired after a row has been added (``sonata-admin-append-form-element``).
+You can listen to this event to trigger custom javascript (eg: add a calendar widget to a newly added date field)
 
 StatusType
 ^^^^^^^^^^
@@ -185,7 +231,7 @@ And the type can now be used:
 sonata_type_date_picker and sonata_type_datetime_picker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Those types integrate `Eonasdan's Bootstrap datetimepicker <https://github.com/Eonasdan/bootstrap-datetimepicke>`_ into a Symfony2 form. They both are available as services, and inherit from ``date`` and ``datetime`` default form types.
+Those types integrate `Eonasdan's Bootstrap datetimepicker <https://github.com/Eonasdan/bootstrap-datetimepicker>`_ into a Symfony2 form. They both are available as services, and inherit from ``date`` and ``datetime`` default form types.
 
 .. note::
 
@@ -233,3 +279,23 @@ Finally, in your form, you may use the form type as follows:
             // ...
         ;
 
+Many of the `standard date picker options <http://eonasdan.github.io/bootstrap-datetimepicker/#options>`_ are available by adding options with a ``dp_`` prefix:
+
+
+.. code-block:: php
+
+    <?php
+
+    // ...
+        $builder
+            ->add('publicationDateStart', 'sonata_type_datetime_picker', array(
+                    'dp_side_by_side'       => true,
+                    'dp_use_current'        => false,
+                    'dp_use_seconds'        => false,
+            ))    // Or sonata_type_date_picker if you don't need the time
+            // ...
+        ;
+
+If you look in the classes ``DateTimePickerType.php`` and ``BasePickerType.php`` you can see all the currently available options.
+
+In addition to these standard options, there is also the option `datepicker_use_button` which, when used, will change the widget so that the datepicker icon is not shown and the pop-up datepicker is invoked simply by clicking on the date input.

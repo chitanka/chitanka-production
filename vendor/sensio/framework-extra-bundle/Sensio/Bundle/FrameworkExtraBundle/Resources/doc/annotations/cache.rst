@@ -12,7 +12,7 @@ The ``@Cache`` annotation makes it easy to define HTTP caching::
     use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
     /**
-     * @Cache(expires="tomorrow", public="true")
+     * @Cache(expires="tomorrow", public=true)
      */
     public function indexAction()
     {
@@ -22,7 +22,7 @@ You can also use the annotation on a class to define caching for all actions
 of a controller::
 
     /**
-     * @Cache(expires="tomorrow", public="true")
+     * @Cache(expires="tomorrow", public=true)
      */
     class BlogController extends Controller
     {
@@ -51,6 +51,12 @@ configuration, the latter overrides the former::
 
 HTTP Validation Strategies
 --------------------------
+
+.. caution::
+
+    Support for HTTP validation strategies was introduced in SensioFrameworkExtraBundle
+    3.0. This bundle version can only be used with Symfony 2.4 or later (see
+    :ref:`the SensioFrameworkExtraBundle release cycle <release-cycle-note>`).
 
 The ``lastModified`` and ``ETag`` attributes manages the HTTP validation cache
 headers. ``lastModified`` adds a ``Last-Modified`` header to Responses and
@@ -100,7 +106,7 @@ Annotation                                            Response Method
 ``@Cache(smaxage="15")``                              ``$response->setSharedMaxAge()``
 ``@Cache(maxage="15")``                               ``$response->setMaxAge()``
 ``@Cache(vary={"Cookie"})``                           ``$response->setVary()``
-``@Cache(public="true")``                             ``$response->setPublic()``
+``@Cache(public=true)``                               ``$response->setPublic()``
 ``@Cache(lastModified="post.getUpdatedAt()")``        ``$response->setLastModified()``
 ``@Cache(ETag="post.getId() ~ post.getUpdatedAt()")`` ``$response->setETag()``
 ===================================================== ================================

@@ -38,7 +38,6 @@ class MenuBuilder
     public function createMainMenu(Request $request)
     {
         $menu = $this->factory->createItem('root');
-        $menu->setCurrentUri($request->getRequestUri());
 
         $menu->addChild('Home', array('route' => 'homepage'));
         // ... add more children
@@ -60,7 +59,7 @@ services:
 
     acme_main.menu.main:
         class: Knp\Menu\MenuItem # the service definition requires setting the class
-        factory_service: acme_hello.menu_builder
+        factory_service: acme_main.menu_builder
         factory_method: createMainMenu
         arguments: ["@request"]
         scope: request # needed as we have the request as a dependency here
@@ -95,7 +94,6 @@ class MenuBuilder
     public function createSidebarMenu(Request $request)
     {
         $menu = $this->factory->createItem('sidebar');
-        $menu->setCurrentUri($request->getRequestUri());
 
         $menu->addChild('Home', array('route' => 'homepage'));
         // ... add more children

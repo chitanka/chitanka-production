@@ -22,8 +22,8 @@ use Monolog\Logger;
 class NativeMailerHandler extends MailHandler
 {
     /**
-     * The email address to which the message is delivered
-     * @var string
+     * The email addresses to which the message will be sent
+     * @var array
      */
     protected $to;
 
@@ -129,6 +129,10 @@ class NativeMailerHandler extends MailHandler
      */
     public function setContentType($contentType)
     {
+        if (strpos($contentType, "\n") !== false || strpos($contentType, "\r") !== false) {
+            throw new \InvalidArgumentException('The content type can not contain newline characters to prevent email header injection');
+        }
+
         $this->contentType = $contentType;
 
         return $this;
@@ -140,6 +144,10 @@ class NativeMailerHandler extends MailHandler
      */
     public function setEncoding($encoding)
     {
+        if (strpos($encoding, "\n") !== false || strpos($encoding, "\r") !== false) {
+            throw new \InvalidArgumentException('The content type can not contain newline characters to prevent email header injection');
+        }
+
         $this->encoding = $encoding;
 
         return $this;

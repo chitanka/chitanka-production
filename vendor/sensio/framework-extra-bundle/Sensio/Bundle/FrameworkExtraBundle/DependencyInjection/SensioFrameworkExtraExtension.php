@@ -1,12 +1,5 @@
 <?php
 
-namespace Sensio\Bundle\FrameworkExtraBundle\DependencyInjection;
-
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\Config\FileLocator;
-
 /*
  * This file is part of the Symfony framework.
  *
@@ -15,6 +8,14 @@ use Symfony\Component\Config\FileLocator;
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
  */
+
+namespace Sensio\Bundle\FrameworkExtraBundle\DependencyInjection;
+
+use Symfony\Component\DependencyInjection\Alias;
+use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\Config\FileLocator;
 
 /**
  * SensioFrameworkExtraExtension.
@@ -74,6 +75,12 @@ class SensioFrameworkExtraExtension extends Extension
         if ($config['security']['annotations']) {
             $annotationsToLoad[] = 'security.xml';
 
+            if (class_exists('Symfony\Component\ExpressionLanguage\ExpressionLanguage') && class_exists('Symfony\Component\Security\Core\Authorization\ExpressionLanguage')) {
+                $container->setAlias('sensio_framework_extra.security.expression_language', new Alias($config['security']['expression_language'], false));
+            } else {
+                $container->removeDefinition('sensio_framework_extra.security.expression_language.default');
+            }
+
             $this->addClassesToCompile(array(
                 'Sensio\\Bundle\\FrameworkExtraBundle\\EventListener\\SecurityListener',
             ));
@@ -83,13 +90,17 @@ class SensioFrameworkExtraExtension extends Extension
             // must be first
             $loader->load('annotations.xml');
 
-            foreach ($annotationsToLoad as $config) {
-                $loader->load($config);
+            foreach ($annotationsToLoad as $configFile) {
+                $loader->load($configFile);
             }
 
             $this->addClassesToCompile(array(
                 'Sensio\\Bundle\\FrameworkExtraBundle\\Configuration\\ConfigurationAnnotation',
             ));
+
+            if ($config['request']['converters']) {
+                $container->getDefinition('sensio_framework_extra.converter.listener')->replaceArgument(1, $config['request']['auto_convert']);
+            }
         }
     }
 
