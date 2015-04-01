@@ -37,23 +37,27 @@ class GenerateNewsletterCommand extends Command {
 	 * @param int $month
 	 */
 	private function generateNewsletter($month) {
-		$this->output->writeln("\n= Книги =\n");
 		$booksByCat = $this->getBooks($month);
 		ksort($booksByCat);
 		foreach ($booksByCat as $cat => $bookRows) {
-			$this->output->writeln("\n== $cat ==\n");
+			//$this->output->writeln("\n== $cat ==\n");
+			$this->output->writeln("\n<h3>$cat</h3>\n");
 			ksort($bookRows);
+			$this->output->writeln('<ul>');
 			foreach ($bookRows as $bookRow) {
 				$this->output->writeln($bookRow);
 			}
+			$this->output->writeln('</ul>');
 		}
 
-		$this->output->writeln("\n\n= Произведения, невключени в книги =\n");
+		$this->output->writeln("\n\n<h3>Произведения, невключени в книги</h3>\n");
 		$textRows = $this->getTexts($month);
 		ksort($textRows);
+		$this->output->writeln('<ul>');
 		foreach ($textRows as $textRow) {
 			$this->output->writeln($textRow);
 		}
+		$this->output->writeln('</ul>');
 	}
 
 	private function getBooks($month) {
@@ -66,11 +70,16 @@ class GenerateNewsletterCommand extends Command {
 			}
 			$bookKey = $revision['book']['title'] . $revision['book']['subtitle'];
 			$cat = $revision['book']['category']['name'];
-			$booksByCat[$cat][$bookKey] = sprintf('* „%s“%s%s — http://chitanka.info/book/%d',
+//			$booksByCat[$cat][$bookKey] = sprintf('* „%s“%s%s — http://chitanka.info/book/%d',
+//				$revision['book']['title'],
+//				($revision['book']['subtitle'] ? " ({$revision['book']['subtitle']})" : ''),
+//				($authors ? ' от ' . implode(', ', $authors) : ''),
+//				$revision['book']['id']);
+			$booksByCat[$cat][$bookKey] = sprintf('<li><a href="http://chitanka.info/book/%d">„%s“</a>%s%s</li>',
+				$revision['book']['id'],
 				$revision['book']['title'],
 				($revision['book']['subtitle'] ? " ({$revision['book']['subtitle']})" : ''),
-				($authors ? ' от ' . implode(', ', $authors) : ''),
-				$revision['book']['id']);
+				($authors ? ' от ' . implode(', ', $authors) : ''));
 		}
 		return $booksByCat;
 	}
@@ -79,18 +88,22 @@ class GenerateNewsletterCommand extends Command {
 	private function getTexts($month) {
 		$repo = $this->getEntityManager()->getTextRevisionRepository();
 		$texts = [];
-		#foreach ($repo->getByDate(array('2011-07-01', '2011-08-31 23:59'), 1, null, false) as $revision) {
 		foreach ($repo->getByMonth($month) as $revision) {
 			$authors = [];
 			foreach ($revision['text']['authors'] as $author) {
 				$authors[] = $author['name'];
 			}
 			$key = $revision['text']['title'] . $revision['text']['subtitle'];
-			$texts[$key] = sprintf('* „%s“%s%s — http://chitanka.info/text/%d',
+//			$texts[$key] = sprintf('* „%s“%s%s — http://chitanka.info/text/%d',
+//				$revision['text']['title'],
+//				($revision['text']['subtitle'] ? " ({$revision['text']['subtitle']})" : ''),
+//				($authors ? ' от ' . implode(', ', $authors) : ''),
+//				$revision['text']['id']);
+			$texts[$key] = sprintf('<li><a href="http://chitanka.info/text/%d">„%s“</a>%s%s</li>',
+				$revision['text']['id'],
 				$revision['text']['title'],
 				($revision['text']['subtitle'] ? " ({$revision['text']['subtitle']})" : ''),
-				($authors ? ' от ' . implode(', ', $authors) : ''),
-				$revision['text']['id']);
+				($authors ? ' от ' . implode(', ', $authors) : ''));
 		}
 		return $texts;
 	}

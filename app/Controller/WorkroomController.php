@@ -81,11 +81,12 @@ class WorkroomController extends Controller {
 			return $this->asJson($contrib);
 		}
 
-		return $this->urlRedirect($this->generateUrl('workroom_entry_edit', array('id' => $entry->getId())));
+		return $this->urlRedirect($this->generateUrl('workroom_entry_edit', ['id' => $entry->getId()]));
 	}
 
 	/**
 	 * @param int $limit
+	 * Cache(maxage="60", public=true) - disabled
 	 */
 	public function rssAction($limit) {
 		$entries = $this->em()->getWorkEntryRepository()->findLatest(min($limit, self::$feedListLimit));

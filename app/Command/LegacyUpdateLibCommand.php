@@ -109,15 +109,15 @@ EOT
 		$this->type = 'poetry';
 		$this->comment = 'Добавяне (от Събрани съчинения, том 4. Български писател, 1979. Съставителство, редакция и бележки: Веска Иванова.)';
 		// 'USERNAME' => array(PERCENT, 'Сканиране, разпознаване и корекция', date('Y'))
-		$this->users = array('zelenkroki' => array(30, 'Форматиране и последна редакция', date('Y')));
+		$this->users = ['zelenkroki' => [30, 'Форматиране и последна редакция', date('Y')]];
 		$this->year2 = null;
 		$this->transYear2 = null;
 		$this->subtitle = $this->orig_title = $this->orig_subtitle = null;
-		$this->labels = array();
+		$this->labels = [];
 
-		$this->errors = array();
+		$this->errors = [];
 		$this->contentDir = $this->getContainer()->getParameter('kernel.root_dir').'/../web/content';
-		$this->books = array();
+		$this->books = [];
 	}
 
 	private function conquerTheWorld(InputInterface $input, OutputInterface $output, $em) {
@@ -130,11 +130,11 @@ EOT
 		}
 		array_unshift($queries, 'SET NAMES utf8');
 
-		return array($queries, $this->errors);
+		return [$queries, $this->errors];
 	}
 
 	private function insertManyFromManyFiles(array $files) {
-		$queries = array();
+		$queries = [];
 
 		foreach ($files as $file) {
 			if (empty($file)) {
@@ -153,12 +153,12 @@ EOT
 
 			fclose($fp);
 
-			$queries = array_merge($queries, $this->insertCurrentText(array(
+			$queries = array_merge($queries, $this->insertCurrentText([
 				'author'      => $authorLine,
 				'title'       => $titleLine,
 				'textContent' => $textContent,
 				'headlevel'   => $headlevel,
-			)));
+			]));
 		}
 
 		return $queries;
@@ -170,9 +170,9 @@ EOT
 		}
 		$fp = fopen($file, 'r') ;
 
-		$queries = array();
+		$queries = [];
 
-		$vars = array('textContent' => ''); // for current text
+		$vars = ['textContent' => '']; // for current text
 
 		$bookFile = '';
 
@@ -189,12 +189,12 @@ EOT
 					$queries = array_merge($queries, $this->insertCurrentText($vars));
 				}
 
-				$vars = array('textContent' => ''); // starting next text
+				$vars = ['textContent' => '']; // starting next text
 
 				if (strpos($line, '>	$id=') === 0) {
 					if ($this->book) {
 						$textId = str_replace('>	$id=', '', rtrim($line));
-						$set = array('book_id' => $this->book, 'text_id' => $textId, 'share_info' => 0);
+						$set = ['book_id' => $this->book, 'text_id' => $textId, 'share_info' => 0];
 						$queries[] = $this->db->insertQ(DBT_BOOK_TEXT, $set, true, false);
 						$bookFile .= ">\t{text:". $textId ."}\n\n";
 					}
@@ -251,7 +251,7 @@ EOT
 		extract($vars);
 
 		// import non-existing stuff from the outer world
-		$fields = array('subtitle', 'lang', 'orig_lang', 'orig_title', 'orig_subtitle', 'transYear', 'year', 'transYear2', 'year2', 'type', 'series', 'sernr', 'license_orig', 'license_trans', 'author', 'translator', 'book', 'labels', 'users');
+		$fields = ['subtitle', 'lang', 'orig_lang', 'orig_title', 'orig_subtitle', 'transYear', 'year', 'transYear2', 'year2', 'type', 'series', 'sernr', 'license_orig', 'license_trans', 'author', 'translator', 'book', 'labels', 'users'];
 		foreach ($fields as $field) {
 			if ( !isset($$field) ) {
 				$$field = $this->$field;
@@ -267,7 +267,7 @@ EOT
 			$comment = $this->comment_edit;
 		}
 
-		foreach ( array('author', 'translator', 'labels') as $var ) {
+		foreach ( ['author', 'translator', 'labels'] as $var ) {
 			if ( is_string($$var) && strpos($$var, ',') !== false ) {
 				$$var = explode(',', $$var);
 			}
@@ -275,20 +275,20 @@ EOT
 
 		if ( is_string($users) ) {
 			$uarr = explode(';', $users);
-			$users = array();
+			$users = [];
 			foreach ( $uarr as $user_perc ) {
 				$up = explode(',', $user_perc);
 				$users[ $up[0] ] = isset($up[1]) ? $up[1] : 100;
 			}
 		}
 
-		$qs = array();
+		$qs = [];
 		$l = strlen($textContent) / 1000;
 		$zl = $l / 3.5;
 
 		$textQuery = '';
 		if ($isNew) {
-			$set = array(
+			$set = [
 				'slug' => String::slugify($title),
 				'title' => $title,
 				'subtitle' => $subtitle,
@@ -307,40 +307,40 @@ EOT
 				'zsize' => $zl,
 				'id' => $textId,
 				'headlevel' => (isset($headlevel) ? $headlevel : 0),
-			);
+			];
 			if ($series) {
 				$set['series_id'] = is_numeric($series) ? $series : $this->getSeriesId($series);
 			}
 			$textQuery = $this->db->replaceQ(DBT_TEXT, $set);
 		} else {
-			$set = array(
+			$set = [
 				'slug' => String::slugify($title),
 				'title' => $title,
 				'subtitle' => $subtitle,
 				'size' => $l, 'zsize' => $zl,
 				'headlevel' => isset($headlevel) ? $headlevel : 0,
-			);
-			$textQuery = $this->db->updateQ(DBT_TEXT, $set, array('id' => $textId));
+			];
+			$textQuery = $this->db->updateQ(DBT_TEXT, $set, ['id' => $textId]);
 		}
 		$qs[] = "\n\n\n/* Текст $textId */\n\n$textQuery";
 
-		$set = array(
+		$set = [
 			'id' => $this->curEditId,
 			'text_id' => $textId,
 			'user_id' => 1,
 			'comment' => $comment,
 			'date' => $this->modifDate,
 			'first' => (int) $isNew,
-		);
+		];
 		$qs[] = $this->db->replaceQ(DBT_EDIT_HISTORY, $set);
-		$qs[] = $this->db->updateQ(DBT_TEXT, array('cur_rev_id' => $this->curEditId), array('id' => $textId));
+		$qs[] = $this->db->updateQ(DBT_TEXT, ['cur_rev_id' => $this->curEditId], ['id' => $textId]);
 		$this->curEditId++;
 
 		if ( !empty($book) ) {
 			if ( ! in_array($book, $this->books)) {
 				$this->books[] = $book;
 				$book_title = isset($book_title) ? $book_title : $title;
-				$set = array(
+				$set = [
 					'id' => $book,
 					'category_id' => 1,
 					'title' => $book_title,
@@ -354,50 +354,50 @@ EOT
 					'has_anno' => strpos($textContent, 'A>') !== false ? 1 : 0,
 					'has_cover' => 1,
 					'created_at' => $this->entrydate,
-				);
+				];
 				$qs[] = $this->db->insertQ(DBT_BOOK, $set, true);
 
-				$set = array(
+				$set = [
 					'id' => $this->curBookRev++,
 					'book_id' => $book,
 					'comment' => 'Добавяне',
 					'date' => $this->modifDate,
-				);
+				];
 				$qs[] = $this->db->insertQ('book_revision', $set, true);
 			}
-			$set = array('book_id' => $book, 'text_id' => $textId, 'share_info' => 1);
+			$set = ['book_id' => $book, 'text_id' => $textId, 'share_info' => 1];
 			$qs[] = $this->db->insertQ(DBT_BOOK_TEXT, $set, true);
 		}
 
 		if ( $isNew ) {
-			$qs[] = $this->db->deleteQ(DBT_AUTHOR_OF, array('text_id' => $textId));
+			$qs[] = $this->db->deleteQ(DBT_AUTHOR_OF, ['text_id' => $textId]);
 			foreach ( (array) $author as $pos => $author1 ) {
 				$authorId = is_numeric($author1) ? $author1 : $this->getPersonId($author1);
 				if ( empty($authorId) ) { continue; }
 
-				$set = array('person_id' => $authorId, 'text_id' => $textId, 'pos' => $pos);
+				$set = ['person_id' => $authorId, 'text_id' => $textId, 'pos' => $pos];
 				$qs[] = $this->db->insertQ(DBT_AUTHOR_OF, $set, false, false);
 				if ( $this->book_author ) {
-					$set = array('book_id' => $book, 'person_id' => $authorId);
+					$set = ['book_id' => $book, 'person_id' => $authorId];
 					$qs[] = $this->db->insertQ(DBT_BOOK_AUTHOR, $set, true, false);
 				}
 			}
 		}
 
 		if ( $isNew ) {
-			$qs[] = $this->db->deleteQ(DBT_TRANSLATOR_OF, array('text_id' => $textId));
+			$qs[] = $this->db->deleteQ(DBT_TRANSLATOR_OF, ['text_id' => $textId]);
 			foreach ( (array) $translator as $pos => $translator1 ) {
 				$translatorId = is_numeric($translator1) ? $translator1 : $this->getPersonId($translator1);
 				if ( empty($translatorId) ) { continue; }
 
-				$set = array('person_id' => $translatorId, 'text_id' => $textId, 'pos' => $pos);
+				$set = ['person_id' => $translatorId, 'text_id' => $textId, 'pos' => $pos];
 				$qs[] = $this->db->insertQ(DBT_TRANSLATOR_OF, $set, false, false);
 			}
 		}
 
 		foreach ( (array) $labels as $label ) {
 			if ( empty($label) ) continue;
-			$set = array('text_id' => $textId, 'label_id' => $label);
+			$set = ['text_id' => $textId, 'label_id' => $label];
 			$qs[] = $this->db->insertQ(DBT_TEXT_LABEL, $set, true, false);
 		}
 
@@ -406,7 +406,7 @@ EOT
 			$userId = $this->getUserId($user);
 			if ( empty($userId) ) { continue; }
 			$size = $percent/100 * $l;
-			$set = array(
+			$set = [
 				'user_id' => $userId,
 				'username' => $user,
 				'text_id' => $textId,
@@ -415,7 +415,7 @@ EOT
 				'date' => $this->modifDate,
 				'humandate' => $humanDate,
 				'comment' => $userComment,
-			);
+			];
 			$qs[] = $this->db->insertQ(DBT_USER_TEXT, $set, true, false);
 		}
 
@@ -461,17 +461,17 @@ EOT
 	public function makeUpdateChunkQuery($file, $textId, $headlevel) {
 		require_once __DIR__ . '/../Legacy/SfbParserSimple.php';
 
-		$data = array();
+		$data = [];
 		foreach (\App\Legacy\makeDbRows($file, $headlevel) as $row) {
 			$name = $row[2];
-			$name = strtr($name, array('_'=>''));
+			$name = strtr($name, ['_'=>'']);
 			$name = $this->db->escape(String::my_replace($name));
-			$data[] = array($textId, $row[0], $row[1], $name, $row[3], $row[4]);
+			$data[] = [$textId, $row[0], $row[1], $name, $row[3], $row[4]];
 		}
-		$qs = array();
-		$qs[] = $this->db->deleteQ('text_header', array('text_id' => $textId));
+		$qs = [];
+		$qs[] = $this->db->deleteQ('text_header', ['text_id' => $textId]);
 		if ( !empty($data) ) {
-			$fields = array('text_id', 'nr', 'level', 'name', 'fpos', 'linecnt');
+			$fields = ['text_id', 'nr', 'level', 'name', 'fpos', 'linecnt'];
 			$qs[] = $this->db->multiinsertQ('text_header', $data, $fields);
 		}
 
@@ -520,7 +520,7 @@ EOT
 	}
 
 	private function popvars($text) {
-		$vars = array();
+		$vars = [];
 		$re = '/\t?\$(\w+)=(.*)\n/';
 		$mcnt = preg_match_all($re, $text, $m);
 		if ($mcnt) {
@@ -532,14 +532,14 @@ EOT
 			$text = trim($text, "\n") . "\n";
 		}
 
-		return array($text, $vars);
+		return [$text, $vars];
 	}
 
-	private $_curIds = array();
-	private $_ids = array(
-		'text' => array(),
-		'book' => array(),
-	);
+	private $_curIds = [];
+	private $_ids = [
+		'text' => [],
+		'book' => [],
+	];
 
 	/**
 	 * @param string $table
@@ -558,7 +558,7 @@ EOT
 	}
 
 	private function getPersonId($personName) {
-		$id = $this->db->getFields(DBT_PERSON, array('slug' => trim($personName)), 'id');
+		$id = $this->db->getFields(DBT_PERSON, ['slug' => trim($personName)], 'id');
 
 		if ( empty($id) ) {
 			$this->errors[] = "Личността $personName не съществува";
@@ -568,7 +568,7 @@ EOT
 	}
 
 	private function getSeriesId($name) {
-		$id = $this->db->getFields(DBT_SERIES, array('slug' => trim($name)), 'id');
+		$id = $this->db->getFields(DBT_SERIES, ['slug' => trim($name)], 'id');
 
 		if ( empty($id) ) {
 			$this->errors[] = "Серията $name не съществува";
@@ -578,7 +578,7 @@ EOT
 	}
 
 	private function getUserId($userName) {
-		$id = $this->db->getFields(DBT_USER, array('username' => $userName), 'id');
+		$id = $this->db->getFields(DBT_USER, ['username' => $userName], 'id');
 
 		if ( empty($id) ) {
 			$this->errors[] = "Потребителя $userName не съществува";

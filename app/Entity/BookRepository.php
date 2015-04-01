@@ -5,7 +5,7 @@
  */
 class BookRepository extends EntityRepository {
 
-	protected $queryableFields = array('id', 'title', 'subtitle', 'origTitle');
+	protected $queryableFields = ['id', 'title', 'subtitle', 'origTitle'];
 
 	/**
 	 * Fetch a book with all important relations
@@ -37,7 +37,7 @@ class BookRepository extends EntityRepository {
 	public function getByCategory($category, $page = 1, $limit = null) {
 		$ids = $this->getIdsByCategory($category, $page, $limit);
 
-		return empty($ids) ? array() : $this->getByIds($ids);
+		return empty($ids) ? [] : $this->getByIds($ids);
 	}
 
 	/**
@@ -71,7 +71,7 @@ class BookRepository extends EntityRepository {
 	public function getBySequence($sequence, $page = 1, $limit = null) {
 		$ids = $this->getIdsBySequence($sequence, $page, $limit);
 
-		return empty($ids) ? array() : $this->getByIds($ids, 'e.seqnr, e.title');
+		return empty($ids) ? [] : $this->getByIds($ids, 'e.seqnr, e.title');
 	}
 
 	/**
@@ -94,7 +94,7 @@ class BookRepository extends EntityRepository {
 	public function getByPrefix($prefix, $page = 1, $limit = null) {
 		$ids = $this->getIdsByPrefix($prefix, $page, $limit);
 
-		return empty($ids) ? array() : $this->getByIds($ids);
+		return empty($ids) ? [] : $this->getByIds($ids);
 	}
 
 	/**
@@ -133,20 +133,39 @@ class BookRepository extends EntityRepository {
 	/**
 	 * @param string $title
 	 * @param int $limit
+	 * @return array
 	 */
 	public function getByTitles($title, $limit = null) {
 		$q = $this->getQueryBuilder()
 			->where('e.title LIKE ?1 OR e.subtitle LIKE ?1 OR e.origTitle LIKE ?1')
 			->setParameter(1, $this->stringForLikeClause($title))
+			->setMaxResults($limit)
 			->getQuery();
-		if ($limit) {
-			$q->setMaxResults($limit);
+		return WorkSteward::joinPersonKeysForBooks($q->getArrayResult());
+	}
+
+	/**
+	 * @param string $titleOrIsbn
+	 * @param int $limit
+	 * @return array
+	 */
+	public function getByTitleOrIsbn($titleOrIsbn, $limit = null) {
+		$isbn = BookIsbn::normalizeIsbn($titleOrIsbn);
+		if (empty($isbn)) {
+			return $this->getByTitles($titleOrIsbn, $limit);
 		}
+		$q = $this->getQueryBuilder()
+			->leftJoin('e.isbns', 'isbn')
+			->where('e.title LIKE ?1 OR e.subtitle LIKE ?1 OR e.origTitle LIKE ?1 OR isbn.code = ?2')
+			->setParameters([1 => $this->stringForLikeClause($titleOrIsbn), 2 => $isbn])
+			->setMaxResults($limit)
+			->getQuery();
 		return WorkSteward::joinPersonKeysForBooks($q->getArrayResult());
 	}
 
 	/**
 	 * @param Person $author
+	 * @return array
 	 */
 	public function getByAuthor($author) {
 		$books = $this->getQueryBuilder('s.name, e.seqnr, e.title')
@@ -188,7 +207,7 @@ class BookRepository extends EntityRepository {
 	 */
 	public function getWithMissingCover($page = 1, $limit = null) {
 		$ids = $this->getIdsWithMissingCover($page, $limit);
-		return empty($ids) ? array() : $this->getByIds($ids);
+		return empty($ids) ? [] : $this->getByIds($ids);
 	}
 
 	/**
