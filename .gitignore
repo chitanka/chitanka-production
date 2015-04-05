@@ -6,7 +6,7 @@
 /web/cache/
 /web/tor/
 /web/todo/
-*.min.js
+/web/js/*.min.js
 *.swp
 .last
 .lock
