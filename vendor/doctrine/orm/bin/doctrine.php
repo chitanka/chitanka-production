@@ -22,7 +22,7 @@ use Doctrine\ORM\Tools\Console\ConsoleRunner;
 
 (@include_once __DIR__ . '/../vendor/autoload.php') || @include_once __DIR__ . '/../../../autoload.php';
 
-$directories = [getcwd(), getcwd() . DIRECTORY_SEPARATOR . 'config'];
+$directories = array(getcwd(), getcwd() . DIRECTORY_SEPARATOR . 'config');
 
 $configFile = null;
 foreach ($directories as $directory) {
@@ -43,7 +43,7 @@ if ( ! is_readable($configFile)) {
     exit(1);
 }
 
-$commands = [];
+$commands = array();
 
 $helperSet = require $configFile;
 
