@@ -13,6 +13,7 @@ namespace FOS\RestBundle\Routing\Loader\Reader;
 
 use Doctrine\Common\Annotations\Reader;
 use Symfony\Component\Routing\Route;
+use FOS\RestBundle\Controller\Annotations\Route as RouteAnnotation;
 use FOS\RestBundle\Util\Inflector\InflectorInterface;
 use FOS\RestBundle\Routing\RestRouteCollection;
 use FOS\RestBundle\Request\ParamReader;
@@ -120,7 +121,7 @@ class RestActionReader
      *
      * @param RestRouteCollection $collection
      * @param \ReflectionMethod   $method
-     * @param array               $resource
+     * @param string[]            $resource
      *
      * @return Route
      *
@@ -180,52 +181,44 @@ class RestActionReader
 
         // generated parameters
         $routeName    = strtolower($routeName);
-        $pattern      = implode('/', $urlParts);
+        $path         = implode('/', $urlParts);
         $defaults     = array('_controller' => $method->getName());
-        $requirements = array('_method' => strtoupper($httpMethod));
+        $requirements = array();
         $options      = array();
         $host         = '';
-        $schemes      = array();
         $condition    = null;
-
-
 
         $annotations = $this->readRouteAnnotation($method);
         if ($annotations) {
             foreach ($annotations as $annotation) {
 
-                $pattern      = implode('/', $urlParts);
+                $path         = implode('/', $urlParts);
                 $defaults     = array('_controller' => $method->getName());
-                $requirements = array('_method' => strtoupper($httpMethod));
+                $requirements = array();
                 $options      = array();
-                $host         = '';
-                $schemes      = array();
+                $methods      = explode('|', $httpMethod);
                 $condition    = null;
 
                 $annoRequirements = $annotation->getRequirements();
+                $annoMethods = $annotation->getMethods();
 
-                if (!isset($annoRequirements['_method'])) {
-                    $annoRequirements['_method'] = $requirements['_method'];
+                if (!empty($annoMethods)) {
+                    $methods = $annoMethods;
                 }
 
-                $pattern      = $annotation->getPattern() !== null ? $this->routePrefix . $annotation->getPattern() : $pattern;
+                $path         = $annotation->getPath() !== null ? $this->routePrefix.$annotation->getPath() : $path;
                 $requirements = array_merge($requirements, $annoRequirements);
                 $options      = array_merge($options, $annotation->getOptions());
                 $defaults     = array_merge($defaults, $annotation->getDefaults());
-                //TODO remove checks after Symfony requirement is bumped to 2.2
-                if (method_exists($annotation, 'getHost')) {
-                    $host = $annotation->getHost();
-                }
-                if (method_exists($annotation, 'getSchemes')) {
-                    $schemes = $annotation->getSchemes();
-                }
+                $host = $annotation->getHost();
+                $schemes = $annotation->getSchemes();
                //TODO remove checks after Symfony requirement is bumped to 2.4
                 if (method_exists($annotation, 'getCondition')) {
                     $condition = $annotation->getCondition();
                 }
 
                 if ($this->includeFormat === true) {
-                    $pattern .= '.{_format}';
+                    $path .= '.{_format}';
 
                     if (!isset($requirements['_format']) && !empty($this->formats)) {
                         $requirements['_format'] = implode('|', array_keys($this->formats));
@@ -233,22 +226,25 @@ class RestActionReader
                 }
                 // add route to collection
                 $route = new Route(
-                    $pattern, $defaults, $requirements, $options, $host, $schemes, null, $condition
+                    $path, $defaults, $requirements, $options, $host, $schemes, $methods, $condition
                 );
                 $this->addRoute($collection, $routeName, $route, $isCollection, $isInflectable, $annotation);
             }
 
         } else {
             if ($this->includeFormat === true) {
-                $pattern .= '.{_format}';
+                $path .= '.{_format}';
 
                 if (!isset($requirements['_format']) && !empty($this->formats)) {
                     $requirements['_format'] = implode('|', array_keys($this->formats));
                 }
             }
+
+            $methods = explode('|', strtoupper($httpMethod));
+
             // add route to collection
             $route = new Route(
-                $pattern, $defaults, $requirements, $options, $host, $schemes, null, $condition
+                $path, $defaults, $requirements, $options, $host, array(), $methods, $condition
             );
             $this->addRoute($collection, $routeName, $route, $isCollection, $isInflectable);
         }
@@ -287,7 +283,7 @@ class RestActionReader
      * Returns HTTP method and resources list from method signature.
      *
      * @param \ReflectionMethod $method
-     * @param array             $resource
+     * @param string[]          $resource
      *
      * @return bool|array
      */
@@ -310,11 +306,14 @@ class RestActionReader
         ) {
             $isCollection = true;
             $httpMethod = substr($httpMethod, 1);
-            if (!empty($resource)) {
-                $resourcePluralized = $this->inflector->pluralize(end($resource));
-                $isInflectable = ($resourcePluralized != $resource[count($resource) - 1]);
-                $resource[count($resource)-1] = $resourcePluralized;
-            }
+        } elseif ('options' === $httpMethod) {
+            $isCollection = true;
+        }
+
+        if ($isCollection && !empty($resource)) {
+            $resourcePluralized = $this->inflector->pluralize(end($resource));
+            $isInflectable = ($resourcePluralized != $resource[count($resource) - 1]);
+            $resource[count($resource)-1] = $resourcePluralized;
         }
 
         $resources = array_merge($resource, $resources);
@@ -327,7 +326,7 @@ class RestActionReader
      *
      * @param \ReflectionMethod $method
      *
-     * @return array
+     * @return \ReflectionParameter[]
      */
     private function getMethodArguments(\ReflectionMethod $method)
     {
@@ -342,6 +341,7 @@ class RestActionReader
             'Symfony\Component\HttpFoundation\Request',
             'FOS\RestBundle\Request\ParamFetcherInterface',
             'Symfony\Component\Validator\ConstraintViolationListInterface',
+            'Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter'
         );
 
         $arguments = array();
@@ -368,7 +368,7 @@ class RestActionReader
     /**
      * Generates route name from resources list.
      *
-     * @param array $resources
+     * @param string[] $resources
      *
      * @return string
      */
@@ -377,7 +377,7 @@ class RestActionReader
         $routeName = '';
         foreach ($resources as $resource) {
             if (null !== $resource) {
-                $routeName .= '_' . basename($resource);
+                $routeName .= '_'.basename($resource);
             }
         }
 
@@ -387,9 +387,9 @@ class RestActionReader
     /**
      * Generates URL parts for route from resources list.
      *
-     * @param array  $resources
-     * @param array  $arguments
-     * @param string $httpMethod
+     * @param string[]               $resources
+     * @param \ReflectionParameter[] $arguments
+     * @param string                 $httpMethod
      *
      * @return array
      */
@@ -431,9 +431,9 @@ class RestActionReader
     /**
      * Returns custom HTTP method for provided list of resources, arguments, method.
      *
-     * @param string $httpMethod current HTTP method
-     * @param array  $resources  resources list
-     * @param array  $arguments  list of method arguments
+     * @param string                 $httpMethod current HTTP method
+     * @param string[]               $resources  resources list
+     * @param \ReflectionParameter[] $arguments  list of method arguments
      *
      * @return string
      */
@@ -459,7 +459,7 @@ class RestActionReader
      *
      * @param \ReflectionMethod $reflectionMethod
      *
-     * @return array|null
+     * @return RouteAnnotation[]
      */
     private function readRouteAnnotation(\ReflectionMethod $reflectionMethod)
     {
@@ -470,6 +470,7 @@ class RestActionReader
                 $annotations = array_merge($annotations, $annotations_new);
             }
         }
+
         return $annotations;
     }
 
@@ -479,7 +480,7 @@ class RestActionReader
      * @param \ReflectionClass $reflectionClass
      * @param string           $annotationName
      *
-     * @return object|null
+     * @return RouteAnnotation|null
      */
     private function readClassAnnotation(\ReflectionClass $reflectionClass, $annotationName)
     {
@@ -496,7 +497,7 @@ class RestActionReader
      * @param \ReflectionMethod $reflectionMethod
      * @param string            $annotationName
      *
-     * @return object|null
+     * @return RouteAnnotation|null
      */
     private function readMethodAnnotation(\ReflectionMethod $reflectionMethod, $annotationName)
     {
@@ -513,7 +514,7 @@ class RestActionReader
      * @param \ReflectionMethod $reflectionMethod
      * @param string            $annotationName
      *
-     * @return array|null
+     * @return RouteAnnotation[]
      */
     private function readMethodAnnotations(\ReflectionMethod $reflectionMethod, $annotationName)
     {
@@ -522,9 +523,9 @@ class RestActionReader
 
         if ($annotations_new = $this->annotationReader->getMethodAnnotations($reflectionMethod)) {
 
-            foreach($annotations_new as $annotation) {
+            foreach ($annotations_new as $annotation) {
                 if ($annotation instanceof $annotationClass) {
-                    $annotations[]= $annotation;
+                    $annotations[] = $annotation;
                 }
             }
         }
@@ -538,12 +539,18 @@ class RestActionReader
      * @param Route               $route
      * @param bool                $isCollection
      * @param bool                $isInflectable
-     * @param object              $annotation
+     * @param RouteAnnotation     $annotation
      */
-    private function addRoute(RestRouteCollection $collection, $routeName, $route, $isCollection, $isInflectable, $annotation = null)
+    private function addRoute(RestRouteCollection $collection, $routeName, $route, $isCollection, $isInflectable, RouteAnnotation $annotation = null)
     {
-        if ($annotation) {
-            $routeName = $routeName.$annotation->getName();
+        if ($annotation && null !== $annotation->getName()) {
+            $options = $annotation->getOptions();
+
+            if (isset($options['method_prefix']) && false === $options['method_prefix']) {
+                $routeName = $annotation->getName();
+            } else {
+                $routeName = $routeName.$annotation->getName();
+            }
         }
 
         $fullRouteName = $this->namePrefix.$routeName;

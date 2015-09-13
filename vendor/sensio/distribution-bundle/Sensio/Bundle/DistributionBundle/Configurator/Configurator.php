@@ -169,7 +169,7 @@ class Configurator
      *
      * @return string
      */
-    public function render($expanded = 0)
+    public function render($expanded = 10)
     {
         return Yaml::dump(array('parameters' => $this->parameters), $expanded);
     }
@@ -181,7 +181,7 @@ class Configurator
      *
      * @return int
      */
-    public function write($expanded = 0)
+    public function write($expanded = 10)
     {
         $filename = $this->isFileWritable() ? $this->filename : $this->getCacheFilename();
 
@@ -200,7 +200,11 @@ class Configurator
             $filename = $this->getCacheFilename();
         }
 
-        $ret = Yaml::parse($filename);
+        if (!file_exists($filename)) {
+            return array();
+        }
+
+        $ret = Yaml::parse(file_get_contents($filename));
         if (false === $ret || array() === $ret) {
             throw new \InvalidArgumentException(sprintf('The %s file is not valid.', $filename));
         }

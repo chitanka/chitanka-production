@@ -60,7 +60,7 @@ class RestYamlCollectionLoader extends YamlFileLoader
     {
         $path = $this->locator->locate($file);
 
-        $config = Yaml::parse($path);
+        $config = Yaml::parse(file_get_contents($path));
 
         $collection = new RouteCollection();
         $collection->addResource(new FileResource($path));
@@ -68,12 +68,15 @@ class RestYamlCollectionLoader extends YamlFileLoader
         // process routes and imports
         foreach ($config as $name => $config) {
             if (isset($config['resource'])) {
-                $resource   = $config['resource'];
-                $prefix     = isset($config['prefix'])      ? $config['prefix']         : null;
-                $namePrefix = isset($config['name_prefix']) ? $config['name_prefix']    : null;
-                $parent     = isset($config['parent'])      ? $config['parent']         : null;
-                $type       = isset($config['type'])        ? $config['type']           : null;
-                $currentDir = dirname($path);
+                $resource     = $config['resource'];
+                $prefix       = isset($config['prefix'])       ? $config['prefix']         : null;
+                $namePrefix   = isset($config['name_prefix'])  ? $config['name_prefix']    : null;
+                $parent       = isset($config['parent'])       ? $config['parent']         : null;
+                $type         = isset($config['type'])         ? $config['type']           : null;
+                $requirements = isset($config['requirements']) ? $config['requirements']   : array();
+                $defaults     = isset($config['defaults'])     ? $config['defaults']       : array();
+                $options      = isset($config['options'])      ? $config['options']        : array();
+                $currentDir   = dirname($path);
 
                 $parents = array();
                 if (!empty($parent)) {
@@ -87,13 +90,22 @@ class RestYamlCollectionLoader extends YamlFileLoader
                 $imported = $this->processor->importResource($this, $resource, $parents, $prefix, $namePrefix, $type, $currentDir);
 
                 if ($imported instanceof RestRouteCollection) {
-                    $parents[]  = ($prefix ? $prefix . '/' : '') . $imported->getSingularName();
+                    $parents[]  = ($prefix ? $prefix.'/' : '').$imported->getSingularName();
                     $prefix     = null;
+                    $namePrefix = null;
 
                     $this->collectionParents[$name] = $parents;
                 }
 
+                $imported->addRequirements($requirements);
+                $imported->addDefaults($defaults);
+                $imported->addOptions($options);
+
                 $imported->addPrefix($prefix);
+
+                // Add name prefix from parent config files
+                $imported = $this->addParentNamePrefix($imported, $namePrefix);
+
                 $collection->addCollection($imported);
             } elseif (isset($config['pattern']) || isset($config['path'])) {
                 // the YamlFileLoader of the Routing component only checks for
@@ -105,7 +117,7 @@ class RestYamlCollectionLoader extends YamlFileLoader
                 if ($this->includeFormat) {
                     // append format placeholder if not present
                     if (false === strpos($config['path'], '{_format}')) {
-                        $config['path'].='.{_format}';
+                        $config['path'] .= '.{_format}';
                     }
 
                     // set format requirement if configured globally
@@ -136,5 +148,30 @@ class RestYamlCollectionLoader extends YamlFileLoader
         return is_string($resource) &&
             'yml' === pathinfo($resource, PATHINFO_EXTENSION) &&
             'rest' === $type;
+    }
+
+    /**
+     * Adds a name prefix to the route name of all collection routes.
+     *
+     * @param RouteCollection $collection    Route collection
+     * @param array $namePrefix              NamePrefix to add in each route name of the route collection
+     *
+     * @return RouteCollection
+     */
+    public function addParentNamePrefix(RouteCollection $collection, $namePrefix)
+    {
+        if (!isset($namePrefix) || ($namePrefix = trim($namePrefix)) === "") {
+            return $collection;
+        }
+
+        $iterator = $collection->getIterator();
+
+        foreach($iterator as $key1 => $route1)
+        {
+            $collection->add($namePrefix.$key1, $route1);
+            $collection->remove($key1);
+        }
+
+        return $collection;
     }
 }

@@ -16,17 +16,17 @@ interface WriterInterface
     /**
      * @return void
      */
-    public function open();
+    function open();
 
     /**
      * @param array $data
      *
      * @return void
      */
-    public function write(array $data);
+    function write(array $data);
 
     /**
      * @return void
      */
-    public function close();
+    function close();
 }

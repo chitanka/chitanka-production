@@ -25,6 +25,7 @@ use JMS\Serializer\SerializationContext;
 class View
 {
     private $data;
+    private $templateData = array();
     private $template;
     private $templateVar;
     private $engine;
@@ -132,6 +133,20 @@ class View
     }
 
     /**
+     * Set template variable
+     *
+     * @param  array|callable $data
+     *
+     * @return View
+     */
+    public function setTemplateData($data = array())
+    {
+        $this->templateData = $data;
+
+        return $this;
+    }
+
+    /**
      * Sets a header.
      *
      * @param string $name
@@ -210,7 +225,7 @@ class View
     /**
      * Sets template variable name to be used in templating formats.
      *
-     * @param string
+     * @param string $templateVar
      *
      * @return View
      */
@@ -224,7 +239,7 @@ class View
     /**
      * Sets the engine.
      *
-     * @param $engine
+     * @param string $engine
      *
      * @return View
      */
@@ -238,7 +253,7 @@ class View
     /**
      * Sets the format.
      *
-     * @param $format
+     * @param string $format
      *
      * @return View
      */
@@ -252,7 +267,7 @@ class View
     /**
      * Sets the location (implicitly removes the route).
      *
-     * @param $location
+     * @param string $location
      *
      * @return View
      */
@@ -267,7 +282,7 @@ class View
     /**
      * Sets the route (implicitly removes the location).
      *
-     * @param $route
+     * @param string $route
      *
      * @return View
      */
@@ -282,7 +297,7 @@ class View
     /**
      * Sets route data.
      *
-     * @param mixed $parameters
+     * @param array $parameters
      *
      * @return View
      */
@@ -318,6 +333,16 @@ class View
     }
 
     /**
+     * Gets the template data.
+     *
+     * @return mixed|null
+     */
+    public function getTemplateData()
+    {
+        return $this->templateData;
+    }
+
+    /**
      * Gets the HTTP status code.
      *
      * @return int|null
@@ -330,7 +355,7 @@ class View
     /**
      * Gets the headers.
      *
-     * @return array|null
+     * @return array
      */
     public function getHeaders()
     {
@@ -400,7 +425,7 @@ class View
     /**
      * Gets route parameters.
      *
-     * @return string|null
+     * @return array|null
      */
     public function getRouteParameters()
     {

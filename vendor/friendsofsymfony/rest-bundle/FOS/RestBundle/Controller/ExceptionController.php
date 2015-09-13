@@ -11,6 +11,7 @@
 
 namespace FOS\RestBundle\Controller;
 
+use FOS\RestBundle\Util\StopFormatListenerException;
 use FOS\RestBundle\View\ExceptionWrapperHandlerInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\TemplateReference;
 use Symfony\Component\HttpKernel\Exception\FlattenException as HttpFlattenException;
@@ -40,7 +41,7 @@ class ExceptionController extends ContainerAware
     protected function createExceptionWrapper(array $parameters)
     {
         /** @var ExceptionWrapperHandlerInterface $exceptionWrapperHandler */
-        $exceptionWrapperHandler = $this->container->get('fos_rest.view.exception_wrapper_handler');
+        $exceptionWrapperHandler = $this->container->get('fos_rest.exception_handler');
 
         return $exceptionWrapperHandler->wrap($parameters);
     }
@@ -51,13 +52,12 @@ class ExceptionController extends ContainerAware
      * @param Request                                    $request
      * @param HttpFlattenException|DebugFlattenException $exception
      * @param DebugLoggerInterface                       $logger
-     * @param string                                     $format
      *
      * @return Response
      *
      * @throws \InvalidArgumentException
      */
-    public function showAction(Request $request, $exception, DebugLoggerInterface $logger = null, $format = 'html')
+    public function showAction(Request $request, $exception, DebugLoggerInterface $logger = null)
     {
         /**
          * Validates that the exception that is handled by the Exception controller is either a DebugFlattenException
@@ -69,16 +69,16 @@ class ExceptionController extends ContainerAware
         if (!$exception instanceof DebugFlattenException && !$exception instanceof HttpFlattenException) {
             throw new \InvalidArgumentException(sprintf(
                 'ExceptionController::showAction can only accept some exceptions (%s, %s), "%s" given',
-                "Symfony\Component\HttpKernel\Exception\FlattenException",
-                "Symfony\Component\Debug\Exception\FlattenException",
+                'Symfony\Component\HttpKernel\Exception\FlattenException',
+                'Symfony\Component\Debug\Exception\FlattenException',
                 get_class($exception)
             ));
         }
 
-        $format = $this->getFormat($request, $format);
+        $format = $this->getFormat($request, $request->getRequestFormat());
         if (null === $format) {
             $message = 'No matching accepted Response format could be determined, while handling: ';
-            $message.= $this->getExceptionMessage($exception);
+            $message .= $this->getExceptionMessage($exception);
 
             return new Response($message, Codes::HTTP_NOT_ACCEPTABLE, $exception->getHeaders());
         }
@@ -87,6 +87,7 @@ class ExceptionController extends ContainerAware
         $code = $this->getStatusCode($exception);
         $viewHandler = $this->container->get('fos_rest.view_handler');
         $parameters = $this->getParameters($viewHandler, $currentContent, $code, $exception, $logger, $format);
+        $showException = $request->attributes->get('showException', $this->container->get('kernel')->isDebug());
 
         try {
             if (!$viewHandler->isFormatTemplating($format)) {
@@ -97,13 +98,13 @@ class ExceptionController extends ContainerAware
             $view->setFormat($format);
 
             if ($viewHandler->isFormatTemplating($format)) {
-                $view->setTemplate($this->findTemplate($request, $format, $code, $this->container->get('kernel')->isDebug()));
+                $view->setTemplate($this->findTemplate($request, $format, $code, $showException));
             }
 
             $response = $viewHandler->handle($view);
         } catch (\Exception $e) {
             $message = 'An Exception was thrown while handling: ';
-            $message.= $this->getExceptionMessage($exception);
+            $message .= $this->getExceptionMessage($exception);
             $response = new Response($message, Codes::HTTP_INTERNAL_SERVER_ERROR, $exception->getHeaders());
         }
 
@@ -157,7 +158,7 @@ class ExceptionController extends ContainerAware
             }
         } catch (\ReflectionException $re) {
             return "FOSUserBundle: Invalid class in  fos_res.exception.messages: "
-                    . $re->getMessage();
+                    .$re->getMessage();
         }
 
         return false;
@@ -209,9 +210,13 @@ class ExceptionController extends ContainerAware
      */
     protected function getFormat(Request $request, $format)
     {
-        $formatNegotiator = $this->container->get('fos_rest.format_negotiator');
-        $format = $formatNegotiator->getBestFormat($request) ?: $format;
-        $request->attributes->set('_format', $format);
+        try {
+            $formatNegotiator = $this->container->get('fos_rest.exception_format_negotiator');
+            $format = $formatNegotiator->getBestFormat($request) ?: $format;
+            $request->attributes->set('_format', $format);
+        } catch (StopFormatListenerException $e) {
+            $format = $request->getRequestFormat();
+        }
 
         return $format;
     }
@@ -261,19 +266,19 @@ class ExceptionController extends ContainerAware
      * @param Request $request
      * @param string  $format
      * @param int     $statusCode
-     * @param bool    $debug
+     * @param bool    $showException
      *
      * @return TemplateReference
      */
-    protected function findTemplate(Request $request, $format, $statusCode, $debug)
+    protected function findTemplate(Request $request, $format, $statusCode, $showException)
     {
-        $name = $debug ? 'exception' : 'error';
-        if ($debug && 'html' == $format) {
+        $name = $showException ? 'exception' : 'error';
+        if ($showException && 'html' == $format) {
             $name = 'exception_full';
         }
 
         // when not in debug, try to find a template for the specific HTTP status code and format
-        if (!$debug) {
+        if (!$showException) {
             $template = new TemplateReference('TwigBundle', 'Exception', $name.$statusCode, $format, 'twig');
             if ($this->container->get('templating')->exists($template)) {
                 return $template;
@@ -289,6 +294,6 @@ class ExceptionController extends ContainerAware
         // default to a generic HTML exception
         $request->setRequestFormat('html');
 
-        return new TemplateReference('TwigBundle', 'Exception', $name, 'html', 'twig');
+        return new TemplateReference('TwigBundle', 'Exception', $showException ? 'exception_full' : $name, 'html', 'twig');
     }
 }

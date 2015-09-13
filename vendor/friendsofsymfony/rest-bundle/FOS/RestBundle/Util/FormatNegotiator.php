@@ -18,6 +18,7 @@ use Negotiation\AcceptHeader;
 
 class FormatNegotiator implements MediaTypeNegotiatorInterface
 {
+    private $formatNegotiator;
     private $map = array();
 
     public function __construct()
@@ -65,6 +66,10 @@ class FormatNegotiator implements MediaTypeNegotiatorInterface
                 $options = $elements[1];
             }
 
+            if (!empty($options['stop'])) {
+                throw new StopFormatListenerException('Stopped format listener');
+            }
+
             if (empty($options['priorities'])) {
                 if (!empty($options['fallback_format'])) {
                     return $request->getMimeType($options['fallback_format']);
@@ -89,7 +94,7 @@ class FormatNegotiator implements MediaTypeNegotiatorInterface
                     }
                 }
                 if ($extensionHeader) {
-                    $acceptHeader.= $extensionHeader.'; q='.$options['prefer_extension'];
+                    $acceptHeader .= $extensionHeader.'; q='.$options['prefer_extension'];
                 }
             }
 

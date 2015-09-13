@@ -11,6 +11,8 @@
 
 namespace Exporter\Writer;
 
+use Exporter\Exception\InvalidDataFormatException;
+
 class XlsWriter implements WriterInterface
 {
     protected $filename;

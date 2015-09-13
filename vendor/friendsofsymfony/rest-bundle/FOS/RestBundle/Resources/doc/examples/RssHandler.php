@@ -5,8 +5,6 @@ namespace FOS\RestBundle\Examples;
 use FOS\RestBundle\View\View;
 use FOS\RestBundle\View\ViewHandler;
 use FOS\RestBundle\Util\Codes;
-
-use Symfony\Bridge\Monolog\Logger;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Psr\Log\LoggerInterface;
@@ -58,7 +56,7 @@ class RssHandler
             $code = Codes::HTTP_OK;
         } catch (\Exception $e) {
             if ($this->logger) {
-                $this->logger->err($e);
+                $this->logger->error($e);
             }
 
             $content = sprintf("%s:<br/><pre>%s</pre>", $e->getMessage(), $e->getTraceAsString());
@@ -111,4 +109,3 @@ class RssHandler
         return $feed->export($format);
     }
 }
-

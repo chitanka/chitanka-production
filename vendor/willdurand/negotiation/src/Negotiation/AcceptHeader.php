@@ -35,7 +35,18 @@ class AcceptHeader
     }
 
     /**
-      @return string
+     * @return string
+     */
+    public function getMediaType()
+    {
+        $parts     = explode(';', $this->value, 2);
+        $mediaType = trim($parts[0], ' ');
+
+        return $mediaType;
+    }
+
+    /**
+     * @return string
      */
     public function getValue()
     {

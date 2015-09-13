@@ -64,7 +64,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     /**
      * Whether or not to serialize null view data.
      *
-     * @var int
+     * @var bool
      */
     protected $serializeNull;
 
@@ -99,12 +99,12 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     /**
      * Constructor
      *
-     * @param array   $formats              the supported formats as keys and if the given formats uses templating is denoted by a true value
-     * @param int     $failedValidationCode The HTTP response status code for a failed validation
-     * @param int     $emptyContentCode     HTTP response status code when the view data is null
-     * @param bool    $serializeNull        Whether or not to serialize null view data
-     * @param array   $forceRedirects       If to force a redirect for the given key format, with value being the status code to use
-     * @param string  $defaultEngine        default engine (twig, php ..)
+     * @param array  $formats              the supported formats as keys and if the given formats uses templating is denoted by a true value
+     * @param int    $failedValidationCode The HTTP response status code for a failed validation
+     * @param int    $emptyContentCode     HTTP response status code when the view data is null
+     * @param bool   $serializeNull        Whether or not to serialize null view data
+     * @param array  $forceRedirects       If to force a redirect for the given key format, with value being the status code to use
+     * @param string $defaultEngine        default engine (twig, php ..)
      */
     public function __construct(
         array $formats = null,
@@ -125,7 +125,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     /**
      * Sets the default serialization groups.
      *
-     * @param array $groups
+     * @param array|string $groups
      */
     public function setExclusionStrategyGroups($groups)
     {
@@ -197,7 +197,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     {
         $form = $this->getFormFromView($view);
 
-        if ($form && $form->isBound() && !$form->isValid()) {
+        if ($form && $form->isSubmitted() && !$form->isValid()) {
             return $this->failedValidationCode;
         }
 
@@ -380,19 +380,24 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     public function prepareTemplateParameters(View $view)
     {
         $data = $view->getData();
-        if ($data instanceof FormInterface) {
-            return array($view->getTemplateVar() => $data->getData(), 'form' => $data->createView());
-        }
 
-        if (empty($data) || !is_array($data) || is_numeric((key($data)))) {
-            return array($view->getTemplateVar() => $data);
+        if ($data instanceof FormInterface) {
+            $data = array($view->getTemplateVar() => $data->getData(), 'form' => $data);
+
+        } elseif (empty($data) || !is_array($data) || is_numeric((key($data)))) {
+            $data = array($view->getTemplateVar() => $data);
         }
 
         if (isset($data['form']) && $data['form'] instanceof FormInterface) {
             $data['form'] = $data['form']->createView();
         }
 
-        return $data;
+        $templateData = $view->getTemplateData();
+        if (is_callable($templateData)) {
+            $templateData = call_user_func($templateData, $this, $view);
+        }
+
+        return array_merge($data, $templateData);
     }
 
     /**
@@ -495,18 +500,18 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
             return $view->getData();
         }
 
-        if ($form->isValid() || !$form->isBound()) {
+        if ($form->isValid() || !$form->isSubmitted()) {
             return $form;
         }
 
         /** @var ExceptionWrapperHandlerInterface $exceptionWrapperHandler */
-        $exceptionWrapperHandler = $this->container->get('fos_rest.view.exception_wrapper_handler');
+        $exceptionWrapperHandler = $this->container->get('fos_rest.exception_handler');
 
         return $exceptionWrapperHandler->wrap(
             array(
                  'status_code' => $this->failedValidationCode,
                  'message'     => 'Validation Failed',
-                 'errors'      => $form
+                 'errors'      => $form,
             )
         );
     }

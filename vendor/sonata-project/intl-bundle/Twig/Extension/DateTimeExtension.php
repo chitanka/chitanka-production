@@ -20,7 +20,6 @@ use Sonata\IntlBundle\Templating\Helper\DateTimeHelper;
  */
 class DateTimeExtension extends \Twig_Extension
 {
-
     protected $helper;
 
     public function __construct(DateTimeHelper $helper)
@@ -28,31 +27,12 @@ class DateTimeExtension extends \Twig_Extension
         $this->helper = $helper;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function initRuntime(\Twig_Environment $environment)
-    {
-        $this->environment = $environment;
-    }
-
-    /**
-     * Returns the token parser instance to add to the existing list.
-     *
-     * @return array An array of Twig_TokenParser instances
-     */
-    public function getTokenParsers()
-    {
-        return array(
-        );
-    }
-
     public function getFilters()
     {
         return array(
-            'format_date'     => new \Twig_Filter_Method($this, 'formatDate', array('is_safe' => array('html'))),
-            'format_time'     => new \Twig_Filter_Method($this, 'formatTime', array('is_safe' => array('html'))),
-            'format_datetime' => new \Twig_Filter_Method($this, 'formatDatetime', array('is_safe' => array('html'))),
+            new \Twig_SimpleFilter('format_date', array($this, 'formatDate'), array('is_safe' => array('html'))),
+            new \Twig_SimpleFilter('format_time', array($this, 'formatTime'), array('is_safe' => array('html'))),
+            new \Twig_SimpleFilter('format_datetime', array($this, 'formatDatetime'), array('is_safe' => array('html'))),
         );
     }
 
@@ -84,9 +64,7 @@ class DateTimeExtension extends \Twig_Extension
     }
 
     /**
-     * Returns the name of the extension.
-     *
-     * @return string The extension name
+     * {@inheritdoc}
      */
     public function getName()
     {

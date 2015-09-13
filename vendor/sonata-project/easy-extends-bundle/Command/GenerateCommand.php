@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Sonata project.
  *
@@ -10,27 +11,25 @@
 
 namespace Sonata\EasyExtendsBundle\Command;
 
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-
 use Sonata\EasyExtendsBundle\Bundle\BundleMetadata;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Generate Application entities from bundle entities
+ * Generate Application entities from bundle entities.
  *
  * @author Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
 class GenerateCommand extends ContainerAwareCommand
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected function configure()
     {
-
         $this
             ->setName('sonata:easy-extends:generate')
             ->setHelp(<<<EOT
@@ -47,7 +46,7 @@ EOT
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -57,6 +56,7 @@ EOT
             if (false === $dest) {
                 $output->writeln('');
                 $output->writeln(sprintf('<error>The provided destination folder \'%s\' does not exist!</error>', $destOption));
+
                 return 0;
             }
         } else {
@@ -64,7 +64,7 @@ EOT
         }
 
         $configuration = array(
-            'application_dir' =>  sprintf("%s/Application", $dest)
+            'application_dir' => sprintf('%s/Application', $dest),
         );
 
         $bundleNames = $input->getArgument('bundle');
@@ -105,7 +105,7 @@ EOT
     }
 
     /**
-     * Generates a bundle entities from a bundle name
+     * Generates a bundle entities from a bundle name.
      *
      * @param string          $bundleName
      * @param array           $configuration
@@ -118,7 +118,6 @@ EOT
         $processed = false;
 
         foreach ($this->getContainer()->get('kernel')->getBundles() as $bundle) {
-
             if ($bundle->getName() != $bundleName) {
                 continue;
             }

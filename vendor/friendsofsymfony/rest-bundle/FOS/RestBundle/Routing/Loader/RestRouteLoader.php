@@ -105,26 +105,32 @@ class RestRouteLoader extends Loader
 
         if (0 === strpos($controller, '@')) {
             $file = $this->locator->locate($controller);
-            $controller = $this->findClass($file);
+            $controllerClass = $this->findClass($file);
+
+            if (false === $controllerClass) {
+                throw new \InvalidArgumentException(sprintf('Can\'t find class for controller "%s"', $controller));
+            }
+
+            $controller = $controllerClass;
         }
 
         if ($this->container->has($controller)) {
             // service_id
-            $prefix = $controller . ':';
+            $prefix = $controller.':';
             $this->container->enterScope('request');
-            $this->container->set('request', new Request);
+            $this->container->set('request', new Request());
             $class = get_class($this->container->get($controller));
             $this->container->leaveScope('request');
         } elseif (class_exists($controller)) {
             // full class name
             $class  = $controller;
-            $prefix = $class . '::';
+            $prefix = $class.'::';
         } elseif (false !== strpos($controller, ':')) {
             // bundle:controller notation
             try {
-                $notation             = $this->controllerParser->parse($controller . ':method');
-                list($class, $method) = explode('::', $notation);
-                $prefix               = $class . '::';
+                $notation             = $this->controllerParser->parse($controller.':method');
+                list($class, ) = explode('::', $notation);
+                $prefix               = $class.'::';
             } catch (\Exception $e) {
                 throw new \InvalidArgumentException(
                     sprintf('Can\'t locate "%s" controller.', $controller)

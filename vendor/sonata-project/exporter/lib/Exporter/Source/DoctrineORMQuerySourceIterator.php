@@ -14,9 +14,7 @@ namespace Exporter\Source;
 use Exporter\Exception\InvalidMethodCallException;
 use Doctrine\ORM\Query;
 use Exporter\Source\SourceIteratorInterface;
-use Symfony\Component\PropertyAccess\PropertyAccess;
-use Symfony\Component\PropertyAccess\PropertyPath;
-use Symfony\Component\PropertyAccess\Exception\UnexpectedTypeException;
+use Symfony\Component\Form\Util\PropertyPath;
 
 class DoctrineORMQuerySourceIterator implements SourceIteratorInterface
 {
@@ -33,32 +31,13 @@ class DoctrineORMQuerySourceIterator implements SourceIteratorInterface
     protected $propertyPaths;
 
     /**
-     * @var PropertyAccess
+     * @param \Doctrine\ORM\Query $query  The Doctrine Query
+     * @param array               $fields Fields to export
      */
-    protected $propertyAccessor;
-
-    /**
-     * @var string default DateTime format
-     */
-    protected $dateTimeFormat;
-
-    /**
-     * @param \Doctrine\ORM\Query $query          The Doctrine Query
-     * @param array               $fields         Fields to export
-     * @param string              $dateTimeFormat
-     */
-    public function __construct(Query $query, array $fields, $dateTimeFormat = 'r')
+    public function __construct(Query $query, array $fields)
     {
         $this->query = clone $query;
         $this->query->setParameters($query->getParameters());
-        foreach ($query->getHints() as $name => $value) {
-            $this->query->setHint($name, $value);
-        }
-
-        // Note : will be deprecated in Symfony 3.0, conserved for 2.2 compatibility
-        // Use createPropertyAccessor() for 3.0
-        // @see Symfony\Component\PropertyAccess\PropertyAccess
-        $this->propertyAccessor = PropertyAccess::getPropertyAccessor();
 
         $this->propertyPaths = array();
         foreach ($fields as $name => $field) {
@@ -68,7 +47,6 @@ class DoctrineORMQuerySourceIterator implements SourceIteratorInterface
                 $this->propertyPaths[$field] = new PropertyPath($field);
             }
         }
-        $this->dateTimeFormat = $dateTimeFormat;
     }
 
     /**
@@ -81,12 +59,7 @@ class DoctrineORMQuerySourceIterator implements SourceIteratorInterface
         $data = array();
 
         foreach ($this->propertyPaths as $name => $propertyPath) {
-            try {
-                $data[$name] = $this->getValue($this->propertyAccessor->getValue($current[0], $propertyPath));
-            } catch (UnexpectedTypeException $e) {
-                //non existent object in path will be ignored
-                $data[$name] = null;
-            }
+            $data[$name] = $this->getValue($propertyPath->getValue($current[0]));
         }
 
         $this->query->getEntityManager()->getUnitOfWork()->detach($current[0]);
@@ -101,10 +74,10 @@ class DoctrineORMQuerySourceIterator implements SourceIteratorInterface
      */
     protected function getValue($value)
     {
-        if (is_array($value) || $value instanceof \Traversable) {
+        if (is_array($value) or $value instanceof \Traversable) {
             $value = null;
         } elseif ($value instanceof \DateTime) {
-            $value = $value->format($this->dateTimeFormat);
+            $value = $value->format('r');
         } elseif (is_object($value)) {
             $value = (string) $value;
         }
@@ -147,21 +120,5 @@ class DoctrineORMQuerySourceIterator implements SourceIteratorInterface
 
         $this->iterator = $this->query->iterate();
         $this->iterator->rewind();
-    }
-
-    /**
-     * @param string $dateTimeFormat
-     */
-    public function setDateTimeFormat($dateTimeFormat)
-    {
-        $this->dateTimeFormat = $dateTimeFormat;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDateTimeFormat()
-    {
-        return $this->dateTimeFormat;
     }
 }

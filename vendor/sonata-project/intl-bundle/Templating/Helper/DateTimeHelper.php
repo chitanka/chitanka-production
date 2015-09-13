@@ -16,7 +16,7 @@ use Sonata\IntlBundle\Timezone\TimezoneDetectorInterface;
 
 /**
  * DateHelper displays culture information. More information here
- * http://userguide.icu-project.org/formatparse/datetime
+ * http://userguide.icu-project.org/formatparse/datetime.
  *
  * @author Thomas Rabaix <thomas.rabaix@ekino.com>
  * @author Alexander <iam.asm89@gmail.com>
@@ -24,6 +24,11 @@ use Sonata\IntlBundle\Timezone\TimezoneDetectorInterface;
 class DateTimeHelper extends BaseHelper
 {
     protected $timezoneDetector;
+
+    /**
+     * @var \ReflectionClass
+     */
+    protected static $reflection;
 
     /**
      * @param TimezoneDetectorInterface $timezoneDetector
@@ -38,98 +43,121 @@ class DateTimeHelper extends BaseHelper
     }
 
     /**
-     * @param \Datetime|string|integer $date
-     * @param null|string              $locale
+     * @param array $args
+     *
+     * @return \IntlDateFormatter
+     */
+    protected static function createInstance(array $args = array())
+    {
+        if (!self::$reflection) {
+            self::$reflection = new \ReflectionClass('IntlDateFormatter');
+        }
+
+        $instance = self::$reflection->newInstanceArgs($args);
+
+        self::checkInternalClass($instance, '\IntlDateFormatter', $args);
+
+        return $instance;
+    }
+
+    /**
+     * @param \Datetime|string|int $date
+     * @param null|string          $locale
      * @param null|string timezone
-     * @param null|integer dateType See \IntlDateFormatter::getDateType
+     * @param null|int dateType See \IntlDateFormatter::getDateType
+     *
      * @return string
      */
     public function formatDate($date, $locale = null, $timezone = null, $dateType = null)
     {
         $date = $this->getDatetime($date, $timezone);
 
-        $formatter = new \IntlDateFormatter(
-            $locale ?: $this->localeDetector->getLocale(),
-            null === $dateType ? \IntlDateFormatter::MEDIUM : $dateType,
-            \IntlDateFormatter::NONE,
-            $timezone ?: $this->timezoneDetector->getTimezone(),
-            \IntlDateFormatter::GREGORIAN
-        );
+        $formatter = self::createInstance(array(
+            'locale'   => $locale ?: $this->localeDetector->getLocale(),
+            'datetype' => null === $dateType ? \IntlDateFormatter::MEDIUM : $dateType,
+            'timetype' => \IntlDateFormatter::NONE,
+            'timezone' => $timezone ?: $this->timezoneDetector->getTimezone(),
+            'calendar' => \IntlDateFormatter::GREGORIAN,
+        ));
 
         return $this->process($formatter, $date);
     }
 
     /**
-     * @param \Datetime|string|integer $datetime
-     * @param null|string              $locale
+     * @param \Datetime|string|int $datetime
+     * @param null|string          $locale
      * @param null|string timezone
-     * @param null|integer dateType See \IntlDateFormatter::getDateType
-     * @param null|integer timeType See \IntlDateFormatter::getTimeType
+     * @param null|int dateType See \IntlDateFormatter::getDateType
+     * @param null|int timeType See \IntlDateFormatter::getTimeType
+     *
      * @return string
      */
     public function formatDateTime($datetime, $locale = null, $timezone = null, $dateType = null, $timeType = null)
     {
         $date = $this->getDatetime($datetime, $timezone);
 
-        $formatter = new \IntlDateFormatter(
-            $locale ?: $this->localeDetector->getLocale(),
-            null === $dateType ? \IntlDateFormatter::MEDIUM : $dateType,
-            null === $timeType ? \IntlDateFormatter::MEDIUM : $timeType,
-            $timezone ?: $this->timezoneDetector->getTimezone(),
-            \IntlDateFormatter::GREGORIAN
-        );
+        $formatter = self::createInstance(array(
+            'locale'   => $locale ?: $this->localeDetector->getLocale(),
+            'datetype' => null === $dateType ? \IntlDateFormatter::MEDIUM : $dateType,
+            'timetype' => null === $timeType ? \IntlDateFormatter::MEDIUM : $timeType,
+            'timezone' => $timezone ?: $this->timezoneDetector->getTimezone(),
+            'calendar' => \IntlDateFormatter::GREGORIAN,
+        ));
 
         return $this->process($formatter, $date);
     }
 
     /**
-     * @param \Datetime|string|integer $time
-     * @param null|string              $locale
+     * @param \Datetime|string|int $time
+     * @param null|string          $locale
      * @param null|string timezone
-     * @param null|integer timeType See \IntlDateFormatter::getTimeType
+     * @param null|int timeType See \IntlDateFormatter::getTimeType
+     *
      * @return string
      */
     public function formatTime($time, $locale = null, $timezone = null, $timeType = null)
     {
         $date = $this->getDatetime($time, $timezone);
 
-        $formatter = new \IntlDateFormatter(
-            $locale ?: $this->localeDetector->getLocale(),
-            \IntlDateFormatter::NONE,
-            null === $timeType ? \IntlDateFormatter::MEDIUM : $timeType,
-            $timezone ?: $this->timezoneDetector->getTimezone(),
-            \IntlDateFormatter::GREGORIAN
-        );
+        $formatter = self::createInstance(array(
+            'locale'   => $locale ?: $this->localeDetector->getLocale(),
+            'datetype' => \IntlDateFormatter::NONE,
+            'timetype' => null === $timeType ? \IntlDateFormatter::MEDIUM : $timeType,
+            'timezone' => $timezone ?: $this->timezoneDetector->getTimezone(),
+            'calendar' => \IntlDateFormatter::GREGORIAN,
+        ));
 
         return $this->process($formatter, $date);
     }
 
     /**
-     * @param \Datetime|string|integer $datetime
+     * @param \Datetime|string|int $datetime
      * @param $pattern
      * @param null|string $locale
      * @param null|string timezone
+     *
      * @return string
      */
     public function format($datetime, $pattern, $locale = null, $timezone = null)
     {
         $date = $this->getDatetime($datetime, $timezone);
 
-        $formatter = new \IntlDateFormatter(
-            $locale ?: $this->localeDetector->getLocale(),
-            \IntlDateFormatter::FULL,
-            \IntlDateFormatter::FULL,
-            $timezone ?: $this->timezoneDetector->getTimezone(),
-            \IntlDateFormatter::GREGORIAN,
-            $pattern
-        );
+        $formatter = self::createInstance(array(
+            'locale'   => $locale ?: $this->localeDetector->getLocale(),
+            'datetype' => \IntlDateFormatter::FULL,
+            'timetype' => \IntlDateFormatter::FULL,
+            'timezone' => $timezone ?: $this->timezoneDetector->getTimezone(),
+            'calendar' => \IntlDateFormatter::GREGORIAN,
+            'pattern'  => $pattern,
+        ));
 
         return $this->process($formatter, $date);
     }
 
     /**
-     * @param  \IntlDateFormatter $formatter
-     * @param  \Datetime          $date
+     * @param \IntlDateFormatter $formatter
+     * @param \Datetime          $date
+     *
      * @return string
      */
     public function process(\IntlDateFormatter $formatter, \Datetime $date)
@@ -140,10 +168,10 @@ class DateTimeHelper extends BaseHelper
     }
 
     /**
-     * Gets a date time instance by a given data and timezone
+     * Gets a date time instance by a given data and timezone.
      *
-     * @param \Datetime|string|integer $data     Value representing date
-     * @param null|string              $timezone Timezone of the date
+     * @param \Datetime|string|int $data     Value representing date
+     * @param null|string          $timezone Timezone of the date
      *
      * @return \Datetime
      */
@@ -155,7 +183,7 @@ class DateTimeHelper extends BaseHelper
 
         // the format method accept array or integer
         if (is_numeric($data)) {
-             $data = (int) $data;
+            $data = (int) $data;
         }
 
         if (is_string($data)) {

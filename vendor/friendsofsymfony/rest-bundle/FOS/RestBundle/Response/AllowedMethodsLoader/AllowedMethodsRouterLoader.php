@@ -31,7 +31,7 @@ class AllowedMethodsRouterLoader implements AllowedMethodsLoaderInterface, Cache
      *
      * @param RouterInterface $router
      * @param string          $cacheDir
-     * @param bool            $isDebug Kernel debug flag
+     * @param bool            $isDebug  Kernel debug flag
      */
     public function __construct(RouterInterface $router, $cacheDir, $isDebug)
     {
@@ -48,7 +48,9 @@ class AllowedMethodsRouterLoader implements AllowedMethodsLoaderInterface, Cache
             $this->warmUp(null);
         }
 
-        return require $this->cache;
+        $path = method_exists($this->cache, 'getPath') ? $this->cache->getPath() : $this->cache;
+
+        return require $path;
     }
 
     /**
@@ -70,20 +72,20 @@ class AllowedMethodsRouterLoader implements AllowedMethodsLoaderInterface, Cache
 
         foreach ($routeCollection->all() as $name => $route) {
 
-            if (!isset($processedRoutes[$route->getPattern()])) {
-                $processedRoutes[$route->getPattern()] = array(
+            if (!isset($processedRoutes[$route->getPath()])) {
+                $processedRoutes[$route->getPath()] = array(
                     'methods' => array(),
                     'names'   => array(),
                 );
             }
 
-            $processedRoutes[$route->getPattern()]['names'][] = $name;
+            $processedRoutes[$route->getPath()]['names'][] = $name;
 
             $requirements = $route->getRequirements();
             if (isset($requirements['_method'])) {
                 $methods = explode('|', $requirements['_method']);
-                $processedRoutes[$route->getPattern()]['methods'] = array_merge(
-                    $processedRoutes[$route->getPattern()]['methods'],
+                $processedRoutes[$route->getPath()]['methods'] = array_merge(
+                    $processedRoutes[$route->getPath()]['methods'],
                     $methods
                 );
             }

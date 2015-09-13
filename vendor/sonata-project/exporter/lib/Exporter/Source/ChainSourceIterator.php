@@ -66,7 +66,7 @@ class ChainSourceIterator implements SourceIteratorInterface
      */
     public function valid()
     {
-        while (!$this->sources->current()->valid()) {
+        if (!$this->sources->current()->valid()) {
             $this->sources->next();
 
             if (!$this->sources->valid()) {

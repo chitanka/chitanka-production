@@ -14,8 +14,6 @@ namespace FOS\RestBundle\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
 use FOS\RestBundle\View\View;
-use FOS\RestBundle\View\RedirectView;
-use FOS\RestBundle\View\RouteRedirectView;
 use FOS\RestBundle\Util\Codes;
 
 /**
@@ -54,7 +52,7 @@ abstract class FOSRestController extends Controller
      */
     protected function redirectView($url, $statusCode = Codes::HTTP_FOUND, array $headers = array())
     {
-        return RedirectView::create($url, $statusCode, $headers);
+        return View::createRedirect($url, $statusCode, $headers);
     }
 
     /**
@@ -71,7 +69,7 @@ abstract class FOSRestController extends Controller
      */
     protected function routeRedirectView($route, array $parameters = array(), $statusCode = Codes::HTTP_CREATED, array $headers = array())
     {
-        return RouteRedirectView::create($route, $parameters, $statusCode, $headers);
+        return View::createRouteRedirect($route, $parameters, $statusCode, $headers);
     }
 
     /**

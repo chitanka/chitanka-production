@@ -11,8 +11,8 @@
 
 namespace Sonata\IntlBundle\Templating\Helper;
 
-use Symfony\Component\Templating\Helper\Helper;
 use Sonata\IntlBundle\Locale\LocaleDetectorInterface;
+use Symfony\Component\Templating\Helper\Helper;
 
 /**
  * BaseHelper provides charset conversion.
@@ -49,7 +49,8 @@ abstract class BaseHelper extends Helper
      *
      * Precondition: the kernel charset is not UTF-8
      *
-     * @param  string $string The string to fix
+     * @param string $string The string to fix
+     *
      * @return string A string with the %kernel.charset% encoding
      */
     protected function fixCharset($string)
@@ -62,10 +63,23 @@ abstract class BaseHelper extends Helper
     }
 
     /**
-     * @static
-     * @return string
+     * Typo in the fonction name.
+     *
+     * @deprecated
      */
     public static function getUCIDataVersion()
+    {
+        @trigger_error('The '.__METHOD__.' is deprecated since 2.2 and will be removed on 3.0. Use '.__CLASS__.'::getICUDataVersion instead.', E_USER_DEPRECATED);
+
+        return self::getICUDataVersion();
+    }
+
+    /**
+     * @static
+     *
+     * @return string
+     */
+    public static function getICUDataVersion()
     {
         if (defined('INTL_ICU_VERSION')) {
             return INTL_ICU_VERSION;
@@ -100,6 +114,27 @@ abstract class BaseHelper extends Helper
             }
         }
 
-        return null;
+        return;
+    }
+
+    /**
+     * https://wiki.php.net/rfc/internal_constructor_behaviour.
+     *
+     * @param mixed  $instance
+     * @param string $class
+     * @param array  $args
+     */
+    protected static function checkInternalClass($instance, $class, array $args = array())
+    {
+        if ($instance !== null) {
+            return;
+        }
+
+        $messages = array();
+        foreach ($args as $name => $value) {
+            $messages[] = sprintf('%s => %s', $name, $value);
+        }
+
+        throw new \RuntimeException(sprintf('Unable to create internal class: %s, with params: %s', $class, implode(', ', $messages)));
     }
 }

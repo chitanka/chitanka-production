@@ -156,18 +156,16 @@ class SitemapWriter implements WriterInterface
     /**
      * Generates the sitemap index from the sitemap part avaible in the folder
      *
-     * @param string $folder   A folder to write sitemap index
-     * @param string $baseUrl  A base URL
-     * @param string $pattern  A sitemap pattern, optional
-     * @param string $filename A sitemap file name, optional
+     * @param string  $folder
+     * @param string  $pattern
+     * @param string  $filename
      */
-    public static function generateSitemapIndex($folder, $baseUrl, $pattern = 'sitemap*.xml', $filename = 'sitemap.xml')
+    public static function generateSitemapIndex($folder, $pattern = 'sitemap*.xml', $filename = 'sitemap.xml')
     {
         $content = "<?xml version='1.0' encoding='UTF-8'?" . ">\n<sitemapindex xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.sitemaps.org/schemas/sitemap/1.0 http://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd' xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>\n";
         foreach (glob(sprintf('%s/%s', $folder, $pattern)) as $file) {
             $stat = stat($file);
-            $content .= sprintf("\t" . '<sitemap><loc>%s/%s</loc><lastmod>%s</lastmod></sitemap>' . "\n",
-                $baseUrl,
+            $content .= sprintf("\t" . '<sitemap><loc>%s</loc><lastmod>%s</lastmod></sitemap>' . "\n",
                 basename($file),
                 date('Y-m-d', $stat['mtime'])
             );
@@ -281,7 +279,7 @@ class SitemapWriter implements WriterInterface
      */
     protected function generateDefaultLine(array $data)
     {
-        return sprintf("    ".'<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>%s</changefreq><priority>%s</priority></url>'."\n", $data['url'], date('Y-m-d', strtotime($data['lastmod'])), $data['changefreq'], $data['priority']);
+        return sprintf("\t".'<url><loc>%s</loc><lastmod>%s</lastmod><changefreq>%s</changefreq><priority>%s</priority></url>'."\n", $data['url'], date('Y-m-d', strtotime($data['lastmod'])), $data['changefreq'], $data['priority']);
     }
 
     /**
@@ -314,7 +312,7 @@ class SitemapWriter implements WriterInterface
             $images .= '</image:image>';
         }
 
-        return sprintf("    ".'<url><loc>%s</loc>%s</url>'."\n", $data['url'], $images);
+        return sprintf("\t".'<url><loc>%s</loc>%s</url>'."\n", $data['url'], $images);
     }
 
     /**
@@ -335,7 +333,7 @@ class SitemapWriter implements WriterInterface
             $videos .= sprintf('<video:%1$s>%2$s</video:%1$s>', (isset($builder[$key]) ? $builder[$key] : $key), $video);
         }
 
-        return sprintf("    ".'<url><loc>%s</loc><video:video>%s</video:video></url>'."\n", $data['url'], $videos);
+        return sprintf("\t".'<url><loc>%s</loc><video:video>%s</video:video></url>'."\n", $data['url'], $videos);
     }
 
     /**

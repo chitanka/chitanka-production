@@ -1,3 +1,43 @@
+2.7.0 / 2015-09-01
+==================
+
+### New features
+
+* Added configuration for ReactJsx filter
+* Upgraded the watch command to use Spork 0.3
+* Added support for Twig 2
+* Allow configuration of sass/scss filter sourcemap option
+* Add configuration for precision in the sass/scss filter
+* Treat NULL like "all bundles" in the config
+
+### Bug fixes
+
+* Removed usage of the deprecated Symfony APIs for Symfony 2.7+
+* Fix the asset cache in the controller to take the asset dependencies into account
+* Added "web" folder as a default load path for the sass filter
+
+2.6.1 / 2015-01-27
+==================
+
+### Bug fixes
+
+* Removed usage of the deprecated Symfony APIs for Symfony 2.6+
+
+2.6.0 / 2015-01-26
+==================
+
+### New features
+
+* Allow configuration of sass/scss filter cache location folders.
+
+### Bug fixes
+
+* Updated RequestListener to set additional format for SVG files
+* Clear PHP file stat cache on each watch iteration
+* Add a safeguard for template references without a bundle to be compatible with latest Symfony changes
+* Fix asset dumping with assets added by the DI tag
+* Change the Jsqueeze var renaming to a safer default (disabled by default)
+
 2.5.0 / 2014-10-15
 ==================
 

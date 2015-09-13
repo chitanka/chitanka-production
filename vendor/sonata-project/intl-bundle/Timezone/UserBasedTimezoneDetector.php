@@ -35,22 +35,22 @@ class UserBasedTimezoneDetector implements TimezoneDetectorInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getTimezone()
     {
         if (!$token = $this->securityContext->getToken()) {
-            return null;
+            return;
         }
 
         if (!$user = $token->getUser()) {
-            return null;
+            return;
         }
 
         if ($user instanceof User) {
             return $user->getTimezone();
         }
 
-        return null;
+        return;
     }
 }

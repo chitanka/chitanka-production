@@ -1630,6 +1630,7 @@ class UnitOfWork implements PropertyChangedListener
             case self::STATE_REMOVED:
                 // Entity becomes managed again
                 unset($this->entityDeletions[$oid]);
+                $this->addToIdentityMap($entity);
 
                 $this->entityStates[$oid] = self::STATE_MANAGED;
                 break;
@@ -2312,6 +2313,10 @@ class UnitOfWork implements PropertyChangedListener
 
                 if ($lockVersion === null) {
                     return;
+                }
+
+                if ($entity instanceof Proxy && !$entity->__isInitialized__) {
+                    $entity->__load();
                 }
 
                 $entityVersion = $class->reflFields[$class->versionField]->getValue($entity);

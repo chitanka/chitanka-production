@@ -26,6 +26,9 @@ class RestXmlCollectionLoader extends XmlFileLoader
 {
     protected $collectionParents = array();
     private $processor;
+    private $includeFormat;
+    private $formats;
+    private $defaultFormat;
 
     /**
      * Initializes xml loader.
@@ -81,7 +84,7 @@ class RestXmlCollectionLoader extends XmlFileLoader
                 $imported = $this->processor->importResource($this, $resource, $parents, $prefix, $namePrefix, $type, $currentDir);
 
                 if (!empty($name) && $imported instanceof RestRouteCollection) {
-                    $parents[]  = (!empty($prefix) ? $prefix . '/' : '') . $imported->getSingularName();
+                    $parents[]  = (!empty($prefix) ? $prefix.'/' : '').$imported->getSingularName();
                     $prefix     = null;
 
                     $this->collectionParents[$name] = $parents;
@@ -100,13 +103,6 @@ class RestXmlCollectionLoader extends XmlFileLoader
      */
     protected function parseRoute(RouteCollection $collection, \DOMElement $node, $path)
     {
-        // the Symfony Routing component uses a path attribute since Symfony 2.2
-        // instead of the deprecated pattern attribute0
-        if (!$node->hasAttribute('path')) {
-            $node->setAttribute('path', $node->getAttribute('pattern'));
-            $node->removeAttribute('pattern');
-        }
-
         if ($this->includeFormat) {
             $path = $node->getAttribute('path');
             // append format placeholder if not present
@@ -138,7 +134,6 @@ class RestXmlCollectionLoader extends XmlFileLoader
 
         // set the default format if configured
         if (null !== $this->defaultFormat) {
-            $config['defaults']['_format'] = $this->defaultFormat;
             $defaultFormatNode = $node->ownerDocument->createElementNS(
                 self::NAMESPACE_URI,
                 'default',
@@ -148,7 +143,51 @@ class RestXmlCollectionLoader extends XmlFileLoader
             $node->appendChild($defaultFormatNode);
         }
 
+        $options = $this->getOptions($node);
+
+        foreach ($options as $option) {
+            $node->appendChild($option);
+        }
+
+        $length = $node->childNodes->length;
+        for ($i = 0; $i < $length; $i++) {
+            $loopNode = $node->childNodes->item($i);
+            if ($loopNode->nodeType == XML_TEXT_NODE) {
+                continue;
+            }
+
+            $newNode = $node->ownerDocument->createElementNS(
+                self::NAMESPACE_URI,
+                $loopNode->nodeName,
+                $loopNode->nodeValue
+            );
+
+            foreach ($loopNode->attributes as $value) {
+                $newNode->setAttribute($value->name, $value->value);
+            }
+
+            $node->appendChild($newNode);
+        }
+
         parent::parseRoute($collection, $node, $path);
+    }
+
+    private function getOptions(\DOMElement $node)
+    {
+        $options = array();
+        foreach ($node->childNodes as $child) {
+            if ($child instanceof \DOMElement && $child->tagName === 'option') {
+                $option = $node->ownerDocument->createElementNs(
+                    self::NAMESPACE_URI,
+                    'option',
+                    $child->nodeValue
+                );
+                $option->setAttribute('key', $child->getAttribute('key'));
+                $options[] = $option;
+            }
+        }
+
+        return $options;
     }
 
     /**
@@ -162,7 +201,8 @@ class RestXmlCollectionLoader extends XmlFileLoader
     }
 
     /**
-     * @param  \DOMDocument              $dom
+     * @param \DOMDocument $dom
+     *
      * @throws \InvalidArgumentException When xml doesn't validate its xsd schema
      */
     protected function validate(\DOMDocument $dom)
@@ -202,6 +242,7 @@ EOF
         if (class_exists('Symfony\Component\Config\Util\XmlUtils')) {
             $dom = XmlUtils::loadFile($file);
             $this->validate($dom);
+
             return $dom;
         }
 
@@ -213,6 +254,8 @@ EOF
      *
      * Note: The underscore postfix on the method name is to ensure compatibility with versions
      *       before 2.0.16 while working around a bug in PHP https://bugs.php.net/bug.php?id=62956
+     *
+     * @param bool $internalErrors The previous state of internal errors to reset it
      *
      * @return array An array of libxml error strings
      */

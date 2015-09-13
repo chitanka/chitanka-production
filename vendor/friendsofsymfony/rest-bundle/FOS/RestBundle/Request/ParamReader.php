@@ -46,6 +46,7 @@ class ParamReader implements ParamReaderInterface
 
         $methodParams = $this->getParamsFromMethod($reflection->getMethod($method));
         $classParams = $this->getParamsFromClass($reflection);
+
         return array_merge($methodParams, $classParams);
     }
 
@@ -54,7 +55,7 @@ class ParamReader implements ParamReaderInterface
      *
      * @param array $annotations
      *
-     * @return \FOS\RestBundle\Controller\Annotations\Param
+     * @return Param[]
      */
     private function getParamsFromAnnotationArray(array $annotations)
     {
