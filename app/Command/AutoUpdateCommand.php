@@ -127,7 +127,7 @@ class AutoUpdateCommand extends Command {
 			foreach ($contentUrls as $subDir => $contentUrl) {
 				$targetDir = "$contentDir/$subDir";
 				$fs->remove($targetDir);
-				shell_exec("$git clone $contentUrl $targetDir");
+				shell_exec("$git clone --depth=1 $contentUrl $targetDir");
 			}
 		}
 		return true;
@@ -169,10 +169,10 @@ class AutoUpdateCommand extends Command {
 	 * @param string $commandName
 	 */
 	private function runCommand($commandName) {
-		$php = isset($_SERVER['_']) ? $_SERVER['_'] : PHP_BINDIR.'/php'; // PHP_BINARY available since 5.4
-		$rootDir = $this->getKernel()->getRootDir();
+		$php = PHP_BINDIR.'/php'; // PHP_BINARY available since 5.4
+		$binDir = realpath($this->getKernel()->getRootDir().'/../bin');
 		$environment = $this->getKernel()->getEnvironment();
-		shell_exec("$php $rootDir/console $commandName --env=$environment");
+		shell_exec("$php $binDir/console $commandName --env=$environment");
 	}
 
 	/**
