@@ -561,6 +561,21 @@ class Text extends BaseWork {
 	public function addLabel(Label $label) { $this->labels[] = $label; }
 	public function getLabels() { return $this->labels; }
 
+	public function getLabelsByGroup($group = null) {
+		$labelsByGroup = [];
+		foreach ($this->getLabels() as $label) {
+			$labelsByGroup[$label->getGroup()][] = $label;
+		}
+		if ($group === null) {
+			return $labelsByGroup;
+		}
+		return isset($labelsByGroup[$group]) ? $labelsByGroup[$group] : [];
+	}
+
+	public function getAvailableLabels() {
+		return Label::GROUPS;
+	}
+
 	public function addReader(User $reader) { $this->readers[] = $reader; }
 	public function getReaders() { return $this->readers; }
 
@@ -662,20 +677,6 @@ class Text extends BaseWork {
 
 		$conv = new SfbToHtmlConverter( ContentService::getInternalContentFilePath( 'text', $this->getId() ) );
 		return $this->hasTitleNote = $conv->hasTitleNote();
-	}
-
-	private function getOrigTitleAsSfb() {
-		if (!$this->isTranslation()) {
-			return '';
-		}
-		$authors = implode(', ', $this->getAuthorOrigNames());
-		$origTitle = $this->origTitle;
-		if ( !empty($this->origSubtitle) ) {
-			$origTitle .= " ({$this->origSubtitle})";
-		}
-		$origTitle .= ', '. $this->getYearHuman();
-		$origTitle = ltrim($origTitle, ', ');
-		return rtrim("\t$authors\n\t$origTitle");
 	}
 
 	public function getImages() {
@@ -1044,10 +1045,13 @@ EOS;
 	}
 
 	public function getExtraInfoForDownload() {
-		return $this->getOrigTitleAsSfb() . "\n\n"
-			. $this->getFullExtraInfo()      . "\n\n"
-			. "\tСвалено от „Моята библиотека“: ".$this->getDocId()."\n"
-			. "\tПоследна корекция: ".Date::humanDate($this->curRev->getDate())."\n";
+		$info = "\t\$source = Моята библиотека\n"
+			. "\t\$id = {$this->getId()}\n";
+		foreach ($this->getBooks() as $book) {
+			$info .= "\t\$book_id = {$book->getId()}\n";
+		}
+		$info .= "\n" . $this->getFullExtraInfo();
+		return $info;
 	}
 
 	public function getContentAsFb2() {
