@@ -142,6 +142,16 @@ return [
 		'jp' => 'Япония',
 	],
 
+	'dashboard' => [
+		'authors' => 'Автори',
+		'translators' => 'Преводачи',
+		'books' => 'Книги',
+		'texts' => 'Творби',
+		'series' => 'Серии',
+		'new' => 'Ново',
+		'workroom' => 'Ателие',
+	],
+
 	'labels' => [
 		'genre' => 'Жанр',
 		'characteristic' => 'Характеристика',
@@ -356,6 +366,10 @@ return [
 	'translators.by' => [
 		'first-name' => 'Преводачи',
 		'last-name' => 'Преводачи по фамилия',
+		'country' => [
+			'first-name' => 'Преводачи по държава',
+			'last-name' => 'Преводачи по държава (по фамилия)',
+		],
 	],
 
 	'person.alt' => [

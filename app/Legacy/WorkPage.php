@@ -84,6 +84,7 @@ class WorkPage extends Page {
 	private $status;
 	private $progress;
 	private $isFrozen;
+	private $availableAt;
 	private $delete;
 	private $scanuser;
 	private $scanuser_view;
@@ -120,6 +121,7 @@ class WorkPage extends Page {
 		$this->status = (int) $this->request->value('entry_status');
 		$this->progress = Number::normInt($this->request->value('progress'), 100, 0);
 		$this->isFrozen = $this->request->checkbox('isFrozen');
+		$this->availableAt = $this->request->value('availableAt');
 		$this->delete = $this->request->checkbox('delete');
 		$this->scanuser = (int) $this->request->value('user', $this->user->getId());
 		$this->scanuser_view = $this->request->value('user');
@@ -180,8 +182,11 @@ class WorkPage extends Page {
 
 	private function updateMainUserData() {
 		if ( empty($this->btitle) ) {
-			$this->addMessage('Не сте посочили заглавие на произведението.', true);
-
+			$this->addMessage('Не сте посочили заглавие.', true);
+			return $this->makeForm();
+		}
+		if ( empty($this->pubYear) ) {
+			$this->addMessage('Не сте посочили година на издаване.', true);
 			return $this->makeForm();
 		}
 		$this->btitle = String::my_replace($this->btitle);
@@ -217,8 +222,13 @@ class WorkPage extends Page {
 		if ( $this->entryId == 0 ) {
 			$id = $this->controller->em()->getNextIdRepository()->findNextId('App:WorkEntry')->getValue();
 			$this->uplfile = preg_replace('/^0-/', "$id-", $this->uplfile);
+			$entry = new WorkEntry();
 		} else {
 			$id = $this->entryId;
+			$entry = $this->repo()->find($this->entryId);
+		}
+		if ($this->availableAt) {
+			$entry->setAvailableAt($this->availableAt);
 		}
 		$set = [
 			'id' => $id,
@@ -231,6 +241,7 @@ class WorkPage extends Page {
 			'comment' => $this->pretifyComment($this->comment),
 			'date'=>$this->date,
 			'is_frozen' => $this->isFrozen,
+			'available_at' => $entry->getAvailableAt('Y-m-d'),
 			'status'=>$this->status,
 			'progress' => $this->progress,
 			'tmpfiles' => self::rawurlencode($this->tmpfiles),
@@ -537,14 +548,19 @@ EOS;
 		$info = $this->makeWorkEntryInfo($dbrow);
 		$title = "<i>$dbrow[title]</i>";
 		$file = '';
-		if ( ! empty($dbrow['tmpfiles']) ) {
-			$file = $this->makeFileLink($dbrow['tmpfiles']);
-		} else if ( ! empty($dbrow['uplfile']) ) {
-			$file = $this->makeFileLink($dbrow['uplfile']);
+		if ($entry->isAvailable()) {
+			if ( ! empty($dbrow['tmpfiles']) ) {
+				$file = $this->makeFileLink($dbrow['tmpfiles']);
+			} else if ( ! empty($dbrow['uplfile']) ) {
+				$file = $this->makeFileLink($dbrow['uplfile']);
+			}
 		}
 		$entryLink = $this->controller->generateUrl('workroom_entry_edit', ['id' => $dbrow['id']]);
 		$commentsLink = $dbrow['num_comments'] ? sprintf('<a href="%s#fos_comment_thread" title="Коментари"><span class="fa fa-comments-o"></span>%s</a>', $entryLink, $dbrow['num_comments']) : '';
-		$title = sprintf('<a href="%s" title="Към страницата за редактиране">%s</a>', $entryLink, $title);
+		$title = sprintf('<a href="%s" title="Към страницата за преглед">%s</a>', $entryLink, $title);
+		if (!$entry->isAvailable()) {
+			$title = '<span class="fa fa-ban" title="Дата на достъп: '.$entry->getAvailableAt('d.m.Y').'"></span> ' . $title;
+		}
 		$this->rowclass = $this->nextRowClass($this->rowclass);
 		$st = $dbrow['progress'] > 0
 			? $this->makeProgressBar($dbrow['progress'])
@@ -560,7 +576,7 @@ EOS;
 			$musers = '';
 			foreach ($entry->getContribs() as $contrib) {
 				$uinfo = $this->makeExtraInfo("{$contrib->getComment()} ({$contrib->getProgress()}%)");
-				$ufile = $contrib->getUplfile() == ''
+				$ufile = $contrib->getUplfile() == '' || !$entry->isAvailable()
 					? ''
 					: $this->makeFileLink($contrib->getUplfile(), $contrib->getUser()->getUsername());
 				if ($contrib->getUser()->getId() == $dbrow['user_id']) {
@@ -584,11 +600,12 @@ EOS;
 		$umarker = $this->getUserTypeMarker($dbrow['type']);
 
 		$adminFields = $this->userIsAdmin() ? $this->makeAdminFieldsForTable($dbrow) : '';
+		$humanDate = (new \DateTime($dbrow['ddate']))->format('d.m.Y');
 
 		return <<<EOS
 
 	<tr class="$this->rowclass$extraclass" id="e$dbrow[id]">
-		<td class="date" title="$dbrow[date]">$dbrow[ddate]</td>
+		<td class="date" title="$dbrow[date]">$humanDate</td>
 		$adminFields
 		<td>$umarker</td>
 		<td>$info</td>
@@ -632,6 +649,9 @@ HTML;
 		}
 		if ($dbrow['pub_year']) {
 			$lines[] = '<b>Година:</b> ' . $dbrow['pub_year'];
+		}
+		if ($dbrow['available_at']) {
+			$lines[] = '<b>Дата на достъп:</b> ' . (new \DateTime($dbrow['available_at']))->format('d.m.Y');
 		}
 		$lines[] = $dbrow['comment'];
 		return $this->makeExtraInfo(implode("\n", $lines));
@@ -701,6 +721,10 @@ HTML;
 	}
 
 	private function makeForm() {
+		if (isset($this->entry) && !$this->entry->isAvailable() && !$this->thisUserCanDeleteEntry()) {
+			return '<div class="alert alert-danger">Този запис ще бъде наличен след '.$this->entry->getAvailableAt('d.m.Y').'.</div>';
+		}
+
 		$this->title .= ' — '.(empty($this->entryId) ? 'Добавяне' : 'Редактиране');
 		$helpTop = empty($this->entryId) ? $this->makeAddEntryHelp() : '';
 		$tabs = '';
@@ -994,6 +1018,12 @@ JS;
 		</div>
 	</div>
 	<div class="form-group">
+		<label for="availableAt" class="col-sm-2 control-label">Дата на достъп:</label>
+		<div class="col-sm-10">
+			<input type="date" name="availableAt" id="availableAt" class="form-control" value="$this->availableAt">
+		</div>
+	</div>
+	<div class="form-group">
 		<label for="file" class="col-sm-2 control-label">Файл:</label>
 		<div class="col-sm-10">
 			<div>
@@ -1093,6 +1123,12 @@ FIELDS;
 		<div class="col-sm-10">
 			$status
 			$isFrozen
+		</div>
+	</div>
+	<div class="form-group">
+		<label for="availableAt" class="col-sm-2 control-label">Дата на достъп:</label>
+		<div class="col-sm-10">
+			<input type="date" name="availableAt" id="availableAt" class="form-control" value="$this->availableAt">
 		</div>
 	</div>
 	<div class="form-group">
@@ -1275,6 +1311,7 @@ EOS;
 		$regUrl = $this->controller->generateUrl('register');
 		$ext = $this->user->isAnonymous() ? "е необходимо първо да се <a href=\"$regUrl\">регистрирате</a> (не се притеснявайте, ще ви отнеме най-много 10–20 секунди, колкото и бавно да пишете). След това се върнете на тази страница и" : '';
 		$umarker = $this->getUserTypeMarker(1);
+		$banYearThreshold = $this->container->getParameter('workroom_ban_year_threshold');
 
 		return <<<EOS
 
@@ -1286,7 +1323,7 @@ EOS;
 		<span class="fa fa-warning"></span>
 	</div>
 	<div class="media-body">
-		Разрешено е да се добавят само книги, издадени на български преди 2013 г. Изключение се прави за онези текстове, които са пратени от авторите си, както и за фен-преводи.
+		Разрешено е да се добавят само книги, издадени на български преди $banYearThreshold г. Изключение се прави за онези текстове, които са пратени от авторите си, както и за фен-преводи.
 	</div>
 </div>
 EOS;
@@ -1377,6 +1414,7 @@ EOS;
 		$this->status = $entry->getStatus();
 		$this->progress = $entry->getProgress();
 		$this->isFrozen = $entry->getIsFrozen();
+		$this->availableAt = $entry->getAvailableAt('Y-m-d');
 		$this->tmpfiles = $entry->getTmpfiles();
 		$this->tfsize = $entry->getTfsize();
 		if ( !$this->thisUserCanDeleteEntry() || $this->request->value('workType', null, 3) === null ) {
