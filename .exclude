@@ -4,7 +4,7 @@ tmp/*
 app/config/parameters.yml
 var/cache/*
 var/log/*
-web/content
+web/content/*
 web/cache/*
 web/tor/*
 web/todo/*
