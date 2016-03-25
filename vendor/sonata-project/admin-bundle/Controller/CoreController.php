@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -12,16 +12,23 @@
 namespace Sonata\AdminBundle\Controller;
 
 use Sonata\AdminBundle\Admin\AdminInterface;
+use Sonata\AdminBundle\Admin\Pool;
+use Sonata\AdminBundle\Search\SearchHandler;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Class CoreController.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class CoreController extends Controller
 {
     /**
-     * @return \Sonata\AdminBundle\Admin\Pool
+     * @return Pool
      */
     protected function getAdminPool()
     {
@@ -29,7 +36,7 @@ class CoreController extends Controller
     }
 
     /**
-     * @return \Sonata\AdminBundle\Search\SearchHandler
+     * @return SearchHandler
      */
     protected function getSearchHandler()
     {
@@ -37,11 +44,18 @@ class CoreController extends Controller
     }
 
     /**
+     * @param Request $request
+     *
      * @return string
      */
-    protected function getBaseTemplate()
+    protected function getBaseTemplate(Request $request = null)
     {
-        if ($this->getRequest()->isXmlHttpRequest()) {
+        // to be BC
+        if (null === $request) {
+            $request = $this->getRequest();
+        }
+
+        if ($request->isXmlHttpRequest()) {
             return $this->getAdminPool()->getTemplate('ajax');
         }
 
@@ -49,14 +63,28 @@ class CoreController extends Controller
     }
 
     /**
+     * @param Request $request
+     *
      * @return Response
      */
-    public function dashboardAction()
+    public function dashboardAction(Request $request)
     {
+        $blocks = array(
+            'top'    => array(),
+            'left'   => array(),
+            'center' => array(),
+            'right'  => array(),
+            'bottom' => array(),
+        );
+
+        foreach ($this->container->getParameter('sonata.admin.configuration.dashboard_blocks') as $block) {
+            $blocks[$block['position']][] = $block;
+        }
+
         return $this->render($this->getAdminPool()->getTemplate('dashboard'), array(
-            'base_template'   => $this->getBaseTemplate(),
+            'base_template'   => $this->getBaseTemplate($request),
             'admin_pool'      => $this->container->get('sonata.admin.pool'),
-            'blocks'          => $this->container->getParameter('sonata.admin.configuration.dashboard_blocks')
+            'blocks'          => $blocks,
         ));
     }
 
@@ -73,7 +101,6 @@ class CoreController extends Controller
     public function searchAction(Request $request)
     {
         if ($request->get('admin') && $request->isXmlHttpRequest()) {
-
             try {
                 $admin = $this->getAdminPool()->getAdminByAdminCode($request->get('admin'));
             } catch (ServiceNotFoundException $e) {
@@ -93,15 +120,15 @@ class CoreController extends Controller
                     $results[] = array(
                         'label' => $admin->toString($result),
                         'link'  => $admin->generateObjectUrl('edit', $result),
-                        'id'    => $admin->id($result)
+                        'id'    => $admin->id($result),
                     );
                 }
             }
 
             $response = new JsonResponse(array(
                 'results' => $results,
-                'page'    => $pager ? (int)$pager->getPage() : false,
-                'total'   => $pager ? (int)$pager->getNbResults() : false
+                'page'    => $pager ? (int) $pager->getPage() : false,
+                'total'   => $pager ? (int) $pager->getNbResults() : false,
             ));
             $response->setPrivate();
 
@@ -109,10 +136,10 @@ class CoreController extends Controller
         }
 
         return $this->render($this->container->get('sonata.admin.pool')->getTemplate('search'), array(
-            'base_template' => $this->getBaseTemplate(),
+            'base_template' => $this->getBaseTemplate($request),
             'admin_pool'    => $this->container->get('sonata.admin.pool'),
             'query'         => $request->get('q'),
-            'groups'        => $this->getAdminPool()->getDashboardGroups()
+            'groups'        => $this->getAdminPool()->getDashboardGroups(),
         ));
     }
 }

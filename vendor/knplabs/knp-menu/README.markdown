@@ -5,10 +5,10 @@ The KnpMenu library provides object oriented menus for PHP 5.3.
 It is used by the [KnpMenuBundle](https://github.com/KnpLabs/KnpMenuBundle) for Symfony2
 but can now be used stand-alone.
 
-[![Build Status](https://secure.travis-ci.org/KnpLabs/KnpMenu.png)](http://travis-ci.org/KnpLabs/KnpMenu)
-[![Latest Stable Version](https://poser.pugx.org/knplabs/knp-menu/v/stable.png)](https://packagist.org/packages/knplabs/knp-menu)
-[![Latest Unstable Version](https://poser.pugx.org/knplabs/knp-menu/v/unstable.png)](https://packagist.org/packages/knplabs/knp-menu)
-[![Gitter chat](https://badges.gitter.im/KnpLabs/KnpMenu.png)](https://gitter.im/KnpLabs/KnpMenu)
+[![Build Status](https://secure.travis-ci.org/KnpLabs/KnpMenu.svg)](http://travis-ci.org/KnpLabs/KnpMenu)
+[![Latest Stable Version](https://poser.pugx.org/knplabs/knp-menu/v/stable.svg)](https://packagist.org/packages/knplabs/knp-menu)
+[![Latest Unstable Version](https://poser.pugx.org/knplabs/knp-menu/v/unstable.svg)](https://packagist.org/packages/knplabs/knp-menu)
+[![Gitter chat](https://badges.gitter.im/KnpLabs/KnpMenu.svg)](https://gitter.im/KnpLabs/KnpMenu)
 
 ## Installation
 
@@ -18,7 +18,7 @@ The simple following command will install `knp-menu` into your project. It also 
 entry in your `composer.json` and update the `composer.lock` as well.
 
 ```bash
-$ composer require 'knplabs/knp-menu:~2.0'
+$ composer require knplabs/knp-menu
 ```
 
 > KnpMenu follows the PSR-0 convention names for its classes, which means you can easily integrate `knp-menu` classes loading in your own autoloader.

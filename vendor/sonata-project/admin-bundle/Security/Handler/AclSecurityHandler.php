@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,43 +11,89 @@
 
 namespace Sonata\AdminBundle\Security\Handler;
 
-use Symfony\Component\Security\Core\SecurityContextInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException;
-use Symfony\Component\Security\Acl\Model\MutableAclProviderInterface;
-use Symfony\Component\Security\Acl\Model\AclInterface;
+use Sonata\AdminBundle\Admin\AdminInterface;
 use Symfony\Component\Security\Acl\Domain\ObjectIdentity;
-use Symfony\Component\Security\Acl\Model\ObjectIdentityInterface;
-use Symfony\Component\Security\Acl\Domain\UserSecurityIdentity;
 use Symfony\Component\Security\Acl\Domain\RoleSecurityIdentity;
+use Symfony\Component\Security\Acl\Domain\UserSecurityIdentity;
 use Symfony\Component\Security\Acl\Exception\AclNotFoundException;
 use Symfony\Component\Security\Acl\Exception\NotAllAclsFoundException;
-use Sonata\AdminBundle\Admin\AdminInterface;
+use Symfony\Component\Security\Acl\Model\AclInterface;
+use Symfony\Component\Security\Acl\Model\MutableAclProviderInterface;
+use Symfony\Component\Security\Acl\Model\ObjectIdentityInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException;
+use Symfony\Component\Security\Core\SecurityContextInterface;
 
+/**
+ * Class AclSecurityHandler.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class AclSecurityHandler implements AclSecurityHandlerInterface
 {
-    protected $securityContext;
+    /**
+     * @var TokenStorageInterface|SecurityContextInterface
+     */
+    protected $tokenStorage;
+
+    /**
+     * @var AuthorizationCheckerInterface|SecurityContextInterface
+     */
+    protected $authorizationChecker;
+
+    /**
+     * @var MutableAclProviderInterface
+     */
     protected $aclProvider;
+
+    /**
+     * @var array
+     */
     protected $superAdminRoles;
+
+    /**
+     * @var array
+     */
     protected $adminPermissions;
+
+    /**
+     * @var array
+     */
     protected $objectPermissions;
+
+    /**
+     * @var string
+     */
     protected $maskBuilderClass;
 
     /**
-     * @param \Symfony\Component\Security\Core\SecurityContextInterface         $securityContext
-     * @param \Symfony\Component\Security\Acl\Model\MutableAclProviderInterface $aclProvider
-     * @param string                                                            $maskBuilderClass
-     * @param array                                                             $superAdminRoles
+     * @param TokenStorageInterface|SecurityContextInterface $tokenStorage
+     * @param TokenStorageInterface|SecurityContextInterface $authorizationChecker
+     * @param MutableAclProviderInterface                    $aclProvider
+     * @param string                                         $maskBuilderClass
+     * @param array                                          $superAdminRoles
+     *
+     * @todo Go back to signature class check when bumping requirements to SF 2.6+
      */
-    public function __construct(SecurityContextInterface $securityContext, MutableAclProviderInterface $aclProvider, $maskBuilderClass, array $superAdminRoles)
+    public function __construct($tokenStorage, $authorizationChecker, MutableAclProviderInterface $aclProvider, $maskBuilderClass, array $superAdminRoles)
     {
-        $this->securityContext  = $securityContext;
-        $this->aclProvider      = $aclProvider;
-        $this->maskBuilderClass = $maskBuilderClass;
-        $this->superAdminRoles  = $superAdminRoles;
+        if (!$tokenStorage instanceof TokenStorageInterface && !$tokenStorage instanceof SecurityContextInterface) {
+            throw new \InvalidArgumentException('Argument 1 should be an instance of Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface or Symfony\Component\Security\Core\SecurityContextInterface');
+        }
+        if (!$authorizationChecker instanceof AuthorizationCheckerInterface && !$authorizationChecker instanceof SecurityContextInterface) {
+            throw new \InvalidArgumentException('Argument 2 should be an instance of Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface or Symfony\Component\Security\Core\SecurityContextInterface');
+        }
+
+        $this->tokenStorage         = $tokenStorage;
+        $this->authorizationChecker = $authorizationChecker;
+        $this->aclProvider          = $aclProvider;
+        $this->maskBuilderClass     = $maskBuilderClass;
+        $this->superAdminRoles      = $superAdminRoles;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function setAdminPermissions(array $permissions)
     {
@@ -55,7 +101,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getAdminPermissions()
     {
@@ -63,7 +109,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function setObjectPermissions(array $permissions)
     {
@@ -71,7 +117,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getObjectPermissions()
     {
@@ -79,7 +125,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function isGranted(AdminInterface $admin, $attributes, $object = null)
     {
@@ -88,7 +134,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
         }
 
         try {
-            return $this->securityContext->isGranted($this->superAdminRoles) || $this->securityContext->isGranted($attributes, $object);
+            return $this->authorizationChecker->isGranted($this->superAdminRoles) || $this->authorizationChecker->isGranted($attributes, $object);
         } catch (AuthenticationCredentialsNotFoundException $e) {
             return false;
         } catch (\Exception $e) {
@@ -97,15 +143,15 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getBaseRole(AdminInterface $admin)
     {
-        return 'ROLE_' . str_replace('.', '_', strtoupper($admin->getCode())) . '_%s';
+        return 'ROLE_'.str_replace('.', '_', strtoupper($admin->getCode())).'_%s';
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function buildSecurityInformation(AdminInterface $admin)
     {
@@ -120,7 +166,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function createObjectSecurity(AdminInterface $admin, $object)
     {
@@ -132,7 +178,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
         }
 
         // retrieving the security identity of the currently logged-in user
-        $user             = $this->securityContext->getToken()->getUser();
+        $user             = $this->tokenStorage->getToken()->getUser();
         $securityIdentity = UserSecurityIdentity::fromAccount($user);
 
         $this->addObjectOwner($acl, $securityIdentity);
@@ -141,7 +187,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function deleteObjectSecurity(AdminInterface $admin, $object)
     {
@@ -150,21 +196,21 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getObjectAcl(ObjectIdentityInterface $objectIdentity)
     {
         try {
             $acl = $this->aclProvider->findAcl($objectIdentity);
         } catch (AclNotFoundException $e) {
-            return null;
+            return;
         }
 
         return $acl;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function findObjectAcls(\Traversable $oids, array $sids = array())
     {
@@ -185,7 +231,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function addObjectOwner(AclInterface $acl, UserSecurityIdentity $securityIdentity = null)
     {
@@ -196,7 +242,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function addObjectClassAces(AclInterface $acl, array $roleInformation = array())
     {
@@ -229,7 +275,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function createAcl(ObjectIdentityInterface $objectIdentity)
     {
@@ -237,7 +283,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function updateAcl(AclInterface $acl)
     {
@@ -245,7 +291,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function deleteAcl(ObjectIdentityInterface $objectIdentity)
     {
@@ -253,7 +299,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function findClassAceIndexByRole(AclInterface $acl, $role)
     {
@@ -267,7 +313,7 @@ class AclSecurityHandler implements AclSecurityHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function findClassAceIndexByUsername(AclInterface $acl, $username)
     {

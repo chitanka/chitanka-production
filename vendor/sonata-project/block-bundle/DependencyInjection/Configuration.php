@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Sonata package.
  *
@@ -15,7 +16,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
- * This is the class that validates and merges configuration from your app/config files
+ * This is the class that validates and merges configuration from your app/config files.
  *
  * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html#cookbook-bundles-extension-config-class}
  */
@@ -35,7 +36,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getConfigTreeBuilder()
     {
@@ -48,7 +49,7 @@ class Configuration implements ConfigurationInterface
             ->fixXmlConfig('block')
             ->fixXmlConfig('block_by_class')
             ->validate()
-                ->always(function($value) {
+                ->always(function ($value) {
                     foreach ($value['blocks'] as $name => &$block) {
                         if (count($block['contexts']) == 0) {
                             $block['contexts'] = $value['default_contexts'];
@@ -58,7 +59,7 @@ class Configuration implements ConfigurationInterface
                     if (isset($value['profiler']['container_types']) && !empty($value['profiler']['container_types'])
                         && isset($value['container']['types']) && !empty($value['container']['types'])
                         && 0 !== count(array_diff($value['profiler']['container_types'], $value['container']['types']))) {
-                        throw new \RuntimeException("You cannot have different config options for sonata_block.profiler.container_types and sonata_block.container.types; the first one is deprecated, in case of doubt use the latter");
+                        throw new \RuntimeException('You cannot have different config options for sonata_block.profiler.container_types and sonata_block.container.types; the first one is deprecated, in case of doubt use the latter');
                     }
 
                     return $value;
@@ -74,7 +75,7 @@ class Configuration implements ConfigurationInterface
                         ->arrayNode('container_types')
                             ->isRequired()
                             // add default value to well know users of BlockBundle
-                            ->defaultValue(array('sonata.block.service.container', 'sonata.page.block.container', 'cmf.block.container', 'cmf.block.slideshow'))
+                            ->defaultValue(array('sonata.block.service.container', 'sonata.page.block.container', 'sonata.dashboard.block.container', 'cmf.block.container', 'cmf.block.slideshow'))
                             ->prototype('scalar')->end()
                         ->end()
                     ->end()
@@ -90,14 +91,14 @@ class Configuration implements ConfigurationInterface
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->scalarNode('handler')->defaultValue('sonata.block.cache.handler.default')->end()
-                        ->booleanNode('listener')->defaultValue(true)->end()
+                        ->booleanNode('listener')->defaultTrue()->end()
                     ->end()
                 ->end()
                 ->arrayNode('templates')
                     ->addDefaultsIfNotSet()
                     ->children()
-                        ->scalarNode('block_base')->defaultValue(null)->end()
-                        ->scalarNode('block_container')->defaultValue(null)->end()
+                        ->scalarNode('block_base')->defaultNull()->end()
+                        ->scalarNode('block_container')->defaultNull()->end()
                     ->end()
                 ->end()
 
@@ -111,7 +112,7 @@ class Configuration implements ConfigurationInterface
                             ->info('container service ids')
                             ->isRequired()
                             // add default value to well know users of BlockBundle
-                            ->defaultValue(array('sonata.block.service.container', 'sonata.page.block.container', 'cmf.block.container', 'cmf.block.slideshow'))
+                            ->defaultValue(array('sonata.block.service.container', 'sonata.page.block.container', 'sonata.dashboard.block.container', 'cmf.block.container', 'cmf.block.slideshow'))
                             ->prototype('scalar')->end()
                         ->end()
                         ->arrayNode('templates')
@@ -142,8 +143,8 @@ class Configuration implements ConfigurationInterface
                             ->end()
                             ->arrayNode('exception')
                                 ->children()
-                                    ->scalarNode('filter')  ->defaultValue(null)->end()
-                                    ->scalarNode('renderer')->defaultValue(null)->end()
+                                    ->scalarNode('filter')->defaultNull()->end()
+                                    ->scalarNode('renderer')->defaultNull()->end()
                                 ->end()
                             ->end()
                         ->end()
@@ -180,7 +181,7 @@ class Configuration implements ConfigurationInterface
                         ->arrayNode('default')
                             ->addDefaultsIfNotSet()
                             ->children()
-                                ->scalarNode('filter')  ->defaultValue('debug_only')->end()
+                                ->scalarNode('filter')->defaultValue('debug_only')->end()
                                 ->scalarNode('renderer')->defaultValue('throw')->end()
                             ->end()
                         ->end()
@@ -220,6 +221,6 @@ class Configuration implements ConfigurationInterface
      */
     public function getConfiguration(array $config, ContainerBuilder $container)
     {
-        return new Configuration(array());
+        return new self(array());
     }
 }

@@ -1,8 +1,8 @@
 <?php namespace App\Admin;
 
-use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
 
 class CategoryAdmin extends Admin {
@@ -34,13 +34,13 @@ class CategoryAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$formMapper->with('General attributes')
 			->add('name')
 			->add('slug')
 			->add('parent', null, ['required' => false, 'query_builder' => function ($repo) {
 				return $repo->createQueryBuilder('e')->orderBy('e.name');
-			}]);
+			}])
+			->end();
 
 	}
 

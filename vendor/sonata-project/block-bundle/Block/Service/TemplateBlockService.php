@@ -11,14 +11,13 @@
 
 namespace Sonata\BlockBundle\Block\Service;
 
-use Sonata\BlockBundle\Block\BlockContextInterface;
-use Symfony\Component\HttpFoundation\Response;
-
 use Sonata\AdminBundle\Form\FormMapper;
-
-use Sonata\BlockBundle\Model\BlockInterface;
 use Sonata\BlockBundle\Block\BaseBlockService;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Sonata\BlockBundle\Block\BlockContextInterface;
+use Sonata\BlockBundle\Model\BlockInterface;
+use Sonata\CoreBundle\Model\Metadata;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * @author     Thomas Rabaix <thomas.rabaix@sonata-project.org>
@@ -32,7 +31,7 @@ class TemplateBlockService extends BaseBlockService
     {
         return $this->renderResponse($blockContext->getTemplate(), array(
             'block'     => $blockContext->getBlock(),
-            'settings'  => $blockContext->getSettings()
+            'settings'  => $blockContext->getSettings(),
         ), $response);
     }
 
@@ -44,25 +43,27 @@ class TemplateBlockService extends BaseBlockService
         $formMapper->add('settings', 'sonata_type_immutable_array', array(
             'keys' => array(
                 array('template', null, array()),
-            )
+            ),
         ));
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getName()
+    public function configureSettings(OptionsResolver $resolver)
     {
-        return 'Template';
+        $resolver->setDefaults(array(
+            'template' => 'SonataBlockBundle:Block:block_template.html.twig',
+        ));
     }
 
     /**
      * {@inheritdoc}
      */
-    public function setDefaultSettings(OptionsResolverInterface $resolver)
+    public function getBlockMetadata($code = null)
     {
-        $resolver->setDefaults(array(
-            'template' => 'SonataBlockBundle:Block:block_template.html.twig'
+        return new Metadata($this->getName(), (!is_null($code) ? $code : $this->getName()), false, 'SonataBlockBundle', array(
+            'class' => 'fa fa-code',
         ));
     }
 }

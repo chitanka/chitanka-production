@@ -1,8 +1,8 @@
 <?php namespace App\Admin;
 
-use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
 
 class BookLinkAdmin extends Admin {
@@ -33,11 +33,11 @@ class BookLinkAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$formMapper->with('General attributes')
 			//->add('book')
 			->add('site')
-			->add('code');
+			->add('code')
+			->end();
 	}
 
 	protected function configureDatagridFilters(DatagridMapper $datagrid) {

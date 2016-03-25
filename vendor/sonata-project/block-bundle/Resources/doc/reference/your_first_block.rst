@@ -6,7 +6,7 @@
 Your first block
 ================
 
-This quick tutorial explains how to create a `RSS reader` block.
+This quick tutorial explains how to create an `RSS reader` block.
 
 A `block service` is just a service which must implement the ``BlockServiceInterface`` interface. There is only one instance of a block service, however there are many block instances.
 
@@ -14,7 +14,7 @@ First namespaces
 ----------------
 
 The ``BaseBlockService`` implements some basic methods defined by the interface.
-The current RSS block will extend this base class. The others `use` statements are required by the interface and remaining methods.
+The current RSS block will extend this base class. The other `use` statements are required by the interface's remaining methods.
 
 .. code-block:: php
 
@@ -29,7 +29,8 @@ The current RSS block will extend this base class. The others `use` statements a
     use Sonata\BlockBundle\Block\BlockContextInterface;
 
     use Sonata\AdminBundle\Form\FormMapper;
-    use Sonata\AdminBundle\Validator\ErrorElement;
+    use Sonata\CoreBundle\Validator\ErrorElement;
+    use Sonata\BlockBundle\Block\BaseBlockService;
 
 Default settings
 ----------------
@@ -44,6 +45,7 @@ In the current tutorial, the default settings are:
 .. code-block:: php
 
     <?php
+
     public function setDefaultSettings(OptionsResolverInterface $resolver)
     {
         $resolver->setDefaults(array(
@@ -53,22 +55,24 @@ In the current tutorial, the default settings are:
         ));
     }
 
-Form Edition
+Form Editing
 ------------
-
-The ``BlockBundle`` relies on the ``AdminBundle`` to manage form edition and keep a good consistency.
+In order to allow editing forms, the ``BlockBundle`` relies on the ``AdminBundle``.
 
 .. code-block:: php
 
     <?php
+
     public function buildEditForm(FormMapper $formMapper, BlockInterface $block)
     {
-        $formMapper->add('settings', 'sonata_type_immutable_array', array(
-            'keys' => array(
-                array('url', 'url', array('required' => false)),
-                array('title', 'text', array('required' => false)),
-            )
-        ));
+        $formMapper
+            ->add('settings', 'sonata_type_immutable_array', array(
+                'keys' => array(
+                    array('url', 'url', array('required' => false)),
+                    array('title', 'text', array('required' => false)),
+                )
+            ))
+        ;
     }
 
 The validation is done at runtime through a ``validateBlock`` method. You can call any Symfony2 assertions, like:
@@ -76,6 +80,7 @@ The validation is done at runtime through a ``validateBlock`` method. You can ca
 .. code-block:: php
 
     <?php
+
     public function validateBlock(ErrorElement $errorElement, BlockInterface $block)
     {
         $errorElement
@@ -87,7 +92,8 @@ The validation is done at runtime through a ``validateBlock`` method. You can ca
                 ->assertNotNull(array())
                 ->assertNotBlank()
                 ->assertMaxLength(array('limit' => 50))
-            ->end();
+            ->end()
+        ;
     }
 
 The ``sonata_type_immutable_array`` type is a specific `form type` which allows to edit an array.
@@ -95,7 +101,7 @@ The ``sonata_type_immutable_array`` type is a specific `form type` which allows 
 Execute
 -------
 
-The next step is the `Execute` method. This method must return a ``Response`` object, which is used to render the block.
+The next step is to implement the `execute` method. This method must return a ``Response`` object, which is used to render the block.
 
 .. code-block:: php
 
@@ -105,8 +111,8 @@ The next step is the `Execute` method. This method must return a ``Response`` ob
     {
         // merge settings
         $settings = $blockContext->getSettings();
-
         $feeds = false;
+
         if ($settings['url']) {
             $options = array(
                 'http' => array(
@@ -165,23 +171,37 @@ Service
 
 We are almost done! Now, just declare the block as a service:
 
-.. code-block:: xml
+.. configuration-block::
 
-    <service id="sonata.block.service.rss" class="Sonata\BlockBundle\Block\Service\RssBlockService">
-        <tag name="sonata.block" />
-        <argument>sonata.block.service.rss</argument>
-        <argument type="service" id="templating" />
-    </service>
+    .. code-block:: xml
 
-and add it to Sonata configuration:
+        <service id="sonata.block.service.rss" class="Sonata\BlockBundle\Block\Service\RssBlockService">
+            <tag name="sonata.block" />
+            <argument>sonata.block.service.rss</argument>
+            <argument type="service" id="templating" />
+        </service>
 
-.. code-block:: yaml
+    .. code-block:: yaml
 
-    # app/config/config.yml
-
-    sonata_block:
-        blocks:
+        services:
             sonata.block.service.rss:
-    #           cache: sonata.cache.memcached
+                class: Sonata\BlockBundle\Block\Service\RssBlockService
+                arguments:
+                    - sonata.block.service.rss
+                    - @templating
+                tags:
+                    - { name: sonata.block }
 
+Then, add the service to Sonata configuration:
 
+.. configuration-block::
+
+    .. code-block:: yaml
+
+        # app/config/config.yml
+
+        sonata_block:
+            blocks:
+                sonata.block.service.rss: ~
+
+If you want to set up caching, take a look at the SonataCacheBundle support documentation: :doc:`cache`.

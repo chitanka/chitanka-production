@@ -1,8 +1,8 @@
 <?php namespace App\Admin;
 
-use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
 
 class SequenceAdmin extends Admin {
@@ -36,12 +36,12 @@ class SequenceAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$formMapper->with('General attributes')
 			->add('name')
 			->add('slug')
 			->add('publisher', null, ['required' => false])
-			->add('isSeqnrVisible', null, ['required' => false]);
+			->add('isSeqnrVisible', null, ['required' => false])
+			->end();
 	}
 
 	protected function configureDatagridFilters(DatagridMapper $datagrid) {

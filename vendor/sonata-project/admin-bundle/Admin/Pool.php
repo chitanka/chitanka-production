@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -12,37 +12,79 @@
 namespace Sonata\AdminBundle\Admin;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 
+/**
+ * Class Pool.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class Pool
 {
-    protected $container = null;
+    /**
+     * @var ContainerInterface
+     */
+    protected $container;
 
+    /**
+     * @var string[]
+     */
     protected $adminServiceIds = array();
 
+    /**
+     * @var array
+     */
     protected $adminGroups = array();
 
+    /**
+     * @var array
+     */
     protected $adminClasses = array();
 
-    protected $templates    = array();
+    /**
+     * @var string[]
+     */
+    protected $templates = array();
 
+    /**
+     * @var array
+     */
+    protected $assets = array();
+
+    /**
+     * @var string
+     */
     protected $title;
 
+    /**
+     * @var string
+     */
     protected $titleLogo;
 
+    /**
+     * @var array
+     */
     protected $options;
 
     /**
-     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-     * @param string                                                    $title
-     * @param string                                                    $logoTitle
-     * @param array                                                     $options
+     * @var PropertyAccessorInterface
      */
-    public function __construct(ContainerInterface $container, $title, $logoTitle, $options = array())
+    protected $propertyAccessor;
+
+    /**
+     * @param ContainerInterface $container
+     * @param string             $title
+     * @param string             $logoTitle
+     * @param array              $options
+     */
+    public function __construct(ContainerInterface $container, $title, $logoTitle, $options = array(), PropertyAccessorInterface $propertyAccessor = null)
     {
         $this->container = $container;
         $this->title     = $title;
         $this->titleLogo = $logoTitle;
         $this->options   = $options;
+        $this->propertyAccessor = $propertyAccessor;
     }
 
     /**
@@ -65,6 +107,7 @@ class Pool
      * Returns whether an admin group exists or not.
      *
      * @param string $group
+     *
      * @return bool
      */
     public function hasGroup($group)
@@ -81,11 +124,16 @@ class Pool
 
         foreach ($this->adminGroups as $name => $adminGroup) {
             if (isset($adminGroup['items'])) {
-                foreach ($adminGroup['items'] as $key => $id) {
-                    $admin = $this->getInstance($id);
+                foreach ($adminGroup['items'] as $key => $item) {
+                    // Only Admin Group should be returned
+                    if ('' != $item['admin']) {
+                        $admin = $this->getInstance($item['admin']);
 
-                    if ($admin->showIn(Admin::CONTEXT_DASHBOARD)) {
-                        $groups[$name]['items'][$key] = $admin;
+                        if ($admin->showIn(Admin::CONTEXT_DASHBOARD)) {
+                            $groups[$name]['items'][$key] = $admin;
+                        } else {
+                            unset($groups[$name]['items'][$key]);
+                        }
                     } else {
                         unset($groups[$name]['items'][$key]);
                     }
@@ -101,10 +149,12 @@ class Pool
     }
 
     /**
-     * Returns all admins related to the given $group
+     * Returns all admins related to the given $group.
      *
      * @param string $group
+     *
      * @return array
+     *
      * @throws \InvalidArgumentException
      */
     public function getAdminsByGroup($group)
@@ -127,7 +177,7 @@ class Pool
     }
 
     /**
-     * return the admin related to the given $class
+     * Return the admin related to the given $class.
      *
      * @param string $class
      *
@@ -136,15 +186,15 @@ class Pool
     public function getAdminByClass($class)
     {
         if (!$this->hasAdminByClass($class)) {
-            return null;
+            return;
         }
 
         if (!is_array($this->adminClasses[$class])) {
-            throw new \RuntimeException("Invalid format for the Pool::adminClass property");
+            throw new \RuntimeException('Invalid format for the Pool::adminClass property');
         }
 
         if (count($this->adminClasses[$class]) > 1) {
-            throw new \RuntimeException(sprintf('Unable to found a valid admin for the class: %s, get too many admin registered: %s', $class, implode(",", $this->adminClasses[$class])));
+            throw new \RuntimeException(sprintf('Unable to find a valid admin for the class: %s, there are too many registered: %s', $class, implode(',', $this->adminClasses[$class])));
         }
 
         return $this->getInstance($this->adminClasses[$class][0]);
@@ -162,7 +212,7 @@ class Pool
 
     /**
      * Returns an admin class by its Admin code
-     * ie : sonata.news.admin.post|sonata.news.admin.comment => return the child class of post
+     * ie : sonata.news.admin.post|sonata.news.admin.comment => return the child class of post.
      *
      * @param string $adminCode
      *
@@ -184,19 +234,25 @@ class Pool
     }
 
     /**
-     * Returns a new admin instance depends on the given code
+     * Returns a new admin instance depends on the given code.
      *
      * @param string $id
      *
-     * @return \Sonata\AdminBundle\Admin\AdminInterface
+     * @return AdminInterface
+     *
+     * @throws \InvalidArgumentException
      */
     public function getInstance($id)
     {
+        if (!in_array($id, $this->adminServiceIds)) {
+            throw new \InvalidArgumentException(sprintf('Admin service "%s" not found in admin pool.', $id));
+        }
+
         return $this->container->get($id);
     }
 
     /**
-     * @return null|\Symfony\Component\DependencyInjection\ContainerInterface
+     * @return ContainerInterface|null
      */
     public function getContainer()
     {
@@ -205,8 +261,6 @@ class Pool
 
     /**
      * @param array $adminGroups
-     *
-     * @return void
      */
     public function setAdminGroups(array $adminGroups)
     {
@@ -223,8 +277,6 @@ class Pool
 
     /**
      * @param array $adminServiceIds
-     *
-     * @return void
      */
     public function setAdminServiceIds(array $adminServiceIds)
     {
@@ -241,8 +293,6 @@ class Pool
 
     /**
      * @param array $adminClasses
-     *
-     * @return void
      */
     public function setAdminClasses(array $adminClasses)
     {
@@ -259,8 +309,6 @@ class Pool
 
     /**
      * @param array $templates
-     *
-     * @return void
      */
     public function setTemplates(array $templates)
     {
@@ -285,8 +333,6 @@ class Pool
         if (isset($this->templates[$name])) {
             return $this->templates[$name];
         }
-
-        return null;
     }
 
     /**
@@ -306,16 +352,26 @@ class Pool
     }
 
     /**
-     * @param $name
+     * @param string $name
+     * @param mixed  $default
      *
      * @return mixed
      */
-    public function getOption($name)
+    public function getOption($name, $default = null)
     {
         if (isset($this->options[$name])) {
             return $this->options[$name];
         }
 
-        return null;
+        return $default;
+    }
+
+    public function getPropertyAccessor()
+    {
+        if (null === $this->propertyAccessor) {
+            $this->propertyAccessor = PropertyAccess::createPropertyAccessor();
+        }
+
+        return $this->propertyAccessor;
     }
 }

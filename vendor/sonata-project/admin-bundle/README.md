@@ -1,11 +1,27 @@
-SonataAdminBundle - The missing Symfony2 Admin Generator
+SonataAdminBundle - The missing Symfony Admin Generator
 ========================================================
 
-[![Build Status](https://secure.travis-ci.org/sonata-project/SonataAdminBundle.png?branch=master)](http://travis-ci.org/sonata-project/SonataAdminBundle)
+- Master branch status : [![Master branch build status]
+  (https://secure.travis-ci.org/sonata-project/SonataAdminBundle.png?branch=master)]
+  (http://travis-ci.org/sonata-project/SonataAdminBundle)
 
-The online documentation of the bundle is in http://sonata-project.org/bundles/admin
+- Last stable branch (currently 2.3) status : [![Last stable branch build Status]
+  (https://travis-ci.org/sonata-project/SonataAdminBundle.svg?branch=2.3)]
+  (https://travis-ci.org/sonata-project/SonataAdminBundle)
 
-The demo website can be found in http://demo.sonata-project.org/admin/dashboard (admin as user and password)
+Demo
+----
+
+The demo website can be found in http://demo.sonata-project.org
+
+After clicking **Launch your container.** you can use the demo.
+
+**Username and password is:** ```admin```
+
+Documentation
+------------
+
+The online documentation of the bundle is in https://sonata-project.org/bundles/admin
 
 For contribution to the documentation you can find it on [Resources/doc](https://github.com/sonata-project/SonataAdminBundle/tree/master/Resources/doc).
 
@@ -15,13 +31,13 @@ and some content might be broken or hidden, make sure to read raw files.
 **Warning**: The bundle has been split into 5 bundles :
 
 * SonataAdminBundle : the current one, contains core libraries and services
-* [SonataDoctrineORMAdminBundle](https://github.com/sonata-project/SonataDoctrineORMAdminBundle) 
+* [SonataDoctrineORMAdminBundle](https://github.com/sonata-project/SonataDoctrineORMAdminBundle)
 : Integrates the admin bundle into with the Doctrine ORM project
-* [SonataDoctrineMongoDBAdminBundle](https://github.com/sonata-project/SonataDoctrineMongoDBAdminBundle) 
+* [SonataDoctrineMongoDBAdminBundle](https://github.com/sonata-project/SonataDoctrineMongoDBAdminBundle)
 : Integrates the admin bundle into with MongoDB (early stage)
-* [SonataDoctrinePhpcrAdminBundle](https://github.com/sonata-project/SonataDoctrinePhpcrAdminBundle) 
+* [SonataDoctrinePhpcrAdminBundle](https://github.com/sonata-project/SonataDoctrinePhpcrAdminBundle)
 : Integrates the admin bundle into with PHPCR (early stage)
-* [SonataPropelAdminBundle](https://github.com/sonata-project/SonataPropelAdminBundle) 
+* [SonataPropelAdminBundle](https://github.com/sonata-project/SonataPropelAdminBundle)
 : Integrates the admin bundle into with Propel (early stage)
 
 **Google Groups**: For questions and proposals you can post on this google groups

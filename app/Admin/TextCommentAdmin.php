@@ -1,10 +1,10 @@
 <?php namespace App\Admin;
 
-use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
-use Sonata\AdminBundle\Show\ShowMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Route\RouteCollection;
+use Sonata\AdminBundle\Show\ShowMapper;
 
 class TextCommentAdmin extends Admin {
 	protected $baseRoutePattern = 'text-comment';
@@ -42,11 +42,11 @@ class TextCommentAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$formMapper->with('General attributes')
 			->add('rname')
 			->add('content')
-			->add('is_shown', null, ['required' => false]);
+			->add('is_shown', null, ['required' => false])
+			->end();
 	}
 
 	protected function configureDatagridFilters(DatagridMapper $datagrid) {

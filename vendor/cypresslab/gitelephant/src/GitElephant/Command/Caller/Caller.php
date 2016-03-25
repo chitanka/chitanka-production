@@ -19,8 +19,9 @@
 
 namespace GitElephant\Command\Caller;
 
-use GitElephant\GitBinary;
-use Symfony\Component\Process\Process;
+use GitElephant\Exception\InvalidRepositoryPathException;
+use \GitElephant\GitBinary;
+use \Symfony\Component\Process\Process;
 
 /**
  * Caller
@@ -66,6 +67,11 @@ class Caller implements CallerInterface
     public function __construct(GitBinary $binary, $repositoryPath)
     {
         $this->binary         = $binary;
+
+        if (!is_dir($repositoryPath)) {
+            throw new InvalidRepositoryPathException($repositoryPath);
+        }
+
         $this->repositoryPath = $repositoryPath;
     }
 
@@ -88,6 +94,10 @@ class Caller implements CallerInterface
      * @param array  $acceptedExitCodes exit codes accepted to consider the command execution successful
      *
      * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\InvalidArgumentException
+     * @throws \Symfony\Component\Process\Exception\ProcessTimedOutException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
+     * @throws \Symfony\Component\Process\Exception\LogicException
      * @return Caller
      */
     public function execute($cmd, $git = true, $cwd = null, $acceptedExitCodes = array(0))
@@ -96,11 +106,15 @@ class Caller implements CallerInterface
             $cmd = $this->binary->getPath() . ' ' . $cmd;
         }
 
-        $process = new Process($cmd, $cwd == null ? $this->repositoryPath : $cwd);
+        $process = new Process($cmd, is_null($cwd) ? $this->repositoryPath : $cwd);
         $process->setTimeout(15000);
         $process->run();
         if (!in_array($process->getExitCode(), $acceptedExitCodes)) {
-            throw new \RuntimeException($process->getErrorOutput());
+            $text = 'Exit code: ' . $process->getExitCode();
+            $text .= ' while executing: "' . $cmd;
+            $text .= '" with reason: ' . $process->getErrorOutput();
+            $text .= "\n" . $process->getOutput();
+            throw new \RuntimeException($text);
         }
         $this->rawOutput = $process->getOutput();
         // rtrim values

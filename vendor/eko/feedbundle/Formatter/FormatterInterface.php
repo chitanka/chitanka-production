@@ -10,10 +10,11 @@
 
 namespace Eko\FeedBundle\Formatter;
 
+use Eko\FeedBundle\Feed\Feed;
 use Eko\FeedBundle\Item\Writer\ItemInterface;
 
 /**
- * Formatter interface
+ * Formatter interface.
  *
  * This interface contains the methods that a renderer needs to implement
  *
@@ -22,14 +23,21 @@ use Eko\FeedBundle\Item\Writer\ItemInterface;
 interface FormatterInterface
 {
     /**
-     * Initialize XML DOMDocument
+     * Sets feed instance.
+     *
+     * @param Feed $feed
+     */
+    public function setFeed(Feed $feed);
+
+    /**
+     * Initialize XML DOMDocument.
      *
      * @abstract
      */
     public function initialize();
 
     /**
-     * Add an entity item to the feed
+     * Add an entity item to the feed.
      *
      * @param \DOMElement   $channel The channel DOM element
      * @param ItemInterface $item    An entity object
@@ -37,7 +45,7 @@ interface FormatterInterface
     public function addItem(\DOMElement $channel, ItemInterface $item);
 
     /**
-     * Returns formatter name
+     * Returns formatter name.
      *
      * @return string
      */

@@ -11,7 +11,7 @@
 namespace Eko\FeedBundle\Field\Item;
 
 /**
- * GroupItemField
+ * GroupItemField.
  *
  * This is items group field class
  *
@@ -20,7 +20,7 @@ namespace Eko\FeedBundle\Field\Item;
 class GroupItemField implements ItemFieldInterface
 {
     /**
-     * @var string $name Field name
+     * @var string Field name
      */
     protected $name;
 
@@ -30,14 +30,20 @@ class GroupItemField implements ItemFieldInterface
     protected $itemFields;
 
     /**
-     * Constructor
+     * @var array
+     */
+    protected $attributes;
+
+    /**
+     * Constructor.
      *
      * @param string                   $name       A group field name
      * @param array|ItemFieldInterface $itemFields An array or a single ItemField instance
+     * @param array                    $attributes An attributes array to add to item fields
      *
      * @throws \RuntimeException if
      */
-    public function __construct($name, $itemFields)
+    public function __construct($name, $itemFields, array $attributes = [])
     {
         $this->name = $name;
 
@@ -46,14 +52,15 @@ class GroupItemField implements ItemFieldInterface
         }
 
         if (!is_array($itemFields)) {
-            $itemFields = array($itemFields);
+            $itemFields = [$itemFields];
         }
 
         $this->itemFields = $itemFields;
+        $this->attributes = $attributes;
     }
 
     /**
-     * Returns group field name
+     * Returns group field name.
      *
      * @return string
      */
@@ -63,12 +70,22 @@ class GroupItemField implements ItemFieldInterface
     }
 
     /**
-     * Returns item fields
+     * Returns item fields.
      *
      * @return array
      */
     public function getItemFields()
     {
         return $this->itemFields;
+    }
+
+    /**
+     * Returns attributes to add to this group item field.
+     *
+     * @return array
+     */
+    public function getAttributes()
+    {
+        return $this->attributes;
     }
 }

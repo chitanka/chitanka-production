@@ -1,35 +1,34 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
  */
 
 namespace Sonata\AdminBundle\Form\Type;
 
-use Symfony\Component\Form\FormBuilderInterface;
+use Sonata\AdminBundle\Form\DataTransformer\ModelToIdTransformer;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
-
-use Sonata\AdminBundle\Form\DataTransformer\ModelToIdTransformer;
 
 /**
  * This type is used to render an hidden input text and 3 links
  *   - an add form modal
- *   - a list modal to select the targetted entities
- *   - a clear selection link
+ *   - a list modal to select the targeted entities
+ *   - a clear selection link.
  */
 class ModelTypeList extends AbstractType
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
@@ -54,23 +53,32 @@ class ModelTypeList extends AbstractType
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
+     *
+     * @todo Remove it when bumping requirements to SF 2.7+
      */
     public function setDefaultOptions(OptionsResolverInterface $resolver)
     {
+        $this->configureOptions($resolver);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function configureOptions(OptionsResolver $resolver)
+    {
         $resolver->setDefaults(array(
-            'model_manager'     => null,
-            'class'             => null,
-            'parent'            => 'text',
-            'btn_add'           => 'link_add',
-            'btn_list'          => 'link_list',
-            'btn_delete'        => 'link_delete',
-            'btn_catalogue'     => 'SonataAdminBundle'
+            'model_manager' => null,
+            'class'         => null,
+            'btn_add'       => 'link_add',
+            'btn_list'      => 'link_list',
+            'btn_delete'    => 'link_delete',
+            'btn_catalogue' => 'SonataAdminBundle',
         ));
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getParent()
     {
@@ -78,9 +86,19 @@ class ModelTypeList extends AbstractType
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
+     *
+     * @todo Remove when dropping Symfony <2.8 support
      */
     public function getName()
+    {
+        return $this->getBlockPrefix();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getBlockPrefix()
     {
         return 'sonata_type_model_list';
     }

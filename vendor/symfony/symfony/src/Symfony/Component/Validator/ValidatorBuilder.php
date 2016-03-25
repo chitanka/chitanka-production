@@ -11,23 +11,25 @@
 
 namespace Symfony\Component\Validator;
 
-use Symfony\Component\PropertyAccess\PropertyAccess;
-use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
-use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
-use Symfony\Component\Validator\Exception\ValidatorException;
-use Symfony\Component\Validator\Mapping\Loader\LoaderChain;
-use Symfony\Component\Validator\Mapping\Cache\CacheInterface;
-use Symfony\Component\Validator\Mapping\Loader\StaticMethodLoader;
-use Symfony\Component\Validator\Mapping\Loader\YamlFileLoader;
-use Symfony\Component\Validator\Mapping\Loader\AnnotationLoader;
-use Symfony\Component\Validator\Mapping\Loader\YamlFilesLoader;
-use Symfony\Component\Validator\Mapping\Loader\XmlFileLoader;
-use Symfony\Component\Validator\Mapping\Loader\XmlFilesLoader;
-use Symfony\Component\Translation\TranslatorInterface;
-use Doctrine\Common\Annotations\Reader;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Annotations\Reader;
 use Doctrine\Common\Cache\ArrayCache;
+use Symfony\Component\Translation\IdentityTranslator;
+use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Component\Validator\Context\ExecutionContextFactory;
+use Symfony\Component\Validator\Exception\ValidatorException;
+use Symfony\Component\Validator\Mapping\Cache\CacheInterface;
+use Symfony\Component\Validator\Mapping\Factory\LazyLoadingMetadataFactory;
+use Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface;
+use Symfony\Component\Validator\Mapping\Loader\AnnotationLoader;
+use Symfony\Component\Validator\Mapping\Loader\LoaderChain;
+use Symfony\Component\Validator\Mapping\Loader\StaticMethodLoader;
+use Symfony\Component\Validator\Mapping\Loader\XmlFileLoader;
+use Symfony\Component\Validator\Mapping\Loader\XmlFilesLoader;
+use Symfony\Component\Validator\Mapping\Loader\YamlFileLoader;
+use Symfony\Component\Validator\Mapping\Loader\YamlFilesLoader;
+use Symfony\Component\Validator\Validator\RecursiveValidator;
 
 /**
  * The default implementation of {@link ValidatorBuilderInterface}.
@@ -57,27 +59,27 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     private $methodMappings = array();
 
     /**
-     * @var Reader
+     * @var Reader|null
      */
-    private $annotationReader = null;
+    private $annotationReader;
 
     /**
-     * @var MetadataFactoryInterface
+     * @var MetadataFactoryInterface|null
      */
     private $metadataFactory;
 
     /**
-     * @var ConstraintValidatorFactoryInterface
+     * @var ConstraintValidatorFactoryInterface|null
      */
     private $validatorFactory;
 
     /**
-     * @var CacheInterface
+     * @var CacheInterface|null
      */
     private $metadataCache;
 
     /**
-     * @var TranslatorInterface
+     * @var TranslatorInterface|null
      */
     private $translator;
 
@@ -85,11 +87,6 @@ class ValidatorBuilder implements ValidatorBuilderInterface
      * @var null|string
      */
     private $translationDomain;
-
-    /**
-     * @var PropertyAccessorInterface
-     */
-    private $propertyAccessor;
 
     /**
      * {@inheritdoc}
@@ -260,10 +257,6 @@ class ValidatorBuilder implements ValidatorBuilderInterface
      */
     public function setConstraintValidatorFactory(ConstraintValidatorFactoryInterface $validatorFactory)
     {
-        if (null !== $this->propertyAccessor) {
-            throw new ValidatorException('You cannot set a validator factory after setting a custom property accessor. Remove the call to setPropertyAccessor() if you want to call setConstraintValidatorFactory().');
-        }
-
         $this->validatorFactory = $validatorFactory;
 
         return $this;
@@ -285,20 +278,6 @@ class ValidatorBuilder implements ValidatorBuilderInterface
     public function setTranslationDomain($translationDomain)
     {
         $this->translationDomain = $translationDomain;
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setPropertyAccessor(PropertyAccessorInterface $propertyAccessor)
-    {
-        if (null !== $this->validatorFactory) {
-            throw new ValidatorException('You cannot set a property accessor after setting a custom validator factory. Configure your validator factory instead.');
-        }
-
-        $this->propertyAccessor = $propertyAccessor;
 
         return $this;
     }
@@ -341,13 +320,23 @@ class ValidatorBuilder implements ValidatorBuilderInterface
                 $loader = $loaders[0];
             }
 
-            $metadataFactory = new ClassMetadataFactory($loader, $this->metadataCache);
+            $metadataFactory = new LazyLoadingMetadataFactory($loader, $this->metadataCache);
         }
 
-        $propertyAccessor = $this->propertyAccessor ?: PropertyAccess::createPropertyAccessor();
-        $validatorFactory = $this->validatorFactory ?: new ConstraintValidatorFactory($propertyAccessor);
-        $translator = $this->translator ?: new DefaultTranslator();
+        $validatorFactory = $this->validatorFactory ?: new ConstraintValidatorFactory();
+        $translator = $this->translator;
 
-        return new Validator($metadataFactory, $validatorFactory, $translator, $this->translationDomain, $this->initializers);
+        if (null === $translator) {
+            $translator = new IdentityTranslator();
+            // Force the locale to be 'en' when no translator is provided rather than relying on the Intl default locale
+            // This avoids depending on Intl or the stub implementation being available. It also ensures that Symfony
+            // validation messages are pluralized properly even when the default locale gets changed because they are in
+            // English.
+            $translator->setLocale('en');
+        }
+
+        $contextFactory = new ExecutionContextFactory($translator, $this->translationDomain);
+
+        return new RecursiveValidator($contextFactory, $metadataFactory, $validatorFactory, $this->initializers);
     }
 }

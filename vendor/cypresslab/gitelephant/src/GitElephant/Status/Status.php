@@ -19,9 +19,9 @@
 
 namespace GitElephant\Status;
 
-use GitElephant\Command\MainCommand;
-use GitElephant\Repository;
-use PhpCollection\Sequence;
+use \GitElephant\Command\MainCommand;
+use \GitElephant\Repository;
+use \PhpCollection\Sequence;
 
 /**
  * Class Status
@@ -42,6 +42,9 @@ class Status
 
     /**
      * @param Repository $repository
+     *
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      */
     private function __construct(Repository $repository)
     {
@@ -65,7 +68,7 @@ class Status
      */
     private function createFromCommand()
     {
-        $command = MainCommand::getInstance()->status(true);
+        $command = MainCommand::getInstance($this->repository)->status(true);
         $lines = $this->repository->getCaller()->execute($command)->getOutputLines(true);
         $this->parseOutputLines($lines);
     }

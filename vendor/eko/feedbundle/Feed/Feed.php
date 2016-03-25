@@ -15,13 +15,11 @@ use Eko\FeedBundle\Field\Item\ItemFieldInterface;
 use Eko\FeedBundle\Item\Writer\ItemInterface;
 use Eko\FeedBundle\Item\Writer\ProxyItem;
 use Eko\FeedBundle\Item\Writer\RoutedItemInterface;
-use Eko\FeedBundle\Formatter\AtomFormatter;
-use Eko\FeedBundle\Formatter\RssFormatter;
-
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 
 /**
- * Feed
+ * Feed.
  *
  * This is the main feed class
  *
@@ -30,40 +28,49 @@ use Symfony\Component\Routing\RouterInterface;
 class Feed
 {
     /**
-     * @var RouterInterface Router service
-     */
-    protected $router;
-
-    /**
-     * @var array $config Configuration settings
+     * @var array
      */
     protected $config;
 
     /**
-     * @var array $items Items of the feed
+     * @var array
      */
-    protected $items = array();
+    protected $formatters;
 
     /**
-     * @var array $fields Contains channel Field instances for this feed
+     * @var RouterInterface
      */
-    protected $channelFields = array();
+    protected $router;
 
     /**
-     * @var array $fields Contains items Field instances for this feed
+     * @var array
      */
-    protected $itemFields = array();
+    protected $items = [];
 
     /**
-     * @param array $config Configuration settings
+     * @var array
      */
-    public function __construct(array $config)
+    protected $channelFields = [];
+
+    /**
+     * @var array
+     */
+    protected $itemFields = [];
+
+    /**
+     * Constructor.
+     *
+     * @param array $config     Configuration settings
+     * @param array $formatters An array of available formatters services
+     */
+    public function __construct(array $config, array $formatters)
     {
         $this->config = $config;
+        $this->formatters = $formatters;
     }
 
     /**
-     * Set the router service
+     * Set the router service.
      *
      * @param RouterInterface $router
      */
@@ -73,10 +80,10 @@ class Feed
     }
 
     /**
-     * Set or redefine a configuration value
+     * Set or redefine a configuration value.
      *
-     * @param mixed  $parameter A configuration parameter name
-     * @param mixed  $value     A value
+     * @param mixed $parameter A configuration parameter name
+     * @param mixed $value     A value
      *
      * @return \Eko\FeedBundle\Feed\Feed
      */
@@ -88,7 +95,7 @@ class Feed
     }
 
     /**
-     * Returns config parameter value
+     * Returns config parameter value.
      *
      * @param mixed      $parameter A configuration parameter name
      * @param mixed|null $default   A default value if not found
@@ -97,17 +104,37 @@ class Feed
      */
     public function get($parameter, $default = null)
     {
+        if ('link' == $parameter) {
+            return $this->getLink();
+        }
+
         return isset($this->config[$parameter]) ? $this->config[$parameter] : $default;
     }
 
     /**
-     * Add an item (an entity which implements ItemInterface instance)
+     * Returns absolute link value.
+     *
+     * @return string
+     */
+    private function getLink()
+    {
+        $linkConfig = $this->config['link'];
+
+        if (is_string($linkConfig) || isset($linkConfig['uri'])) {
+            return (is_string($linkConfig)) ? $linkConfig : $linkConfig['uri'];
+        }
+
+        return $this->router->generate($linkConfig['route_name'], $linkConfig['route_params'], UrlGeneratorInterface::ABSOLUTE_URL);
+    }
+
+    /**
+     * Add an item (an entity which implements ItemInterface instance).
      *
      * @param mixed $item An entity item (implements ItemInterface or RoutedItemInterface)
      *
-     * @return \Eko\FeedBundle\Feed\Feed
-     *
      * @throws \InvalidArgumentException if item does not implement ItemInterface or RoutedItemInterface
+     *
+     * @return \Eko\FeedBundle\Feed\Feed
      */
     public function add($item)
     {
@@ -125,7 +152,7 @@ class Feed
     }
 
     /**
-     * Add items from array
+     * Add items from array.
      *
      * @param array $items Array of items (implementing ItemInterface or RoutedItemInterface) to add
      *
@@ -141,7 +168,7 @@ class Feed
     }
 
     /**
-     * Set items from array. Note that this method will override any existing items
+     * Set items from array. Note that this method will override any existing items.
      *
      * @param array $items Array of items (implementing ItemInterface or RoutedItemInterface) to set
      *
@@ -149,13 +176,13 @@ class Feed
      */
     public function setItems(array $items)
     {
-        $this->items = array();
+        $this->items = [];
 
         return $this->addFromArray($items);
     }
 
     /**
-     * Returns feed items
+     * Returns feed items.
      *
      * @return array
      */
@@ -165,7 +192,7 @@ class Feed
     }
 
     /**
-     * Add a new channel field to render
+     * Add a new channel field to render.
      *
      * @param ChannelFieldInterface $field A custom Field instance
      *
@@ -179,7 +206,7 @@ class Feed
     }
 
     /**
-     * Returns custom channel fields
+     * Returns custom channel fields.
      *
      * @return array
      */
@@ -189,7 +216,7 @@ class Feed
     }
 
     /**
-     * Add a new item field to render
+     * Add a new item field to render.
      *
      * @param ItemFieldInterface $field A custom Field instance
      *
@@ -203,7 +230,7 @@ class Feed
     }
 
     /**
-     * Returns custom item fields
+     * Returns custom item fields.
      *
      * @return array
      */
@@ -213,39 +240,32 @@ class Feed
     }
 
     /**
-     * Render the feed in specified format
+     * Render the feed in specified format.
      *
      * @param string $format The format to render (RSS, Atom, ...)
      *
-     * @return string
-     *
      * @throws \InvalidArgumentException if given format formatter does not exists
+     *
+     * @return string
      */
     public function render($format)
     {
-        switch ($format) {
-            case 'rss':
-                $formatter = new RssFormatter($this);
-                break;
-
-            case 'atom':
-                $formatter = new AtomFormatter($this);
-                break;
-
-            default:
-                throw new \InvalidArgumentException(
-                    sprintf("Format '%s' is not available. Please see documentation.", $format)
-                );
-                break;
+        if (!isset($this->formatters[$format])) {
+            throw new \InvalidArgumentException(
+                sprintf("Unable to find a formatter service for format '%s'.", $format)
+            );
         }
+
+        $formatter = $this->formatters[$format];
+        $formatter->setFeed($this);
 
         return $formatter->render();
     }
 
     /**
-     * Return if feed has items
+     * Return if feed has items.
      *
-     * @return boolean
+     * @return bool
      */
     public function hasItems()
     {

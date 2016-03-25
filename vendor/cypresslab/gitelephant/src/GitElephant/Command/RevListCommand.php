@@ -19,8 +19,9 @@
 
 namespace GitElephant\Command;
 
-use GitElephant\Objects\Tag;
-use GitElephant\Objects\Commit;
+use \GitElephant\Objects\Tag;
+use \GitElephant\Objects\Commit;
+use \GitElephant\Repository;
 
 /**
  * RevList Command generator
@@ -32,11 +33,14 @@ class RevListCommand extends BaseCommand
     const GIT_REVLIST = 'rev-list';
 
     /**
-     * @return RevListCommand
+     * constructor
+     *
+     * @param \GitElephant\Repository $repo The repository object this command 
+     *                                      will interact with
      */
-    public static function getInstance()
+    public function __construct(Repository $repo = null)
     {
-        return new self();
+        parent::__construct($repo);
     }
 
     /**
@@ -44,6 +48,7 @@ class RevListCommand extends BaseCommand
      *
      * @param \GitElephant\Objects\Tag $tag a tag instance
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function getTagCommit(Tag $tag)
@@ -63,6 +68,7 @@ class RevListCommand extends BaseCommand
      * @param \GitElephant\Objects\Commit $commit commit instance
      * @param int                         $max    max count
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function commitPath(Commit $commit, $max = 1000)

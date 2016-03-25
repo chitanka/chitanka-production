@@ -14,7 +14,7 @@ namespace Sonata\CoreBundle\Twig\Extension;
 use Sonata\CoreBundle\FlashMessage\FlashManager;
 
 /**
- * Class FlashMessageExtension
+ * Class FlashMessageExtension.
  *
  * This is the Sonata core flash message Twig extension
  *
@@ -28,7 +28,7 @@ class FlashMessageExtension extends \Twig_Extension
     protected $flashManager;
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param FlashManager $flashManager
      */
@@ -43,13 +43,13 @@ class FlashMessageExtension extends \Twig_Extension
     public function getFunctions()
     {
         return array(
-            'sonata_flashmessages_get' => new \Twig_Function_Method($this, 'getFlashMessages'),
-            'sonata_flashmessages_types' => new \Twig_Function_Method($this, 'getFlashMessagesTypes'),
+            new \Twig_SimpleFunction('sonata_flashmessages_get', array($this, 'getFlashMessages')),
+            new \Twig_SimpleFunction('sonata_flashmessages_types', array($this, 'getFlashMessagesTypes')),
         );
     }
 
     /**
-     * Returns flash messages handled by Sonata core flash manager
+     * Returns flash messages handled by Sonata core flash manager.
      *
      * @param string $type   Type of flash message
      * @param string $domain Translation domain to use
@@ -62,10 +62,7 @@ class FlashMessageExtension extends \Twig_Extension
     }
 
     /**
-     * Returns flash messages types handled by Sonata core flash manager
-     *
-     * @param string $type   Type of flash message
-     * @param string $domain Translation domain to use
+     * Returns flash messages types handled by Sonata core flash manager.
      *
      * @return string
      */
@@ -76,16 +73,6 @@ class FlashMessageExtension extends \Twig_Extension
 
     /**
      * {@inheritdoc}
-     */
-    public function initRuntime(\Twig_Environment $environment)
-    {
-        $this->environment = $environment;
-    }
-
-    /**
-     * Returns the name of the extension.
-     *
-     * @return string The extension name
      */
     public function getName()
     {

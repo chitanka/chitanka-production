@@ -19,9 +19,10 @@
 
 namespace GitElephant\Command;
 
-use GitElephant\Objects\Branch;
-use GitElephant\Objects\TreeishInterface;
-use GitElephant\Objects\Object;
+use \GitElephant\Objects\Branch;
+use \GitElephant\Objects\TreeishInterface;
+use \GitElephant\Objects\Object;
+use \GitElephant\Repository;
 
 /**
  * ls-tree command generator
@@ -33,11 +34,14 @@ class LsTreeCommand extends BaseCommand
     const LS_TREE_COMMAND = 'ls-tree';
 
     /**
-     * @return LsTreeCommand
+     * constructor
+     *
+     * @param \GitElephant\Repository $repo The repository object this command 
+     *                                      will interact with
      */
-    public static function getInstance()
+    public function __construct(Repository $repo = null)
     {
-        return new self();
+        parent::__construct($repo);
     }
 
     /**
@@ -45,6 +49,7 @@ class LsTreeCommand extends BaseCommand
      *
      * @param string|Branch $ref The reference to build the tree from
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function fullTree($ref = 'HEAD')
@@ -71,6 +76,7 @@ class LsTreeCommand extends BaseCommand
      * @param string        $ref  reference
      * @param string|Object $path path
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function tree($ref = 'HEAD', $path = null)
@@ -99,11 +105,12 @@ class LsTreeCommand extends BaseCommand
      *
      * @param null|string $ref the reference to build the tree from
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function listAll($ref = null)
     {
-        if ($ref == null) {
+        if (is_null($ref)) {
             $ref = 'HEAD';
         }
         $this->clearAll();

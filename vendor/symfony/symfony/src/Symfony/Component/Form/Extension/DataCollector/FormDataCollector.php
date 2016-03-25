@@ -18,9 +18,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 
 /**
- * Data collector for {@link \Symfony\Component\Form\FormInterface} instances.
+ * Data collector for {@link FormInterface} instances.
  *
  * @since  2.4
+ *
  * @author Robert Schönthal <robert.schoenthal@gmail.com>
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
@@ -69,6 +70,7 @@ class FormDataCollector extends DataCollector implements FormDataCollectorInterf
         $this->dataExtractor = $dataExtractor;
         $this->data = array(
             'forms' => array(),
+            'forms_by_hash' => array(),
             'nb_errors' => 0,
         );
     }
@@ -138,7 +140,9 @@ class FormDataCollector extends DataCollector implements FormDataCollectorInterf
         $hash = spl_object_hash($form);
 
         if (!isset($this->dataByForm[$hash])) {
-            $this->dataByForm[$hash] = array();
+            // field was created by form event
+            $this->collectConfiguration($form);
+            $this->collectDefaultData($form);
         }
 
         $this->dataByForm[$hash] = array_replace(
@@ -184,7 +188,7 @@ class FormDataCollector extends DataCollector implements FormDataCollectorInterf
     {
         $this->data['forms'][$form->getName()] = array();
 
-        $this->recursiveBuildPreliminaryFormTree($form, $this->data['forms'][$form->getName()]);
+        $this->recursiveBuildPreliminaryFormTree($form, $this->data['forms'][$form->getName()], $this->data['forms_by_hash']);
     }
 
     /**
@@ -194,7 +198,7 @@ class FormDataCollector extends DataCollector implements FormDataCollectorInterf
     {
         $this->data['forms'][$form->getName()] = array();
 
-        $this->recursiveBuildFinalFormTree($form, $view, $this->data['forms'][$form->getName()]);
+        $this->recursiveBuildFinalFormTree($form, $view, $this->data['forms'][$form->getName()], $this->data['forms_by_hash']);
     }
 
     /**
@@ -213,7 +217,7 @@ class FormDataCollector extends DataCollector implements FormDataCollectorInterf
         return $this->data;
     }
 
-    private function recursiveBuildPreliminaryFormTree(FormInterface $form, &$output = null)
+    private function recursiveBuildPreliminaryFormTree(FormInterface $form, &$output, array &$outputByHash)
     {
         $hash = spl_object_hash($form);
 
@@ -221,16 +225,18 @@ class FormDataCollector extends DataCollector implements FormDataCollectorInterf
             ? $this->dataByForm[$hash]
             : array();
 
+        $outputByHash[$hash] = &$output;
+
         $output['children'] = array();
 
         foreach ($form as $name => $child) {
             $output['children'][$name] = array();
 
-            $this->recursiveBuildPreliminaryFormTree($child, $output['children'][$name]);
+            $this->recursiveBuildPreliminaryFormTree($child, $output['children'][$name], $outputByHash);
         }
     }
 
-    private function recursiveBuildFinalFormTree(FormInterface $form = null, FormView $view, &$output = null)
+    private function recursiveBuildFinalFormTree(FormInterface $form = null, FormView $view, &$output, array &$outputByHash)
     {
         $viewHash = spl_object_hash($view);
         $formHash = null;
@@ -255,6 +261,8 @@ class FormDataCollector extends DataCollector implements FormDataCollectorInterf
                     ? $this->dataByForm[$formHash]
                     : array()
             );
+
+            $outputByHash[$formHash] = &$output;
         }
 
         $output['children'] = array();
@@ -268,7 +276,7 @@ class FormDataCollector extends DataCollector implements FormDataCollectorInterf
 
             $output['children'][$name] = array();
 
-            $this->recursiveBuildFinalFormTree($childForm, $childView, $output['children'][$name]);
+            $this->recursiveBuildFinalFormTree($childForm, $childView, $output['children'][$name], $outputByHash);
         }
     }
 }

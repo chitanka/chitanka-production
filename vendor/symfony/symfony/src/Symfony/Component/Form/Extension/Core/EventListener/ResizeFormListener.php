@@ -34,23 +34,31 @@ class ResizeFormListener implements EventSubscriberInterface
     protected $options;
 
     /**
-     * Whether children could be added to the group
+     * Whether children could be added to the group.
+     *
      * @var bool
      */
     protected $allowAdd;
 
     /**
-     * Whether children could be removed from the group
+     * Whether children could be removed from the group.
+     *
      * @var bool
      */
     protected $allowDelete;
 
-    public function __construct($type, array $options = array(), $allowAdd = false, $allowDelete = false)
+    /**
+     * @var bool
+     */
+    private $deleteEmpty;
+
+    public function __construct($type, array $options = array(), $allowAdd = false, $allowDelete = false, $deleteEmpty = false)
     {
         $this->type = $type;
         $this->allowAdd = $allowAdd;
         $this->allowDelete = $allowDelete;
         $this->options = $options;
+        $this->deleteEmpty = $deleteEmpty;
     }
 
     public static function getSubscribedEvents()
@@ -94,12 +102,8 @@ class ResizeFormListener implements EventSubscriberInterface
         $form = $event->getForm();
         $data = $event->getData();
 
-        if (null === $data || '' === $data) {
-            $data = array();
-        }
-
         if (!is_array($data) && !($data instanceof \Traversable && $data instanceof \ArrayAccess)) {
-            throw new UnexpectedTypeException($data, 'array or (\Traversable and \ArrayAccess)');
+            $data = array();
         }
 
         // Remove all empty rows
@@ -128,12 +132,30 @@ class ResizeFormListener implements EventSubscriberInterface
         $form = $event->getForm();
         $data = $event->getData();
 
+        // At this point, $data is an array or an array-like object that already contains the
+        // new entries, which were added by the data mapper. The data mapper ignores existing
+        // entries, so we need to manually unset removed entries in the collection.
+
         if (null === $data) {
             $data = array();
         }
 
         if (!is_array($data) && !($data instanceof \Traversable && $data instanceof \ArrayAccess)) {
             throw new UnexpectedTypeException($data, 'array or (\Traversable and \ArrayAccess)');
+        }
+
+        if ($this->deleteEmpty) {
+            $previousData = $event->getForm()->getData();
+            foreach ($form as $name => $child) {
+                $isNew = !isset($previousData[$name]);
+
+                // $isNew can only be true if allowAdd is true, so we don't
+                // need to check allowAdd again
+                if ($child->isEmpty() && ($isNew || $this->allowDelete)) {
+                    unset($data[$name]);
+                    $form->remove($name);
+                }
+            }
         }
 
         // The data mapper only adds, but does not remove items, so do this
@@ -153,27 +175,5 @@ class ResizeFormListener implements EventSubscriberInterface
         }
 
         $event->setData($data);
-    }
-
-    /**
-     * Alias of {@link preSubmit()}.
-     *
-     * @deprecated Deprecated since version 2.3, to be removed in 3.0. Use
-     *             {@link preSubmit()} instead.
-     */
-    public function preBind(FormEvent $event)
-    {
-        $this->preSubmit($event);
-    }
-
-    /**
-     * Alias of {@link onSubmit()}.
-     *
-     * @deprecated Deprecated since version 2.3, to be removed in 3.0. Use
-     *             {@link onSubmit()} instead.
-     */
-    public function onBind(FormEvent $event)
-    {
-        $this->onSubmit($event);
     }
 }

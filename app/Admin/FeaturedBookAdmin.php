@@ -1,8 +1,8 @@
 <?php namespace App\Admin;
 
-use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
 
 class FeaturedBookAdmin extends Admin {
@@ -36,13 +36,13 @@ class FeaturedBookAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$formMapper->with('General attributes')
 			->add('title')
 			->add('author')
 			->add('url')
 			->add('cover')
-			->add('description');
+			->add('description')
+			->end();
 
 	}
 

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
- * (c) 2010-2011 Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,13 +11,12 @@
 
 namespace Sonata\AdminBundle\Admin;
 
-use Sonata\AdminBundle\Admin\AdminInterface;
 use Sonata\AdminBundle\Exception\NoValueException;
 use Symfony\Component\DependencyInjection\Container;
 
 /**
  * A FieldDescription hold the information about a field. A typical
- * admin instance contains different collections of fields
+ * admin instance contains different collections of fields.
  *
  * - form: used by the form
  * - list: used by the list
@@ -53,8 +52,8 @@ use Symfony\Component\DependencyInjection\Container;
  *
  * Filter Field options :
  *   - options (o): options given to the Filter object
- *   - field_options (o): options given to the filter field object
- *   - field_type (o): options given to the filter field object
+ *   - field_type (o): the widget class to use to render the field
+ *   - field_options (o): the options to give to the widget
  *
  * @author Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
@@ -66,12 +65,12 @@ abstract class BaseFieldDescription implements FieldDescriptionInterface
     protected $name;
 
     /**
-     * @var string|integer the type
+     * @var string|int the type
      */
     protected $type;
 
     /**
-     * @var string|integer the original mapping type
+     * @var string|int the original mapping type
      */
     protected $mappingType;
 
@@ -90,8 +89,8 @@ abstract class BaseFieldDescription implements FieldDescriptionInterface
      */
     protected $fieldMapping;
 
-    /*
-     * var array the ORM parent mapping association
+    /**
+     * @var array the ORM parent mapping association
      */
     protected $parentAssociationMappings;
 
@@ -106,17 +105,17 @@ abstract class BaseFieldDescription implements FieldDescriptionInterface
     protected $options = array();
 
     /**
-     * @var Admin|null the parent Admin instance
+     * @var AdminInterface|null the parent Admin instance
      */
     protected $parent = null;
 
     /**
-     * @var Admin the related admin instance
+     * @var AdminInterface the related admin instance
      */
     protected $admin;
 
     /**
-     * @var Admin the associated admin class if the object is associated to another entity
+     * @var AdminInterface the associated admin class if the object is associated to another entity
      */
     protected $associationAdmin;
 
@@ -149,7 +148,7 @@ abstract class BaseFieldDescription implements FieldDescriptionInterface
         $this->name = $name;
 
         if (!$this->getFieldName()) {
-            $this->setFieldName(substr(strrchr('.' . $name, '.'), 1));
+            $this->setFieldName(substr(strrchr('.'.$name, '.'), 1));
         }
     }
 
@@ -293,9 +292,6 @@ abstract class BaseFieldDescription implements FieldDescriptionInterface
     }
 
     /**
-     * set the association admin instance (only used if the field is linked to an Admin)
-     *
-     * @param \Sonata\AdminBundle\Admin\AdminInterface $associationAdmin the associated admin
      * {@inheritdoc}
      */
     public function setAssociationAdmin(AdminInterface $associationAdmin)
@@ -325,6 +321,10 @@ abstract class BaseFieldDescription implements FieldDescriptionInterface
      */
     public function getFieldValue($object, $fieldName)
     {
+        if ($this->isVirtual()) {
+            return;
+        }
+
         $camelizedFieldName = self::camelize($fieldName);
 
         $getters = array();
@@ -335,16 +335,20 @@ abstract class BaseFieldDescription implements FieldDescriptionInterface
             $getters[] = $this->getOption('code');
         }
         // parameters for the method given in the code option
-        if($this->getOption('parameters')){
+        if ($this->getOption('parameters')) {
             $parameters = $this->getOption('parameters');
         }
-        $getters[] = 'get' . $camelizedFieldName;
-        $getters[] = 'is' . $camelizedFieldName;
+        $getters[] = 'get'.$camelizedFieldName;
+        $getters[] = 'is'.$camelizedFieldName;
 
         foreach ($getters as $getter) {
             if (method_exists($object, $getter)) {
-                return call_user_func_array(array($object, $getter),$parameters);
+                return call_user_func_array(array($object, $getter), $parameters);
             }
+        }
+
+        if (method_exists($object, '__call')) {
+            return call_user_func_array(array($object, '__call'), array($fieldName, $parameters));
         }
 
         if (isset($object->{$fieldName})) {
@@ -411,7 +415,7 @@ abstract class BaseFieldDescription implements FieldDescriptionInterface
     }
 
     /**
-     * Camelize a string
+     * Camelize a string.
      *
      * @static
      *
@@ -421,13 +425,11 @@ abstract class BaseFieldDescription implements FieldDescriptionInterface
      */
     public static function camelize($property)
     {
-        return preg_replace_callback('/(^|[_. ])+(.)/', function ($match) {
-            return ('.' === $match[1] ? '_' : '') . strtoupper($match[2]);
-        }, $property);
+        return Container::camelize($property);
     }
 
     /**
-     * Defines the help message
+     * Defines the help message.
      *
      * @param string $help
      */
@@ -477,10 +479,20 @@ abstract class BaseFieldDescription implements FieldDescriptionInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getTranslationDomain()
     {
-        return $this->getOption('translation_domain') ? : $this->getAdmin()->getTranslationDomain();
+        return $this->getOption('translation_domain') ?: $this->getAdmin()->getTranslationDomain();
+    }
+
+    /**
+     * Return true if field is virtual.
+     *
+     * @return bool
+     */
+    public function isVirtual()
+    {
+        return false !== $this->getOption('virtual_field', false);
     }
 }

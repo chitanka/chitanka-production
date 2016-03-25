@@ -12,17 +12,19 @@
 namespace Sonata\BlockBundle\Twig;
 
 /**
- * GlobalVariables
+ * GlobalVariables.
  *
  * @author Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
 class GlobalVariables
 {
+    /**
+     * @var string[]
+     */
     protected $templates;
 
     /**
-     *
-     * @param array              $templates
+     * @param string[] $templates
      */
     public function __construct(array $templates)
     {
@@ -30,7 +32,7 @@ class GlobalVariables
     }
 
     /**
-     * @return array
+     * @return string[]
      */
     public function getTemplates()
     {

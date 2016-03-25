@@ -1,6 +1,34 @@
 CHANGELOG
 =========
 
+2.8.3
+-----
+
+ * remove readline support from the question helper as it caused issues
+
+2.8.0
+-----
+
+ * use readline for user input in the question helper when available to allow
+   the use of arrow keys
+
+2.6.0
+-----
+
+ * added a Process helper
+ * added a DebugFormatter helper
+
+2.5.0
+-----
+
+ * deprecated the dialog helper (use the question helper instead)
+ * deprecated TableHelper in favor of Table
+ * deprecated ProgressHelper in favor of ProgressBar
+ * added ConsoleLogger
+ * added a question helper
+ * added a way to set the process name of a command
+ * added a way to set a default command instead of `ListCommand`
+
 2.4.0
 -----
 

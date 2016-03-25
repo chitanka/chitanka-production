@@ -5,8 +5,8 @@
 Events
 ======
 
-Sometime, you might want to create an area where a block can be added, depending on some external settings. A good example is
-a `Comment mechanism`. You might want to create a ``CommentBundle`` to render a `comment thread` on different pages. The comment area can used `Disqus <http://disqus.com>`_ or your own solution.
+Sometimes you might want to create an area where a block can be added, depending on some external settings. A good example is
+a `Comment mechanism`. You might want to create a ``CommentBundle`` to render a `comment thread` on different pages. The comment area can use Disqus_ or your own solution.
 As part of a full stack solution, you don't know which solution is going to be used. However, you know where the comment area will be located.
 
 The `Event mechanism` implemented in the ``SonataBlockBundle`` tries to address this situation, and to provide a clean syntax:
@@ -32,39 +32,34 @@ So, the current the name will be ``sonata.block.event.blog.comment``.
 
     .. code-block:: xml
 
-        <service id="discus.comment" class="Sonata\CommentBundle\Event\Discus">
-            <tag name="kernel.event_listener" event="sonata.block.blog.comment" method="onBlock"/>
+        <service id="disqus.comment" class="Sonata\CommentBundle\Event\Discus">
+            <tag name="kernel.event_listener" event="sonata.block.event.blog.comment" method="onBlock"/>
         </service>
 
     .. code-block:: yaml
 
         services:
-            discus.comment:
-                class: Sonata\CommentBundle\Event\Discus"
+            disqus.comment:
+                class: Sonata\CommentBundle\Event\Disqus"
                 tags:
-                    - { name: kernel.event_listener, event: sonata.block.blog.comment, method: onBlock}
+                    - { name: kernel.event_listener, event: sonata.block.event.blog.comment, method: onBlock }
 
-The `event listener` must return a ``BlockInterface`` so the rendering workflow will work properly.
+The `event listener` must push one or some ``BlockInterface`` instances into ``BlockEvent`` passed in so the rendering workflow will work properly.
 
-.. code-block:: jinja
+.. code-block:: php
 
     <?php
 
     use Sonata\BlockBundle\Model\Block;
 
-    class Discus
+    class Disqus
     {
-        /**
-         * @param  BlockEvent
-         *
-         * @return BlockInterface
-         */
         public function onBlock(BlockEvent $event)
         {
             $block = new Block();
             $block->setId(uniqid()); // set a fake id
             $block->setSettings($event->getSettings());
-            $block->setName('sonata.comment.block.discus');
+            $block->setType('sonata.comment.block.discus');
 
             $event->addBlock($block);
         }
@@ -90,3 +85,5 @@ the generated blocks (if any).
       :align: center
       :alt: Block profiler with events
       :width: 500
+
+.. _Disqus: http://disqus.com

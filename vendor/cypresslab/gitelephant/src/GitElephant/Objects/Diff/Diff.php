@@ -19,10 +19,10 @@
 
 namespace GitElephant\Objects\Diff;
 
-use GitElephant\Utilities;
-use GitElephant\Repository;
-use GitElephant\Command\DiffTreeCommand;
-use GitElephant\Command\DiffCommand;
+use \GitElephant\Utilities;
+use \GitElephant\Repository;
+use \GitElephant\Command\DiffTreeCommand;
+use \GitElephant\Command\DiffCommand;
 
 /**
  * Represent a collection of diffs between two trees
@@ -58,6 +58,9 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      * @param null|string|\GitElephant\Objects\Commit $commit2    second commit
      * @param null|string                             $path       path to consider
      *
+     * @throws \RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return Diff
      */
     public static function create(Repository $repository, $commit1 = null, $commit2 = null, $path = null)
@@ -89,6 +92,11 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      * @param null $commit2 commit 2
      * @param null $path    path
      *
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\InvalidArgumentException
+     * @throws \Symfony\Component\Process\Exception\LogicException
+     * @throws \InvalidArgumentException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @see ShowCommand::commitInfo
      */
     public function createFromCommand($commit1 = null, $commit2 = null, $path = null)
@@ -101,15 +109,15 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
         }
         if ($commit2 === null) {
             if ($commit1->isRoot()) {
-                $command = DiffTreeCommand::getInstance()->rootDiff($commit1);
+                $command = DiffTreeCommand::getInstance($this->repository)->rootDiff($commit1);
             } else {
-                $command = DiffCommand::getInstance()->diff($commit1);
+                $command = DiffCommand::getInstance($this->repository)->diff($commit1);
             }
         } else {
             if (is_string($commit2)) {
                 $commit2 = $this->getRepository()->getCommit($commit2);
             }
-            $command = DiffCommand::getInstance()->diff($commit1, $commit2, $path);
+            $command = DiffCommand::getInstance($this->repository)->diff($commit1, $commit2, $path);
         }
         $outputLines = $this->getCaller()->execute($command)->getOutputLines();
         $this->parseOutputLines($outputLines);
@@ -119,6 +127,8 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      * parse the output of a git command showing a commit
      *
      * @param array $outputLines output lines
+     *
+     * @throws \InvalidArgumentException
      */
     private function parseOutputLines($outputLines)
     {

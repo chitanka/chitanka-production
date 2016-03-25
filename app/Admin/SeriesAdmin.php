@@ -1,9 +1,9 @@
 <?php namespace App\Admin;
 
 use App\Entity\Series;
-use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
 
 class SeriesAdmin extends Admin {
@@ -37,8 +37,7 @@ class SeriesAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$formMapper->with('General attributes')
 			->add('slug')
 			->add('name')
 			->add('orig_name', null, ['required' => false])
@@ -48,7 +47,8 @@ class SeriesAdmin extends Admin {
 			], [
 				'edit' => 'inline',
 				'inline' => 'table',
-			]);
+			])
+			->end();
 	}
 
 	protected function configureDatagridFilters(DatagridMapper $datagrid) {

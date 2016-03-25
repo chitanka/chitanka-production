@@ -29,10 +29,10 @@ class DateTimeToArrayTransformer extends BaseDateTimeTransformer
     /**
      * Constructor.
      *
-     * @param string  $inputTimezone  The input timezone
-     * @param string  $outputTimezone The output timezone
-     * @param array   $fields         The date fields
-     * @param bool    $pad            Whether to use padding
+     * @param string $inputTimezone  The input timezone
+     * @param string $outputTimezone The output timezone
+     * @param array  $fields         The date fields
+     * @param bool   $pad            Whether to use padding
      *
      * @throws UnexpectedTypeException if a timezone is not a string
      */
@@ -51,7 +51,7 @@ class DateTimeToArrayTransformer extends BaseDateTimeTransformer
     /**
      * Transforms a normalized date into a localized date.
      *
-     * @param \DateTime $dateTime Normalized date.
+     * @param \DateTime|\DateTimeInterface $dateTime A DateTime object
      *
      * @return array Localized date.
      *
@@ -63,35 +63,38 @@ class DateTimeToArrayTransformer extends BaseDateTimeTransformer
     {
         if (null === $dateTime) {
             return array_intersect_key(array(
-                'year'    => '',
-                'month'   => '',
-                'day'     => '',
-                'hour'    => '',
-                'minute'  => '',
-                'second'  => '',
+                'year' => '',
+                'month' => '',
+                'day' => '',
+                'hour' => '',
+                'minute' => '',
+                'second' => '',
             ), array_flip($this->fields));
         }
 
-        if (!$dateTime instanceof \DateTime) {
-            throw new TransformationFailedException('Expected a \DateTime.');
+        if (!$dateTime instanceof \DateTime && !$dateTime instanceof \DateTimeInterface) {
+            throw new TransformationFailedException('Expected a \DateTime or \DateTimeInterface.');
         }
 
-        $dateTime = clone $dateTime;
         if ($this->inputTimezone !== $this->outputTimezone) {
+            if (!$dateTime instanceof \DateTimeImmutable) {
+                $dateTime = clone $dateTime;
+            }
+
             try {
-                $dateTime->setTimezone(new \DateTimeZone($this->outputTimezone));
+                $dateTime = $dateTime->setTimezone(new \DateTimeZone($this->outputTimezone));
             } catch (\Exception $e) {
                 throw new TransformationFailedException($e->getMessage(), $e->getCode(), $e);
             }
         }
 
         $result = array_intersect_key(array(
-            'year'    => $dateTime->format('Y'),
-            'month'   => $dateTime->format('m'),
-            'day'     => $dateTime->format('d'),
-            'hour'    => $dateTime->format('H'),
-            'minute'  => $dateTime->format('i'),
-            'second'  => $dateTime->format('s'),
+            'year' => $dateTime->format('Y'),
+            'month' => $dateTime->format('m'),
+            'day' => $dateTime->format('d'),
+            'hour' => $dateTime->format('H'),
+            'minute' => $dateTime->format('i'),
+            'second' => $dateTime->format('s'),
         ), array_flip($this->fields));
 
         if (!$this->pad) {
@@ -99,6 +102,8 @@ class DateTimeToArrayTransformer extends BaseDateTimeTransformer
                 // remove leading zeros
                 $entry = (string) (int) $entry;
             }
+            // unset reference to keep scope clear
+            unset($entry);
         }
 
         return $result;
@@ -174,15 +179,16 @@ class DateTimeToArrayTransformer extends BaseDateTimeTransformer
 
         try {
             $dateTime = new \DateTime(sprintf(
-                '%s-%s-%s %s:%s:%s %s',
+                '%s-%s-%s %s:%s:%s',
                 empty($value['year']) ? '1970' : $value['year'],
                 empty($value['month']) ? '1' : $value['month'],
                 empty($value['day']) ? '1' : $value['day'],
                 empty($value['hour']) ? '0' : $value['hour'],
                 empty($value['minute']) ? '0' : $value['minute'],
-                empty($value['second']) ? '0' : $value['second'],
-                $this->outputTimezone
-            ));
+                empty($value['second']) ? '0' : $value['second']
+                ),
+                new \DateTimeZone($this->outputTimezone)
+            );
 
             if ($this->inputTimezone !== $this->outputTimezone) {
                 $dateTime->setTimezone(new \DateTimeZone($this->inputTimezone));

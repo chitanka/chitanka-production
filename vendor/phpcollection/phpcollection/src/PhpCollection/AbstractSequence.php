@@ -31,9 +31,6 @@ use OutOfBoundsException;
  *
  * This sequence is mutable.
  *
- * @IgnoreAnnotation("template")
- * @template T The type that this sequence contains.
- *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
 class AbstractSequence extends AbstractCollection implements \IteratorAggregate, SequenceInterface
@@ -41,7 +38,7 @@ class AbstractSequence extends AbstractCollection implements \IteratorAggregate,
     protected $elements;
 
     /**
-     * @param array<T> $elements
+     * @param array $elements
      */
     public function __construct(array $elements = array())
     {
@@ -78,6 +75,74 @@ class AbstractSequence extends AbstractCollection implements \IteratorAggregate,
     public function isDefinedAt($index)
     {
         return isset($this->elements[$index]);
+    }
+
+    /**
+     * Returns a filtered sequence.
+     *
+     * @param callable $callable receives the element and must return true (= keep) or false (= remove).
+     *
+     * @return AbstractSequence
+     */
+    public function filter($callable)
+    {
+        return $this->filterInternal($callable, true);
+    }
+
+    public function map($callable)
+    {
+        $newElements = array();
+        foreach ($this->elements as $i => $element) {
+            $newElements[$i] = $callable($element);
+        }
+
+        return $this->createNew($newElements);
+    }
+
+    /**
+     * Returns a filtered sequence.
+     *
+     * @param callable $callable receives the element and must return true (= remove) or false (= keep).
+     *
+     * @return AbstractSequence
+     */
+    public function filterNot($callable)
+    {
+        return $this->filterInternal($callable, false);
+    }
+
+    private function filterInternal($callable, $booleanKeep)
+    {
+        $newElements = array();
+        foreach ($this->elements as $element) {
+            if ($booleanKeep !== call_user_func($callable, $element)) {
+                continue;
+            }
+
+            $newElements[] = $element;
+        }
+
+        return $this->createNew($newElements);
+    }
+
+    public function foldLeft($initialValue, $callable)
+    {
+        $value = $initialValue;
+        foreach ($this->elements as $elem) {
+            $value = call_user_func($callable, $value, $elem);
+        }
+
+        return $value;
+    }
+
+    public function foldRight($initialValue, $callable)
+    {
+        $value = $initialValue;
+        foreach (array_reverse($this->elements) as $elem) {
+            $value = call_user_func($callable, $elem, $value);
+        }
+
+        return $value;
     }
 
     /**
@@ -221,7 +286,7 @@ class AbstractSequence extends AbstractCollection implements \IteratorAggregate,
      *
      * @param callable $callable receives elements of this sequence as first argument, and returns true/false.
      *
-     * @return Sequence<T>
+     * @return Sequence
      */
     public function takeWhile($callable)
     {
@@ -265,6 +330,17 @@ class AbstractSequence extends AbstractCollection implements \IteratorAggregate,
         }
 
         return $this->createNew(array_slice($this->elements, $i));
+    }
+
+    public function exists($callable)
+    {
+        foreach ($this as $elem) {
+            if ($callable($elem) === true) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function count()

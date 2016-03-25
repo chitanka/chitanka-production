@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Sonata package.
  *
@@ -8,17 +9,15 @@
  * file that was distributed with this source code.
  */
 
-
 namespace Sonata\CoreBundle\Form\Type;
 
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
-
 /**
- * Class DatePickerType
+ * Class DatePickerType.
  *
- * @package Sonata\CoreBundle\Form\Type
  *
  * @author Hugo Briand <briand@ekino.com>
  */
@@ -26,13 +25,25 @@ class DateTimePickerType extends BasePickerType
 {
     /**
      * {@inheritdoc}
+     *
+     * @todo Remove it when bumping requirements to SF 2.7+
      */
     public function setDefaultOptions(OptionsResolverInterface $resolver)
+    {
+        $this->configureOptions($resolver);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults(array_merge($this->getCommonDefaults(), array(
             'dp_use_minutes'     => true,
             'dp_use_seconds'     => true,
             'dp_minute_stepping' => 1,
+            'format'             => DateTimeType::DEFAULT_DATE_FORMAT,
+            'date_format'        => null,
         )));
     }
 
@@ -47,7 +58,7 @@ class DateTimePickerType extends BasePickerType
     /**
      * {@inheritdoc}
      */
-    public function getName()
+    public function getBlockPrefix()
     {
         return 'sonata_type_datetime_picker';
     }
@@ -55,8 +66,8 @@ class DateTimePickerType extends BasePickerType
     /**
      * {@inheritdoc}
      */
-    protected function getDefaultFormat()
+    public function getName()
     {
-        return DateTimeType::HTML5_FORMAT;
+        return $this->getBlockPrefix();
     }
 }

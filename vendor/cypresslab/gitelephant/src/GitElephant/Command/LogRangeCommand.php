@@ -14,7 +14,8 @@
 
 namespace GitElephant\Command;
 
-use GitElephant\Objects\TreeishInterface;
+use \GitElephant\Objects\TreeishInterface;
+use \GitElephant\Repository;
 
 /**
  * Log Range command generator
@@ -28,11 +29,14 @@ class LogRangeCommand extends BaseCommand
     const GIT_LOG = 'log';
 
     /**
-     * @return LogCommand
+     * constructor
+     *
+     * @param \GitElephant\Repository $repo The repository object this command 
+     *                                      will interact with
      */
-    public static function getInstance()
+    public function __construct(Repository $repo = null)
     {
-        return new self();
+        parent::__construct($repo);
     }
 
     /**
@@ -46,6 +50,7 @@ class LogRangeCommand extends BaseCommand
      * @param int|null                                     $offset      skip n entries
      * @param boolean|false                                $firstParent skip commits brought in to branch by a merge
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function showLog($refStart, $refEnd, $path = null, $limit = null, $offset = null, $firstParent = false)

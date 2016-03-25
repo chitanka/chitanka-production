@@ -16,7 +16,7 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
- * This is the class that validates and merges configuration from your app/config files
+ * This is the class that validates and merges configuration from your app/config files.
  *
  * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html#cookbook-bundles-extension-config-class}
  *
@@ -26,7 +26,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 class Configuration implements ConfigurationInterface
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getConfigTreeBuilder()
     {
@@ -35,20 +35,60 @@ class Configuration implements ConfigurationInterface
 
         $this->addFlashMessageSection($rootNode);
 
+        $rootNode
+            ->children()
+                ->arrayNode('form')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->arrayNode('mapping')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->booleanNode('enabled')
+                                    ->defaultValue(true)
+                                ->end()
+                                ->arrayNode('type')
+                                    ->useAttributeAsKey('id')
+                                    ->defaultValue(array())
+                                    ->prototype('scalar')->end()
+                                ->end()
+
+                                ->arrayNode('extension')
+                                    ->useAttributeAsKey('id')
+                                    ->defaultValue(array())
+                                    ->prototype('array')
+                                        ->prototype('scalar')->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end()
+        ;
+
         return $treeBuilder;
     }
 
     /**
-     * Returns configuration for flash messages
+     * Returns configuration for flash messages.
      *
      * @param ArrayNodeDefinition $node
-     *
-     * @return void
      */
     private function addFlashMessageSection(ArrayNodeDefinition $node)
     {
         $node
             ->children()
+                ->scalarNode('form_type')
+                    ->defaultValue('standard')
+                    ->validate()
+                    ->ifNotInArray($validFormTypes = array('standard', 'horizontal'))
+                        ->thenInvalid(sprintf(
+                            'The form_type option value must be one of %s',
+                            $validFormTypesString = implode(', ', $validFormTypes)
+                        ))
+                    ->end()
+                    ->info(sprintf('Must be one of %s', $validFormTypesString))
+                ->end()
                 ->arrayNode('flashmessage')
                     ->useAttributeAsKey('message')
                     ->prototype('array')

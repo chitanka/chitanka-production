@@ -1,27 +1,48 @@
 <?php
+
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
  */
+
 namespace Sonata\AdminBundle\Route;
 
 use Symfony\Component\Routing\Route;
 
+/**
+ * Class RouteCollection.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class RouteCollection
 {
+    /**
+     * @var Route[]
+     */
     protected $elements = array();
 
+    /**
+     * @var string
+     */
     protected $baseCodeRoute;
 
+    /**
+     * @var string
+     */
     protected $baseRouteName;
 
+    /**
+     * @var string
+     */
     protected $baseControllerName;
 
+    /**
+     * @var string
+     */
     protected $baseRoutePattern;
 
     /**
@@ -39,22 +60,28 @@ class RouteCollection
     }
 
     /**
-     * @param string $name
-     * @param string $pattern
-     * @param array  $defaults
-     * @param array  $requirements
-     * @param array  $options
+     * Add route.
      *
-     * @return \Sonata\AdminBundle\Route\RouteCollection
+     * @param string $name         Name
+     * @param string $pattern      Pattern (will be automatically combined with @see $this->baseRoutePattern and $name
+     * @param array  $defaults     Defaults
+     * @param array  $requirements Requirements
+     * @param array  $options      Options
+     * @param string $host         Host
+     * @param array  $schemes      Schemes
+     * @param array  $methods      Methods
+     * @param string $condition    Condition
+     *
+     * @return RouteCollection
      */
-    public function add($name, $pattern = null, array $defaults = array(), array $requirements = array(), array $options = array())
+    public function add($name, $pattern = null, array $defaults = array(), array $requirements = array(), array $options = array(), $host = '', array $schemes = array(), array $methods = array(), $condition = '')
     {
-        $pattern    = sprintf('%s/%s', $this->baseRoutePattern, $pattern ?: $name);
+        $pattern    = $this->baseRoutePattern.'/'.($pattern ?: $name);
         $code       = $this->getCode($name);
-        $routeName  = sprintf('%s_%s', $this->baseRouteName, $name);
+        $routeName  = $this->baseRouteName.'_'.$name;
 
         if (!isset($defaults['_controller'])) {
-            $defaults['_controller'] = sprintf('%s:%s', $this->baseControllerName, $this->actionify($code));
+            $defaults['_controller'] = $this->baseControllerName.':'.$this->actionify($code);
         }
 
         if (!isset($defaults['_sonata_admin'])) {
@@ -63,7 +90,10 @@ class RouteCollection
 
         $defaults['_sonata_name'] = $routeName;
 
-        $this->elements[$this->getCode($name)] = new Route($pattern, $defaults, $requirements, $options);
+        $this->elements[$this->getCode($name)] = function () use (
+            $pattern, $defaults, $requirements, $options, $host, $schemes, $methods, $condition) {
+            return new Route($pattern, $defaults, $requirements, $options, $host, $schemes, $methods, $condition);
+        };
 
         return $this;
     }
@@ -79,13 +109,13 @@ class RouteCollection
             return $name;
         }
 
-        return sprintf('%s.%s', $this->baseCodeRoute, $name);
+        return $this->baseCodeRoute.'.'.$name;
     }
 
     /**
      * @param RouteCollection $collection
      *
-     * @return \Sonata\AdminBundle\Route\RouteCollection
+     * @return RouteCollection
      */
     public function addCollection(RouteCollection $collection)
     {
@@ -97,10 +127,28 @@ class RouteCollection
     }
 
     /**
-     * @return array
+     * @param $element
+     *
+     * @return Route
+     */
+    private function resolve($element)
+    {
+        if (is_callable($element)) {
+            return call_user_func($element);
+        }
+
+        return $element;
+    }
+
+    /**
+     * @return Route[]
      */
     public function getElements()
     {
+        foreach ($this->elements as $name => $element) {
+            $this->elements[$name] = $this->resolve($element);
+        }
+
         return $this->elements;
     }
 
@@ -124,7 +172,11 @@ class RouteCollection
     public function get($name)
     {
         if ($this->has($name)) {
-            return $this->elements[$this->getCode($name)];
+            $code = $this->getCode($name);
+
+            $this->elements[$code] = $this->resolve($this->elements[$code]);
+
+            return $this->elements[$code];
         }
 
         throw new \InvalidArgumentException(sprintf('Element "%s" does not exist.', $name));
@@ -133,7 +185,7 @@ class RouteCollection
     /**
      * @param string $name
      *
-     * @return \Sonata\AdminBundle\Route\RouteCollection
+     * @return RouteCollection
      */
     public function remove($name)
     {
@@ -143,11 +195,11 @@ class RouteCollection
     }
 
     /**
-     * Remove all routes except routes in $routeList
+     * Remove all routes except routes in $routeList.
      *
      * @param array $routeList
      *
-     * @return \Sonata\AdminBundle\Route\RouteCollection
+     * @return RouteCollection
      */
     public function clearExcept(array $routeList)
     {
@@ -167,9 +219,9 @@ class RouteCollection
     }
 
     /**
-     * Remove all routes
+     * Remove all routes.
      *
-     * @return \Sonata\AdminBundle\Route\RouteCollection
+     * @return RouteCollection
      */
     public function clear()
     {
@@ -179,7 +231,7 @@ class RouteCollection
     }
 
     /**
-     * Convert a word in to the format for a symfony action action_name => actionName
+     * Convert a word in to the format for a symfony action action_name => actionName.
      *
      * @param string $action Word to actionify
      *
@@ -188,7 +240,6 @@ class RouteCollection
     public function actionify($action)
     {
         if (($pos = strrpos($action, '.')) !== false) {
-
             $action = substr($action, $pos + 1);
         }
 

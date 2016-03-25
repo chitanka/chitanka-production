@@ -1,7 +1,7 @@
 <?php namespace App\Admin;
 
-use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
 
 class TextTranslatorAdmin extends Admin {
@@ -32,12 +32,12 @@ class TextTranslatorAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$formMapper->with('General attributes')
 			//->add('text')
 			->add('person', 'sonata_type_model_list', ['required' => false])
 			->add('pos')
-			->add('year');
+			->add('year')
+			->end();
 	}
 
 }

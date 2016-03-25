@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -18,12 +18,13 @@ use Symfony\Component\EventDispatcher\Event;
  * This event is sent by hook:
  *   - preUpdate | postUpdate
  *   - prePersist | postPersist
- *   - preRemove | postRemove
+ *   - preRemove | postRemove.
  *
  * You can register the listener to the event dispatcher by using:
- *   - sonata.admin.event.persitence.[pre|post]_[persist|update|remove)
- *   - sonata.admin.event.persitence.[admin_code].[pre|post]_[persist|update|remove)  (not implemented yet)
+ *   - sonata.admin.event.persistence.[pre|post]_[persist|update|remove)
+ *   - sonata.admin.event.persistence.[admin_code].[pre|post]_[persist|update|remove)  (not implemented yet)
  *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
 class PersistenceEvent extends Event
 {
@@ -32,12 +33,21 @@ class PersistenceEvent extends Event
     const TYPE_PRE_PERSIST  = 'pre_persist';
     const TYPE_POST_PERSIST = 'post_persist';
     const TYPE_PRE_REMOVE   = 'pre_remove';
-    const TYPE_POST_REMOVE  = 'post_update';
+    const TYPE_POST_REMOVE  = 'post_remove';
 
+    /**
+     * @var AdminInterface
+     */
     protected $admin;
 
+    /**
+     * @var object
+     */
     protected $object;
 
+    /**
+     * @var string
+     */
     protected $type;
 
     /**
@@ -53,7 +63,7 @@ class PersistenceEvent extends Event
     }
 
     /**
-     * @return \Sonata\AdminBundle\Admin\AdminInterface
+     * @return AdminInterface
      */
     public function getAdmin()
     {

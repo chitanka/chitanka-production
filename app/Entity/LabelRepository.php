@@ -6,6 +6,7 @@
 class LabelRepository extends EntityRepository {
 	/**
 	 * @param string $slug
+	 * @return Label
 	 */
 	public function findBySlug($slug) {
 		return $this->findOneBy(['slug' => $slug]);

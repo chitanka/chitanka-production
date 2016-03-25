@@ -10,10 +10,11 @@
 
 namespace Eko\FeedBundle\Feed;
 
+use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\Routing\RouterInterface;
 
 /**
- * FeedManager
+ * FeedManager.
  *
  * This class manage feeds specified in configuration file
  *
@@ -21,10 +22,22 @@ use Symfony\Component\Routing\RouterInterface;
  */
 class FeedManager
 {
+    use ContainerAwareTrait;
+
     /**
      * @var array
      */
     protected $config;
+
+    /**
+     * @var RouterInterface
+     */
+    protected $router;
+
+    /**
+     * @var array
+     */
+    protected $formatters;
 
     /**
      * @var array
@@ -32,55 +45,55 @@ class FeedManager
     protected $feeds;
 
     /**
-     * @var RouterInterface Router service
-     */
-    protected $router;
-
-    /**
-     * Constructor
+     * Constructor.
      * 
-     * @param RouterInterface $router
-     * @param array           $config Configuration settings
+     * @param RouterInterface $router     A Symfony router instance
+     * @param array           $config     Configuration settings
+     * @param array           $formatters Feed formatters list
      */
-    public function __construct(RouterInterface $router, array $config)
+    public function __construct(RouterInterface $router, array $config, array $formatters)
     {
         $this->config = $config;
         $this->router = $router;
+        $this->formatters = $formatters;
     }
 
     /**
-     * Check if feed exists in configuration under 'feeds' node
+     * Check if feed exists in configuration under 'feeds' node.
      *
      * @param string $feed Feed name
      *
      * @return bool
      */
-    public function has($feed) {
+    public function has($feed)
+    {
         return isset($this->config['feeds'][$feed]);
     }
 
     /**
-     * Return specified Feed instance if exists
+     * Return specified Feed instance if exists.
      *
-     * @param string $feed Feed name
-     *
-     * @return Feed
+     * @param string $feedName
      *
      * @throws \InvalidArgumentException
+     *
+     * @return Feed
      */
-    public function get($feed)
+    public function get($feedName)
     {
-        if (!$this->has($feed)) {
+        if (!$this->has($feedName)) {
             throw new \InvalidArgumentException(
-                sprintf("Specified feed '%s' is not defined in your configuration.", $feed)
+                sprintf("Specified feed '%s' is not defined in your configuration.", $feedName)
             );
         }
 
-        if (!isset($this->feeds[$feed])) {
-            $this->feeds[$feed] = new Feed($this->config['feeds'][$feed]);
-            $this->feeds[$feed]->setRouter($this->router);
+        if (!isset($this->feeds[$feedName])) {
+            $feed = new Feed($this->config['feeds'][$feedName], $this->formatters);
+            $feed->setRouter($this->router);
+
+            $this->feeds[$feedName] = $feed;
         }
 
-        return $this->feeds[$feed];
+        return $this->feeds[$feedName];
     }
 }

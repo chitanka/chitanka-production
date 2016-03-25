@@ -1,7 +1,8 @@
 <?php namespace App\Form\Type;
 
-use Symfony\Component\Form\FormBuilderInterface;
 use FOS\CommentBundle\Form\CommentType as BaseCommentType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
 
 class CommentType extends BaseCommentType {
 
@@ -10,7 +11,7 @@ class CommentType extends BaseCommentType {
 	 */
 	public function buildForm(FormBuilderInterface $builder, array $options) {
 		parent::buildForm($builder, $options);
-		$builder->add('cc', 'text', [
+		$builder->add('cc', TextType::class, [
 			'required' => false,
 			'label' => 'Уведомяване на', // TODO move to translation
 			'attr' => [
@@ -19,7 +20,7 @@ class CommentType extends BaseCommentType {
 		]);
 	}
 
-	public function getName() {
+	public function getBlockPrefix() {
 		return 'comment_form';
 	}
 }

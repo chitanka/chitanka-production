@@ -1,25 +1,34 @@
 <?php
+
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
  */
+
 namespace Sonata\AdminBundle\Route;
 
-use Sonata\AdminBundle\Builder\RouteBuilderInterface;
 use Sonata\AdminBundle\Admin\AdminInterface;
+use Sonata\AdminBundle\Builder\RouteBuilderInterface;
 use Sonata\AdminBundle\Model\AuditManagerInterface;
 
+/**
+ * Class PathInfoBuilder.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class PathInfoBuilder implements RouteBuilderInterface
 {
+    /**
+     * @var AuditManagerInterface
+     */
     protected $manager;
 
     /**
-     * @param \Sonata\AdminBundle\Model\AuditManagerInterface $manager
+     * @param AuditManagerInterface $manager
      */
     public function __construct(AuditManagerInterface $manager)
     {
@@ -27,8 +36,8 @@ class PathInfoBuilder implements RouteBuilderInterface
     }
 
     /**
-     * @param \Sonata\AdminBundle\Admin\AdminInterface  $admin
-     * @param \Sonata\AdminBundle\Route\RouteCollection $collection
+     * @param AdminInterface  $admin
+     * @param RouteCollection $collection
      */
     public function build(AdminInterface $admin, RouteCollection $collection)
     {
@@ -43,6 +52,7 @@ class PathInfoBuilder implements RouteBuilderInterface
         if ($this->manager->hasReader($admin->getClass())) {
             $collection->add('history', $admin->getRouterIdParameter().'/history');
             $collection->add('history_view_revision', $admin->getRouterIdParameter().'/history/{revision}/view');
+            $collection->add('history_compare_revisions', $admin->getRouterIdParameter().'/history/{base_revision}/{compare_revision}/compare');
         }
 
         if ($admin->isAclEnabled()) {

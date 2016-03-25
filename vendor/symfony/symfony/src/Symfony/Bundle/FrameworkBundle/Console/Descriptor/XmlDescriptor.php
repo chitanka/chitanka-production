@@ -15,11 +15,15 @@ use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
  * @author Jean-François Simon <jeanfrancois.simon@sensiolabs.com>
+ *
+ * @internal
  */
 class XmlDescriptor extends Descriptor
 {
@@ -89,6 +93,30 @@ class XmlDescriptor extends Descriptor
     protected function describeContainerAlias(Alias $alias, array $options = array())
     {
         $this->writeDocument($this->getContainerAliasDocument($alias, isset($options['id']) ? $options['id'] : null));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function describeEventDispatcherListeners(EventDispatcherInterface $eventDispatcher, array $options = array())
+    {
+        $this->writeDocument($this->getEventDispatcherListenersDocument($eventDispatcher, array_key_exists('event', $options) ? $options['event'] : null));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function describeCallable($callable, array $options = array())
+    {
+        $this->writeDocument($this->getCallableDocument($callable));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function describeContainerParameter($parameter, array $options = array())
+    {
+        $this->writeDocument($this->getContainerParameterDocument($parameter, $options));
     }
 
     /**
@@ -168,11 +196,9 @@ class XmlDescriptor extends Descriptor
             }
         }
 
-        $requirements = $route->getRequirements();
-        unset($requirements['_scheme'], $requirements['_method']);
-        if (count($requirements)) {
+        if (count($route->getRequirements())) {
             $routeXML->appendChild($requirementsXML = $dom->createElement('requirements'));
-            foreach ($requirements as $attribute => $pattern) {
+            foreach ($route->getRequirements() as $attribute => $pattern) {
                 $requirementsXML->appendChild($requirementXML = $dom->createElement('requirement'));
                 $requirementXML->setAttribute('key', $attribute);
                 $requirementXML->appendChild(new \DOMText($pattern));
@@ -303,24 +329,35 @@ class XmlDescriptor extends Descriptor
 
         $serviceXML->setAttribute('class', $definition->getClass());
 
-        if ($definition->getFactoryClass()) {
-            $serviceXML->setAttribute('factory-class', $definition->getFactoryClass());
+        if ($factory = $definition->getFactory()) {
+            $serviceXML->appendChild($factoryXML = $dom->createElement('factory'));
+
+            if (is_array($factory)) {
+                if ($factory[0] instanceof Reference) {
+                    $factoryXML->setAttribute('service', (string) $factory[0]);
+                } elseif ($factory[0] instanceof Definition) {
+                    throw new \InvalidArgumentException('Factory is not describable.');
+                } else {
+                    $factoryXML->setAttribute('class', $factory[0]);
+                }
+                $factoryXML->setAttribute('method', $factory[1]);
+            } else {
+                $factoryXML->setAttribute('function', $factory);
+            }
         }
 
-        if ($definition->getFactoryService()) {
-            $serviceXML->setAttribute('factory-service', $definition->getFactoryService());
-        }
-
-        if ($definition->getFactoryMethod()) {
-            $serviceXML->setAttribute('factory-method', $definition->getFactoryMethod());
-        }
-
-        $serviceXML->setAttribute('scope', $definition->getScope());
         $serviceXML->setAttribute('public', $definition->isPublic() ? 'true' : 'false');
         $serviceXML->setAttribute('synthetic', $definition->isSynthetic() ? 'true' : 'false');
         $serviceXML->setAttribute('lazy', $definition->isLazy() ? 'true' : 'false');
-        $serviceXML->setAttribute('synchronized', $definition->isSynchronized() ? 'true' : 'false');
+        if (method_exists($definition, 'isShared')) {
+            $serviceXML->setAttribute('shared', $definition->isShared() ? 'true' : 'false');
+        }
         $serviceXML->setAttribute('abstract', $definition->isAbstract() ? 'true' : 'false');
+
+        if (method_exists($definition, 'isAutowired')) {
+            $serviceXML->setAttribute('autowired', $definition->isAutowired() ? 'true' : 'false');
+        }
+
         $serviceXML->setAttribute('file', $definition->getFile());
 
         if (!$omitTags) {
@@ -364,5 +401,131 @@ class XmlDescriptor extends Descriptor
         $aliasXML->setAttribute('public', $alias->isPublic() ? 'true' : 'false');
 
         return $dom;
+    }
+
+    /**
+     * @param string $parameter
+     * @param array  $options
+     *
+     * @return \DOMDocument
+     */
+    private function getContainerParameterDocument($parameter, $options = array())
+    {
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->appendChild($parameterXML = $dom->createElement('parameter'));
+
+        if (isset($options['parameter'])) {
+            $parameterXML->setAttribute('key', $options['parameter']);
+        }
+
+        $parameterXML->appendChild(new \DOMText($this->formatParameter($parameter)));
+
+        return $dom;
+    }
+
+    /**
+     * @param EventDispatcherInterface $eventDispatcher
+     * @param string|null              $event
+     *
+     * @return \DOMDocument
+     */
+    private function getEventDispatcherListenersDocument(EventDispatcherInterface $eventDispatcher, $event = null)
+    {
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->appendChild($eventDispatcherXML = $dom->createElement('event-dispatcher'));
+
+        $registeredListeners = $eventDispatcher->getListeners($event);
+        if (null !== $event) {
+            $this->appendEventListenerDocument($eventDispatcher, $event, $eventDispatcherXML, $registeredListeners);
+        } else {
+            ksort($registeredListeners);
+
+            foreach ($registeredListeners as $eventListened => $eventListeners) {
+                $eventDispatcherXML->appendChild($eventXML = $dom->createElement('event'));
+                $eventXML->setAttribute('name', $eventListened);
+
+                $this->appendEventListenerDocument($eventDispatcher, $eventListened, $eventXML, $eventListeners);
+            }
+        }
+
+        return $dom;
+    }
+
+    /**
+     * @param \DOMElement $element
+     * @param array       $eventListeners
+     */
+    private function appendEventListenerDocument(EventDispatcherInterface $eventDispatcher, $event, \DOMElement $element, array $eventListeners)
+    {
+        foreach ($eventListeners as $listener) {
+            $callableXML = $this->getCallableDocument($listener);
+            $callableXML->childNodes->item(0)->setAttribute('priority', $eventDispatcher->getListenerPriority($event, $listener));
+
+            $element->appendChild($element->ownerDocument->importNode($callableXML->childNodes->item(0), true));
+        }
+    }
+
+    /**
+     * @param callable $callable
+     *
+     * @return \DOMDocument
+     */
+    private function getCallableDocument($callable)
+    {
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->appendChild($callableXML = $dom->createElement('callable'));
+
+        if (is_array($callable)) {
+            $callableXML->setAttribute('type', 'function');
+
+            if (is_object($callable[0])) {
+                $callableXML->setAttribute('name', $callable[1]);
+                $callableXML->setAttribute('class', get_class($callable[0]));
+            } else {
+                if (0 !== strpos($callable[1], 'parent::')) {
+                    $callableXML->setAttribute('name', $callable[1]);
+                    $callableXML->setAttribute('class', $callable[0]);
+                    $callableXML->setAttribute('static', 'true');
+                } else {
+                    $callableXML->setAttribute('name', substr($callable[1], 8));
+                    $callableXML->setAttribute('class', $callable[0]);
+                    $callableXML->setAttribute('static', 'true');
+                    $callableXML->setAttribute('parent', 'true');
+                }
+            }
+
+            return $dom;
+        }
+
+        if (is_string($callable)) {
+            $callableXML->setAttribute('type', 'function');
+
+            if (false === strpos($callable, '::')) {
+                $callableXML->setAttribute('name', $callable);
+            } else {
+                $callableParts = explode('::', $callable);
+
+                $callableXML->setAttribute('name', $callableParts[1]);
+                $callableXML->setAttribute('class', $callableParts[0]);
+                $callableXML->setAttribute('static', 'true');
+            }
+
+            return $dom;
+        }
+
+        if ($callable instanceof \Closure) {
+            $callableXML->setAttribute('type', 'closure');
+
+            return $dom;
+        }
+
+        if (method_exists($callable, '__invoke')) {
+            $callableXML->setAttribute('type', 'object');
+            $callableXML->setAttribute('name', get_class($callable));
+
+            return $dom;
+        }
+
+        throw new \InvalidArgumentException('Callable is not describable.');
     }
 }

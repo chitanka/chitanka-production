@@ -11,7 +11,7 @@
 namespace Eko\FeedBundle\Field\Item;
 
 /**
- * ItemField
+ * ItemField.
  *
  * This is the items field class
  *
@@ -20,28 +20,34 @@ namespace Eko\FeedBundle\Field\Item;
 class ItemField implements ItemFieldInterface
 {
     /**
-     * @var string $name Field name
+     * @var string Field name
      */
     protected $name;
 
     /**
-     * @var string $method Item method name
+     * @var string Item method name
      */
     protected $method;
 
     /**
-     * @var array $options Options array (required, cdata, ...)
+     * @var array Options array (required, cdata, ...)
      */
     protected $options;
 
     /**
-     * Constructor
-     *
-     * @param string|array $name    A field name
-     * @param string       $method  An item method name
-     * @param array        $options An options array
+     * @var array Attributes to add to this item field
      */
-    public function __construct($name, $method, $options = array())
+    protected $attributes;
+
+    /**
+     * Constructor.
+     *
+     * @param string|array $name       A field name
+     * @param string       $method     An item method name
+     * @param array        $options    An options array
+     * @param array        $attributes An attributes array
+     */
+    public function __construct($name, $method, array $options = [], array $attributes = [])
     {
         $this->name = $name;
         $this->method = $method;
@@ -49,10 +55,12 @@ class ItemField implements ItemFieldInterface
         if (!empty($options)) {
             $this->options = $options;
         }
+
+        $this->attributes = $attributes;
     }
 
     /**
-     * Returns field name
+     * Returns field name.
      *
      * @return string|array
      */
@@ -62,7 +70,7 @@ class ItemField implements ItemFieldInterface
     }
 
     /**
-     * Returns method name
+     * Returns method name.
      *
      * @return string
      */
@@ -72,7 +80,7 @@ class ItemField implements ItemFieldInterface
     }
 
     /**
-     * Returns option value
+     * Returns option value.
      *
      * @param string $option  An option name
      * @param mixed  $default A default value
@@ -82,5 +90,15 @@ class ItemField implements ItemFieldInterface
     public function get($option, $default = false)
     {
         return isset($this->options[$option]) ? $this->options[$option] : $default;
+    }
+
+    /**
+     * Returns attributes to be added to this item field.
+     *
+     * @return array
+     */
+    public function getAttributes()
+    {
+        return $this->attributes;
     }
 }

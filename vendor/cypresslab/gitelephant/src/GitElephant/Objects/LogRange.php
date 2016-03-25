@@ -15,8 +15,8 @@
 
 namespace GitElephant\Objects;
 
-use GitElephant\Repository;
-use GitElephant\Command\LogRangeCommand;
+use \GitElephant\Repository;
+use \GitElephant\Command\LogRangeCommand;
 
 /**
  * Git range log abstraction object
@@ -37,7 +37,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @var array
      */
-    private $commits  = array();
+    private $rangeCommits  = array();
 
     /**
      * the cursor position
@@ -57,7 +57,8 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      * @param null                    $offset      offset
      * @param boolean                 $firstParent first parent
      *
-     * @internal param string $ref treeish reference
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      */
     public function __construct(
         Repository $repository,
@@ -82,11 +83,15 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      * @param string  $offset      offset
      * @param boolean $firstParent first parent
      *
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\LogicException
+     * @throws \Symfony\Component\Process\Exception\InvalidArgumentException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @see ShowCommand::commitInfo
      */
     private function createFromCommand($refStart, $refEnd, $path, $limit, $offset, $firstParent)
     {
-        $command = LogRangeCommand::getInstance()->showLog($refStart, $refEnd, $path, $limit, $offset, $firstParent);
+        $command = LogRangeCommand::getInstance($this->getRepository())->showLog($refStart, $refEnd, $path, $limit, $offset, $firstParent);
         $outputLines = $this->getRepository()->getCaller()->execute(
             $command,
             true,
@@ -98,18 +103,18 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
     private function parseOutputLines($outputLines)
     {
         $commitLines = null;
-        $this->commits = array();
+        $this->rangeCommits = array();
         foreach ($outputLines as $line) {
             if (preg_match('/^commit (\w+)$/', $line) > 0) {
                 if (null !== $commitLines) {
-                    $this->commits[] = Commit::createFromOutputLines($this->repository, $commitLines);
+                    $this->rangeCommits[] = Commit::createFromOutputLines($this->getRepository(), $commitLines);
                 }
                 $commitLines = array();
             }
             $commitLines[] = $line;
         }
         if (null !== $commitLines && count($commitLines) > 0) {
-            $this->commits[] = Commit::createFromOutputLines($this->repository, $commitLines);
+            $this->rangeCommits[] = Commit::createFromOutputLines($this->getRepository(), $commitLines);
         }
     }
 
@@ -120,7 +125,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      */
     public function toArray()
     {
-        return $this->commits;
+        return $this->rangeCommits;
     }
 
     /**
@@ -164,7 +169,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      */
     public function offsetExists($offset)
     {
-        return isset($this->commits[$offset]);
+        return isset($this->rangeCommits[$offset]);
     }
 
     /**
@@ -176,7 +181,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      */
     public function offsetGet($offset)
     {
-        return isset($this->commits[$offset]) ? $this->commits[$offset] : null;
+        return isset($this->rangeCommits[$offset]) ? $this->rangeCommits[$offset] : null;
     }
 
     /**
@@ -211,7 +216,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      */
     public function count()
     {
-        return count($this->commits);
+        return count($this->rangeCommits);
     }
 
     /**

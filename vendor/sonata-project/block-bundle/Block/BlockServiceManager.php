@@ -11,11 +11,9 @@
 
 namespace Sonata\BlockBundle\Block;
 
-use Sonata\BlockBundle\Model\BlockInterface;
-
-use Sonata\AdminBundle\Validator\ErrorElement;
-
 use Psr\Log\LoggerInterface;
+use Sonata\BlockBundle\Model\BlockInterface;
+use Sonata\CoreBundle\Validator\ErrorElement;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class BlockServiceManager implements BlockServiceManagerInterface
@@ -30,8 +28,14 @@ class BlockServiceManager implements BlockServiceManagerInterface
      */
     protected $container;
 
+    /**
+     * @var bool
+     */
     protected $inValidate;
 
+    /**
+     * @var array
+     */
     protected $contexts;
 
     /**
@@ -117,7 +121,7 @@ class BlockServiceManager implements BlockServiceManagerInterface
      */
     public function setServices(array $blockServices)
     {
-        foreach($blockServices as $name => $service) {
+        foreach ($blockServices as $name => $service) {
             $this->add($name, $service);
         }
     }
@@ -133,7 +137,7 @@ class BlockServiceManager implements BlockServiceManagerInterface
             }
         }
 
-        return $this->services;
+        return $this->sortServices($this->services);
     }
 
     /**
@@ -157,7 +161,7 @@ class BlockServiceManager implements BlockServiceManagerInterface
             $services[$name] = $this->getService($name);
         }
 
-        return $services;
+        return $this->sortServices($services);
     }
 
     /**
@@ -201,5 +205,25 @@ class BlockServiceManager implements BlockServiceManagerInterface
         } catch (\Exception $e) {
             $this->inValidate = false;
         }
+    }
+
+    /**
+     * Sort alphabetically services.
+     *
+     * @param array $services
+     *
+     * @return array
+     */
+    private function sortServices($services)
+    {
+        uasort($services, function ($a, $b) {
+            if ($a->getName() == $b->getName()) {
+                return 0;
+            }
+
+            return ($a->getName() < $b->getName()) ? -1 : 1;
+        });
+
+        return $services;
     }
 }

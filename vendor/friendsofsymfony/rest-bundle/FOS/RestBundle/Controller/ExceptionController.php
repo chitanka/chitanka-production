@@ -14,9 +14,10 @@ namespace FOS\RestBundle\Controller;
 use FOS\RestBundle\Util\StopFormatListenerException;
 use FOS\RestBundle\View\ExceptionWrapperHandlerInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\TemplateReference;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\FlattenException as HttpFlattenException;
 use Symfony\Component\Debug\Exception\FlattenException as DebugFlattenException;
-use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\HttpKernel\Log\DebugLoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,10 +27,25 @@ use FOS\RestBundle\View\View;
 use FOS\RestBundle\Util\ExceptionWrapper;
 
 /**
- * Custom ExceptionController that uses the view layer and supports HTTP response status code mapping
+ * Custom ExceptionController that uses the view layer and supports HTTP response status code mapping.
  */
-class ExceptionController extends ContainerAware
+class ExceptionController implements ContainerAwareInterface
 {
+    /**
+     * @var ContainerInterface
+     */
+    protected $container;
+
+    /**
+     * Sets the Container associated with this Controller.
+     *
+     * @param ContainerInterface $container A ContainerInterface instance
+     */
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
+    }
+
     /**
      * Creates a new ExceptionWrapper instance that can be overwritten by a custom
      * ExceptionController class.
@@ -59,7 +75,7 @@ class ExceptionController extends ContainerAware
      */
     public function showAction(Request $request, $exception, DebugLoggerInterface $logger = null)
     {
-        /**
+        /*
          * Validates that the exception that is handled by the Exception controller is either a DebugFlattenException
          * or HttpFlattenException.
          * Type hinting has been removed due to a BC change in symfony/symfony 2.3.5.
@@ -75,15 +91,19 @@ class ExceptionController extends ContainerAware
             ));
         }
 
-        $format = $this->getFormat($request, $request->getRequestFormat());
+        try {
+            $format = $this->getFormat($request, $request->getRequestFormat());
+        } catch (\Exception $e) {
+            $format = null;
+        }
         if (null === $format) {
             $message = 'No matching accepted Response format could be determined, while handling: ';
             $message .= $this->getExceptionMessage($exception);
 
-            return new Response($message, Codes::HTTP_NOT_ACCEPTABLE, $exception->getHeaders());
+            return $this->createPlainResponse($message, Codes::HTTP_NOT_ACCEPTABLE, $exception->getHeaders());
         }
 
-        $currentContent = $this->getAndCleanOutputBuffering();
+        $currentContent = $this->getAndCleanOutputBuffering($request);
         $code = $this->getStatusCode($exception);
         $viewHandler = $this->container->get('fos_rest.view_handler');
         $parameters = $this->getParameters($viewHandler, $currentContent, $code, $exception, $logger, $format);
@@ -105,10 +125,26 @@ class ExceptionController extends ContainerAware
         } catch (\Exception $e) {
             $message = 'An Exception was thrown while handling: ';
             $message .= $this->getExceptionMessage($exception);
-            $response = new Response($message, Codes::HTTP_INTERNAL_SERVER_ERROR, $exception->getHeaders());
+            $response = $this->createPlainResponse($message, Codes::HTTP_INTERNAL_SERVER_ERROR, $exception->getHeaders());
         }
 
         return $response;
+    }
+
+    /**
+     * Returns a Response Object with content type text/plain.
+     *
+     * @param string $content
+     * @param int    $status
+     * @param array  $headers
+     *
+     * @return Response
+     */
+    private function createPlainResponse($content, $status = 200, $headers = array())
+    {
+        $headers['content-type'] = 'text/plain';
+
+        return new Response($content, $status, $headers);
     }
 
     /**
@@ -117,11 +153,13 @@ class ExceptionController extends ContainerAware
      * This code comes from Symfony and should be synchronized on a regular basis
      * see src/Symfony/Bundle/TwigBundle/Controller/ExceptionController.php
      *
+     * @param Request $request
+     *
      * @return string
      */
-    protected function getAndCleanOutputBuffering()
+    protected function getAndCleanOutputBuffering(Request $request)
     {
-        $startObLevel = $this->container->get('request')->headers->get('X-Php-Ob-Level', -1);
+        $startObLevel = $request->headers->get('X-Php-Ob-Level', -1);
 
         // ob_get_level() never returns 0 on some Windows configurations, so if
         // the level is the same two times in a row, the loop should be stopped.
@@ -157,7 +195,7 @@ class ExceptionController extends ContainerAware
                 }
             }
         } catch (\ReflectionException $re) {
-            return "FOSUserBundle: Invalid class in  fos_res.exception.messages: "
+            return 'FOSUserBundle: Invalid class in  fos_res.exception.messages: '
                     .$re->getMessage();
         }
 
@@ -238,10 +276,10 @@ class ExceptionController extends ContainerAware
      */
     protected function getParameters(ViewHandler $viewHandler, $currentContent, $code, $exception, DebugLoggerInterface $logger = null, $format = 'html')
     {
-        $parameters  = array(
+        $parameters = array(
             'status' => 'error',
             'status_code' => $code,
-            'status_text' => array_key_exists($code, Response::$statusTexts) ? Response::$statusTexts[$code] : "error",
+            'status_text' => array_key_exists($code, Response::$statusTexts) ? Response::$statusTexts[$code] : 'error',
             'currentContent' => $currentContent,
             'message' => $this->getExceptionMessage($exception),
             'exception' => $exception,

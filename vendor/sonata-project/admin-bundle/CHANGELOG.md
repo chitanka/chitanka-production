@@ -1,6 +1,44 @@
 CHANGELOG
 =========
 
+### 2015-06-18
+ * Add missing Route constructor parameters to ``RouteCollection:add`` method
+
+### 2015-03-04
+ * [BC BREAK] Admin LTE 2.0 used. Assets files changed.
+ * [BC BREAK] moved ``sonata_wrapper`` block on ```standard_layout.html.twig```
+ * [BC BREAK] removed ``btn-outline``` from doctrine-orm-admin form actions buttons
+
+### 2015-03-01
+ * [BC BREAK] added the ``hasRoute`` method to the AdminInterface
+
+## 2015-02-18
+ * [BC BREAK] Integration of KNPMenu for the admin menu. This integration is resetted when the standard layout ``standard_layout.html.twig`` is overrided. The KNPMenu is available in ``sonata_menu.html.twig`` template.
+
+### 2015-02-15
+ * [BC BREAK] added ``getFieldOption``, ``setFieldOption`` methods to the FilterInterface
+ * [BC BREAK] added the ``getFilterFieldDescription`` method to the AdminInterface
+ * [BC BREAK] added the ``getMaxPageLinks``, ``setMaxPageLinks`` methods to the PagerInterface
+ * [BC BREAK] CSS class ``sonata-autocomplete-dropdown-item`` is not automatically added to dropdown
+   autocomplete item in ``sonata_type_model_autocomplete``, use option ``dropdown_item_css_class``
+   to set the CSS class of dropdown item.
+
+## 2015-01-05
+ * [BC BREAK] #2665 - text from Admin's toString method is escaped for html output before adding in flash message to prevent possible XSS vulnerability.
+
+### 2014-11-04
+* [BC BREAK] Inline edition now validates the whole object.
+
+### 2014-09-21
+ * added new form type ``sonata_choice_field_mask``
+
+### 2014-09-19
+ * [BC BREAK] ``field_options`` is now directly given to ``value`` form in ``DateRangeType`` and ``DateTimeRangeType`` filters.
+
+### 2014-08-08
+ * added new form type ``sonata_type_model_autocomplete``
+ * changed ``collection`` form type to ``sonata_type_native_collection``
+
 ### 2013-12-27
 
 * [BC BREAK] Added KnpMenuBundle v2.x compatibility, ``buildSideMenu`` must now use the ``Admin::generateMenuUrl`` method to generate the route arguments for the KnpMenu options.
@@ -18,6 +56,9 @@ CHANGELOG
 * [BC BREAK] added ``getBatchActions`` to the AdminInterface
   If you do not extend the Admin class, you need to add this method to
   your admin.
+
+### 2013-10-26
+ * added new form type ``sonata_type_model_hidden``
 
 ### 2013-10-13
 
@@ -166,7 +207,7 @@ CHANGELOG
 * [BC BREAK] Introduce Block Into the Admin Bundle
     * The AdminBundle has now a dependency to BlockBundle : http://github.com/sonata-project/SonataBlockBundle
     * The dashboard list is now a block, so it can be removed from the sonata_admin configuration.
-    * More blocks can be created please follow the instruction here : http://sonata-project.org/bundles/block/master/doc/reference/your_first_block.html
+    * More blocks can be created please follow the instruction here : https://sonata-project.org/bundles/block/master/doc/reference/your_first_block.html
 
 * [BC BREAK] New configuration format for the dashboard section.
 

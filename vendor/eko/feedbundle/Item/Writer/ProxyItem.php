@@ -11,12 +11,11 @@
 
 namespace Eko\FeedBundle\Item\Writer;
 
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 
-use Eko\FeedBundle\Item\Writer\ItemInterface;
-
 /**
- * Proxy Item
+ * Proxy Item.
  *
  * This interface contains the methods that you need to implement in your entity
  *
@@ -35,7 +34,7 @@ class ProxyItem implements ItemInterface
     protected $router;
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param RoutedItemInterface $item
      * @param RouterInterface     $router
@@ -47,26 +46,26 @@ class ProxyItem implements ItemInterface
     }
 
     /**
-     * Returns item custom fields methods if exists in entity
+     * Returns item custom fields methods if exists in entity.
      *
      * @param string $method Method name
      * @param array  $args   Arguments array
      *
-     * @return mixed
-     *
      * @throws \InvalidArgumentException If method is not defined
+     *
+     * @return mixed
      */
     public function __call($method, $args)
     {
         if (method_exists($this->item, $method)) {
-            return call_user_func_array(array($this->item, $method), $args);
+            return call_user_func_array([$this->item, $method], $args);
         }
 
         throw new \InvalidArgumentException(sprintf('Method "%s" should be defined in your entity.', $method));
     }
 
     /**
-     * This method returns feed item title
+     * This method returns feed item title.
      *
      * @return string
      */
@@ -76,7 +75,7 @@ class ProxyItem implements ItemInterface
     }
 
     /**
-     * This method returns feed item description (or content)
+     * This method returns feed item description (or content).
      *
      * @return string
      */
@@ -86,26 +85,26 @@ class ProxyItem implements ItemInterface
     }
 
     /**
-     * This method returns feed item URL link
+     * This method returns feed item URL link.
      *
      * @return string
      */
     public function getFeedItemLink()
     {
-        $parameters = $this->item->getFeedItemRouteParameters() ?: array();
+        $parameters = $this->item->getFeedItemRouteParameters() ?: [];
 
-        $url = $this->router->generate($this->item->getFeedItemRouteName(), $parameters, true);
+        $url = $this->router->generate($this->item->getFeedItemRouteName(), $parameters, UrlGeneratorInterface::ABSOLUTE_URL);
 
         $anchor = (string) $this->item->getFeedItemUrlAnchor();
         if ($anchor !== '') {
-            $url .= '#' . $anchor;
+            $url .= '#'.$anchor;
         }
 
         return $url;
     }
 
     /**
-     * This method returns item publication date
+     * This method returns item publication date.
      *
      * @return \DateTime
      */

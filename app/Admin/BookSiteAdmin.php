@@ -1,8 +1,8 @@
 <?php namespace App\Admin;
 
-use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
 
 class BookSiteAdmin extends Admin {
@@ -31,10 +31,10 @@ class BookSiteAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$formMapper->with('General attributes')
 			->add('name')
 			->add('url')
+			->end()
 			->setHelps([
 				'url' => $this->trans('help.booksite.url')
 			]);

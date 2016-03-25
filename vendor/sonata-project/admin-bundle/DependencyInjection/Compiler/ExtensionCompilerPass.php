@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,18 +11,20 @@
 
 namespace Sonata\AdminBundle\DependencyInjection\Compiler;
 
-use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * @author Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ * Class ExtensionCompilerPass.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
 class ExtensionCompilerPass implements CompilerPassInterface
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function process(ContainerBuilder $container)
     {
@@ -64,7 +66,7 @@ class ExtensionCompilerPass implements CompilerPassInterface
             $extensions = $this->getExtensionsForAdmin($id, $admin, $container, $extensionMap);
 
             foreach ($extensions as $extension) {
-                if (!$container->hasDefinition($extension)) {
+                if (!$container->has($extension)) {
                     throw new \InvalidArgumentException(sprintf('Unable to find extension service for id %s', $extension));
                 }
                 $admin->addMethodCall('addExtension', array(new Reference($extension)));
@@ -73,29 +75,32 @@ class ExtensionCompilerPass implements CompilerPassInterface
     }
 
     /**
-     * @param string $id
-     * @param Definition $admin
+     * @param string           $id
+     * @param Definition       $admin
      * @param ContainerBuilder $container
-     * @param array $extensionMap
+     * @param array            $extensionMap
+     *
      * @return array
      */
     protected function getExtensionsForAdmin($id, Definition $admin, ContainerBuilder $container, array $extensionMap)
     {
         $extensions = array();
-        $class = $classReflection = $subjectReflection = null;
+        $classReflection = $subjectReflection = null;
 
         $excludes = $extensionMap['excludes'];
         unset($extensionMap['excludes']);
 
         foreach ($extensionMap as $type => $subjects) {
             foreach ($subjects as $subject => $extensionList) {
-
                 if ('admins' == $type) {
                     if ($id == $subject) {
                         $extensions = array_merge($extensions, $extensionList);
                     }
                 } else {
                     $class = $this->getManagedClass($admin, $container);
+                    if (!class_exists($class)) {
+                        continue;
+                    }
                     $classReflection = new \ReflectionClass($class);
                     $subjectReflection = new \ReflectionClass($subject);
                 }
@@ -117,6 +122,12 @@ class ExtensionCompilerPass implements CompilerPassInterface
                         $extensions = array_merge($extensions, $extensionList);
                     }
                 }
+
+                if ('uses' == $type) {
+                    if ($this->hasTrait($classReflection, $subject)) {
+                        $extensions = array_merge($extensions, $extensionList);
+                    }
+                }
             }
         }
 
@@ -128,10 +139,11 @@ class ExtensionCompilerPass implements CompilerPassInterface
     }
 
     /**
-     * Resolves the class argument of the admin to an actual class (in case of %parameter%)
+     * Resolves the class argument of the admin to an actual class (in case of %parameter%).
      *
-     * @param Definition $admin
+     * @param Definition       $admin
      * @param ContainerBuilder $container
+     *
      * @return string
      */
     protected function getManagedClass(Definition $admin, ContainerBuilder $container)
@@ -141,16 +153,18 @@ class ExtensionCompilerPass implements CompilerPassInterface
 
     /**
      * @param array $config
+     *
      * @return array
      */
     protected function flattenExtensionConfiguration(array $config)
     {
         $extensionMap = array(
-            'excludes'      => array(),
-            'admins'        => array(),
-            'implements'    => array(),
-            'extends'       => array(),
-            'instanceof'    => array(),
+            'excludes'   => array(),
+            'admins'     => array(),
+            'implements' => array(),
+            'extends'    => array(),
+            'instanceof' => array(),
+            'uses'       => array(),
         );
 
         foreach ($config as $extension => $options) {
@@ -165,5 +179,24 @@ class ExtensionCompilerPass implements CompilerPassInterface
         }
 
         return $extensionMap;
+    }
+
+    /**
+     * @param \ReflectionClass $class
+     * @param                  $traitName
+     *
+     * @return bool
+     */
+    protected function hasTrait(\ReflectionClass $class, $traitName)
+    {
+        if (in_array($traitName, $class->getTraitNames())) {
+            return true;
+        }
+
+        if (!$parentClass = $class->getParentClass()) {
+            return false;
+        }
+
+        return $this->hasTrait($parentClass, $traitName);
     }
 }

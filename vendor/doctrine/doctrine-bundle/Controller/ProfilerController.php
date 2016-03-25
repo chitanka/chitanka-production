@@ -16,7 +16,8 @@ namespace Doctrine\Bundle\DoctrineBundle\Controller;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
-use Symfony\Component\DependencyInjection\ContainerAware;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -24,8 +25,21 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * @author Christophe Coevoet <stof@notk.org>
  */
-class ProfilerController extends ContainerAware
+class ProfilerController implements ContainerAwareInterface
 {
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
+    }
+
     /**
      * Renders the profiler panel for the given token.
      *
@@ -65,7 +79,7 @@ class ProfilerController extends ContainerAware
             return new Response('This query cannot be explained.');
         }
 
-        return $this->container->get('templating')->renderResponse('DoctrineBundle:Collector:explain.html.twig', array(
+        return $this->container->get('templating')->renderResponse('@Doctrine/Collector/explain.html.twig', array(
             'data' => $results,
             'query' => $query,
         ));

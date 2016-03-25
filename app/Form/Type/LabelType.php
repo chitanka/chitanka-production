@@ -18,11 +18,11 @@ class LabelType extends AbstractType {
 
 	public function getDefaultOptions(array $options) {
 		return [
-			'data_class' => 'App\Entity\Label',
+			'data_class' => \App\Entity\Label::class,
 		];
 	}
 
-	public function getName() {
+	public function getBlockPrefix() {
 		return 'label';
 	}
 

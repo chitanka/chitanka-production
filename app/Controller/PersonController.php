@@ -1,9 +1,10 @@
 <?php namespace App\Controller;
 
-use App\Pagination\Pager;
-use App\Util\Stringy;
 use App\Entity\Person;
+use App\Pagination\Pager;
 use App\Service\SearchService;
+use App\Service\Translation;
+use App\Util\Stringy;
 use Symfony\Component\HttpFoundation\Request;
 
 class PersonController extends Controller {
@@ -44,9 +45,10 @@ class PersonController extends Controller {
 	}
 
 	public function listByCountryIndexAction($by) {
+		$translation = new Translation();
 		return [
 			'by' => $by,
-			'countries' => $this->getPersonRepository()->getCountryList()
+			'countries' => $translation->getCountryChoices(),
 		];
 	}
 

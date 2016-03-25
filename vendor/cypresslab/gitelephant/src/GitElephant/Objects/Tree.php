@@ -19,9 +19,9 @@
 
 namespace GitElephant\Objects;
 
-use GitElephant\Repository;
-use GitElephant\Command\LsTreeCommand;
-use GitElephant\Command\CatFileCommand;
+use \GitElephant\Repository;
+use \GitElephant\Command\LsTreeCommand;
+use \GitElephant\Command\CatFileCommand;
 
 /**
  * An abstraction of a git tree
@@ -96,7 +96,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \Iterator
      */
     private function createFromCommand()
     {
-        $command = LsTreeCommand::getInstance()->tree($this->ref, $this->subject);
+        $command = LsTreeCommand::getInstance($this->getRepository())->tree($this->ref, $this->subject);
         $outputLines = $this->getCaller()->execute($command)->getOutputLines(true);
         $this->parseOutputLines($outputLines);
     }
@@ -111,8 +111,9 @@ class Tree extends Object implements \ArrayAccess, \Countable, \Iterator
      * @param string                  $ref        a treeish reference
      * @param Object                  $subject    the subject
      *
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @internal param \GitElephant\Objects\Object|string $treeObject Object instance
-     *
      */
     public function __construct(Repository $repository, $ref = 'HEAD', $subject = null)
     {
@@ -192,11 +193,15 @@ class Tree extends Object implements \ArrayAccess, \Countable, \Iterator
     /**
      * get binary data
      *
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\LogicException
+     * @throws \Symfony\Component\Process\Exception\InvalidArgumentException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return string
      */
     public function getBinaryData()
     {
-        $cmd = CatFileCommand::getInstance()->content($this->getSubject(), $this->ref);
+        $cmd = CatFileCommand::getInstance($this->getRepository())->content($this->getSubject(), $this->ref);
 
         return $this->getCaller()->execute($cmd)->getRawOutput();
     }
@@ -278,7 +283,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \Iterator
             return ($a->getName() == $names[0]) ? -1 : 1;
         }
 
-        return $a->getType() == Object::TYPE_TREE && $b->getType() == Object::TYPE_BLOB ? -1 : 1;
+        return $a->getType() == Object::TYPE_TREE || $b->getType() == Object::TYPE_BLOB ? -1 : 1;
     }
 
     /**
@@ -316,7 +321,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \Iterator
             }
             if (!in_array($name, $this->pathChildren)) {
                 $path                 = rtrim(rtrim($slices['fullPath'], $name), '/');
-                $treeObject           = new Object(
+                $treeObject           = new TreeObject(
                     $this->repository,
                     $slices['permissions'],
                     $slices['type'],
@@ -336,6 +341,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \Iterator
      *
      * @param string $ref
      *
+     * @throws \RuntimeException
      * @return Commit\Message
      */
     public function getLastCommitMessage($ref = 'master')
@@ -348,6 +354,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \Iterator
      *
      * @param string $ref
      *
+     * @throws \RuntimeException
      * @return Author
      */
     public function getLastCommitAuthor($ref = 'master')
@@ -360,6 +367,8 @@ class Tree extends Object implements \ArrayAccess, \Countable, \Iterator
      *
      * @param string $ref
      *
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return Commit
      */
     public function getLastCommit($ref = 'master')
@@ -384,26 +393,6 @@ class Tree extends Object implements \ArrayAccess, \Countable, \Iterator
         } else {
             return $this->getSubject();
         }
-    }
-
-    /**
-     * Repository setter
-     *
-     * @param \GitElephant\Repository $repository the repository variable
-     */
-    public function setRepository($repository)
-    {
-        $this->repository = $repository;
-    }
-
-    /**
-     * Repository getter
-     *
-     * @return \GitElephant\Repository
-     */
-    public function getRepository()
-    {
-        return $this->repository;
     }
 
     /**

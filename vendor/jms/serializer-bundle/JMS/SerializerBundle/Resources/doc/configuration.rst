@@ -8,7 +8,7 @@ or the ``jms_serializer.subscribing_handler``.
 
 .. code-block :: xml
 
-    <service id="my_handler" class="MyHandler" public="false">
+    <service id="my_handler" class="MyHandler">
         <tag name="jms_serializer.handler" type="DateTime" direction="serialization" format="json"
                     method="serializeDateTimeToJson" />
     </service>
@@ -29,7 +29,7 @@ The semantics are mainly the same as registering a regular Symfony2 event listen
 except that you can specify some additional attributes:
 
 - *format*: The format that you want to listen to; defaults to all formats.
-- *type*: The type name that you want to listen to; defaults to all types.
+- *class*: The type name that you want to listen to; defaults to all types.
 - *direction*: The direction (serialization, or deserialization); defaults to both.
 
 .. note ::
@@ -67,17 +67,17 @@ is searched for metadata with a path that is under your control.
 
 Changing the Object Constructor
 ----------------------------------
-A Constructor class is used to construct new objects during deserialization. The 
+A Constructor class is used to construct new objects during deserialization. The
 default constructor uses the `unserialize` function to construct objects. Other
-constructors are configured as services. You can set the constructor by changing 
+constructors are configured as services. You can set the constructor by changing
 the service alias:
 
-```yaml
-services:
-    jms_serializer.object_constructor:
-        alias: jms_serializer.doctrine_object_constructor
-        public: false
-```
+.. code-block :: yaml
+
+    services:
+        jms_serializer.object_constructor:
+            alias: jms_serializer.doctrine_object_constructor
+            public: false
 
 Extension Reference
 -------------------
@@ -91,6 +91,7 @@ values:
 
         # config.yml
         jms_serializer:
+            enable_short_alias: true # controls if "serializer" service is aliased to jms_serializer.serializer service
             handlers:
                 datetime:
                     default_format: "c" # ISO8601

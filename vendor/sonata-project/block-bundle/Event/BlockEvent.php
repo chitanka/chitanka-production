@@ -16,12 +16,18 @@ use Symfony\Component\EventDispatcher\Event;
 
 class BlockEvent extends Event
 {
+    /**
+     * @var array
+     */
     protected $settings;
 
+    /**
+     * @var BlockInterface[]
+     */
     protected $blocks = array();
 
     /**
-     * @param array  $settings
+     * @param array $settings
      */
     public function __construct(array $settings = array())
     {
@@ -55,6 +61,8 @@ class BlockEvent extends Event
     /**
      * @param string $name
      * @param mixed  $default
+     *
+     * @return mixed
      */
     public function getSetting($name, $default = null)
     {

@@ -11,12 +11,11 @@
 namespace Eko\FeedBundle\Feed;
 
 use Eko\FeedBundle\Hydrator\HydratorInterface;
-
-use Zend\Feed\Reader\Reader as ZendReader;
 use Zend\Feed\Reader\Feed\FeedInterface;
+use Zend\Feed\Reader\Reader as ZendReader;
 
 /**
- * Reader
+ * Reader.
  *
  * This is the main feed reader class
  *
@@ -35,7 +34,7 @@ class Reader
     protected $hydrator;
 
     /**
-     * Sets entity hydrator service
+     * Sets entity hydrator service.
      *
      * @param HydratorInterface $hydrator
      */
@@ -45,7 +44,7 @@ class Reader
     }
 
     /**
-     * Loads feed from an url or file path
+     * Loads feed from an url or file path.
      *
      * @param string $file
      *
@@ -63,7 +62,7 @@ class Reader
     }
 
     /**
-     * Get feed object previously loaded
+     * Get feed object previously loaded.
      *
      * @return FeedInterface
      */
@@ -75,18 +74,18 @@ class Reader
     }
 
     /**
-     * Populate entities with feed entries using hydrator
+     * Populate entities with feed entries using hydrator.
      *
      * @param string $entityName
      *
-     * @return array
-     *
      * @throws \RuntimeException if entity name does not exists
+     *
+     * @return array
      */
     public function populate($entityName)
     {
         if (!class_exists($entityName)) {
-            throw new \RuntimeException(sprintf('Entity %s does not exists.'));
+            throw new \RuntimeException(sprintf('Entity %s does not exists.', $entityName));
         }
 
         $feed = $this->get();
@@ -95,7 +94,7 @@ class Reader
     }
 
     /**
-     * Check if a feed is currently loaded
+     * Check if a feed is currently loaded.
      *
      * @throws \RuntimeException if there is no feed loaded
      */

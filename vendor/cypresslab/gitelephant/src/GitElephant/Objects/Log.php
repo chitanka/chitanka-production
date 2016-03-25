@@ -19,9 +19,9 @@
 
 namespace GitElephant\Objects;
 
-use GitElephant\Repository;
-use GitElephant\Command\LogCommand;
-use GitElephant\Utilities;
+use \GitElephant\Repository;
+use \GitElephant\Command\LogCommand;
+use \GitElephant\Utilities;
 
 /**
  * Git log abstraction object
@@ -75,6 +75,9 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      * @param int                     $limit       limit
      * @param null                    $offset      offset
      * @param boolean                 $firstParent first parent
+     *
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      */
     public function __construct(
         Repository $repository,
@@ -97,11 +100,15 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      * @param string  $offset      offset
      * @param boolean $firstParent first parent
      *
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\LogicException
+     * @throws \Symfony\Component\Process\Exception\InvalidArgumentException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @see ShowCommand::commitInfo
      */
     private function createFromCommand($ref, $path, $limit, $offset, $firstParent)
     {
-        $command = LogCommand::getInstance()->showLog($ref, $path, $limit, $offset, $firstParent);
+        $command = LogCommand::getInstance($this->getRepository())->showLog($ref, $path, $limit, $offset, $firstParent);
         $outputLines = $this->getRepository()->getCaller()->execute($command)->getOutputLines(true);
         $this->parseOutputLines($outputLines);
     }
@@ -111,7 +118,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
         $this->commits = array();
         $commits = Utilities::pregSplitFlatArray($outputLines, '/^commit (\w+)$/');
         foreach ($commits as $commitOutputLines) {
-            $this->commits[] = Commit::createFromOutputLines($this->repository, $commitOutputLines);
+            $this->commits[] = Commit::createFromOutputLines($this->getRepository(), $commitOutputLines);
         }
     }
 

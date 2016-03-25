@@ -16,11 +16,12 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Routing\Route;
 
 /**
- * A console command for retrieving information about routes
+ * A console command for retrieving information about routes.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Tobias Schultze <http://tobion.de>
@@ -49,18 +50,19 @@ class RouterDebugCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('router:debug')
+            ->setName('debug:router')
             ->setDefinition(array(
                 new InputArgument('name', InputArgument::OPTIONAL, 'A route name'),
-                new InputOption('show-controllers', null,  InputOption::VALUE_NONE, 'Show assigned controllers in overview'),
-                new InputOption('format', null, InputOption::VALUE_REQUIRED, 'To output route(s) in other formats', 'txt'),
+                new InputOption('show-controllers', null, InputOption::VALUE_NONE, 'Show assigned controllers in overview'),
+                new InputOption('format', null, InputOption::VALUE_REQUIRED, 'The output format (txt, xml, json, or md)', 'txt'),
                 new InputOption('raw', null, InputOption::VALUE_NONE, 'To output raw route(s)'),
             ))
             ->setDescription('Displays current routes for an application')
-            ->setHelp(<<<EOF
+            ->setHelp(<<<'EOF'
 The <info>%command.name%</info> displays the configured routes:
 
   <info>php %command.full_name%</info>
+
 EOF
             )
         ;
@@ -73,6 +75,7 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $io = new SymfonyStyle($input, $output);
         $name = $input->getArgument('name');
         $helper = new DescriptorHelper();
 
@@ -81,11 +84,14 @@ EOF
             if (!$route) {
                 throw new \InvalidArgumentException(sprintf('The route "%s" does not exist.', $name));
             }
+
             $this->convertController($route);
-            $helper->describe($output, $route, array(
-                'format'   => $input->getOption('format'),
+
+            $helper->describe($io, $route, array(
+                'format' => $input->getOption('format'),
                 'raw_text' => $input->getOption('raw'),
-                'name'     => $name,
+                'name' => $name,
+                'output' => $io,
             ));
         } else {
             $routes = $this->getContainer()->get('router')->getRouteCollection();
@@ -94,10 +100,11 @@ EOF
                 $this->convertController($route);
             }
 
-            $helper->describe($output, $routes, array(
-                'format'           => $input->getOption('format'),
-                'raw_text'         => $input->getOption('raw'),
+            $helper->describe($io, $routes, array(
+                'format' => $input->getOption('format'),
+                'raw_text' => $input->getOption('raw'),
                 'show_controllers' => $input->getOption('show-controllers'),
+                'output' => $io,
             ));
         }
     }

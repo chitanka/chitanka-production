@@ -12,8 +12,8 @@
 namespace Sonata\CoreBundle\Serializer;
 
 use JMS\Serializer\Context;
-use JMS\Serializer\VisitorInterface;
 use JMS\Serializer\GraphNavigator;
+use JMS\Serializer\VisitorInterface;
 use Sonata\CoreBundle\Model\ManagerInterface;
 
 /**
@@ -26,6 +26,9 @@ abstract class BaseSerializerHandler implements SerializerHandlerInterface
      */
     protected $manager;
 
+    /**
+     * @param ManagerInterface $manager
+     */
     public function __construct(ManagerInterface $manager)
     {
         $this->manager = $manager;
@@ -77,7 +80,7 @@ abstract class BaseSerializerHandler implements SerializerHandlerInterface
             return $visitor->visitInteger($data->getId(), $type, $context);
         }
 
-        return null;
+        return;
     }
 
     /**

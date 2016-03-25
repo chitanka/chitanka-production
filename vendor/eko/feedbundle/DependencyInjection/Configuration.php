@@ -14,7 +14,7 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
- * Configuration
+ * Configuration.
  *
  * This class generates configuration settings tree
  *
@@ -23,7 +23,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 class Configuration implements ConfigurationInterface
 {
     /**
-     * Builds configuration tree
+     * Builds configuration tree.
      *
      * @return \Symfony\Component\Config\Definition\Builder\TreeBuilder A tree builder instance
      */
@@ -35,6 +35,7 @@ class Configuration implements ConfigurationInterface
         $rootNode
             ->children()
                 ->scalarNode('hydrator')->defaultValue('eko_feed.hydrator.default')->end()
+                ->scalarNode('translation_domain')->defaultNull()->end()
                 ->arrayNode('feeds')
                     ->requiresAtLeastOneElement()
                     ->useAttributeAsKey('name')
@@ -42,14 +43,27 @@ class Configuration implements ConfigurationInterface
                         ->children()
                             ->scalarNode('title')->isRequired()->end()
                             ->scalarNode('description')->isRequired()->end()
-                            ->scalarNode('link')->isRequired()->end()
+                            ->arrayNode('link')
+                                ->isRequired()
+                                ->beforeNormalization()
+                                    ->ifString()
+                                    ->then(function ($value) { return ['uri' => $value]; })
+                                ->end()
+                                ->children()
+                                    ->scalarNode('route_name')->end()
+                                    ->arrayNode('route_params')
+                                        ->useAttributeAsKey('key')
+                                        ->prototype('scalar')->end()
+                                    ->end()
+                                    ->scalarNode('uri')->end()
+                                ->end()
+                            ->end()
                             ->scalarNode('encoding')->isRequired()->end()
                             ->scalarNode('author')->end()
                         ->end()
                     ->end()
                 ->end()
-            ->end()
-        ;
+            ->end();
 
         return $treeBuilder;
     }

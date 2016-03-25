@@ -52,7 +52,7 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
         OutputInterface::VERBOSITY_NORMAL => Logger::WARNING,
         OutputInterface::VERBOSITY_VERBOSE => Logger::NOTICE,
         OutputInterface::VERBOSITY_VERY_VERBOSE => Logger::INFO,
-        OutputInterface::VERBOSITY_DEBUG => Logger::DEBUG
+        OutputInterface::VERBOSITY_DEBUG => Logger::DEBUG,
     );
 
     /**
@@ -120,7 +120,12 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
      */
     public function onCommand(ConsoleCommandEvent $event)
     {
-        $this->setOutput($event->getOutput());
+        $output = $event->getOutput();
+        if ($output instanceof ConsoleOutputInterface) {
+            $output = $output->getErrorOutput();
+        }
+
+        $this->setOutput($output);
     }
 
     /**
@@ -139,8 +144,8 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
     public static function getSubscribedEvents()
     {
         return array(
-            ConsoleEvents::COMMAND => 'onCommand',
-            ConsoleEvents::TERMINATE => 'onTerminate'
+            ConsoleEvents::COMMAND => array('onCommand', 255),
+            ConsoleEvents::TERMINATE => array('onTerminate', -255),
         );
     }
 
@@ -149,11 +154,7 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
      */
     protected function write(array $record)
     {
-        if ($record['level'] >= Logger::ERROR && $this->output instanceof ConsoleOutputInterface) {
-            $this->output->getErrorOutput()->write((string) $record['formatted']);
-        } else {
-            $this->output->write((string) $record['formatted']);
-        }
+        $this->output->write((string) $record['formatted']);
     }
 
     /**
@@ -167,7 +168,7 @@ class ConsoleHandler extends AbstractProcessingHandler implements EventSubscribe
     /**
      * Updates the logging level based on the verbosity setting of the console output.
      *
-     * @return bool    Whether the handler is enabled and verbosity is not set to quiet.
+     * @return bool Whether the handler is enabled and verbosity is not set to quiet.
      */
     private function updateLevel()
     {

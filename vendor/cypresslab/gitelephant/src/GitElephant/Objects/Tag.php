@@ -19,9 +19,9 @@
 
 namespace GitElephant\Objects;
 
-use GitElephant\Repository;
-use GitElephant\Command\TagCommand;
-use GitElephant\Command\RevListCommand;
+use \GitElephant\Repository;
+use \GitElephant\Command\TagCommand;
+use \GitElephant\Command\RevListCommand;
 
 /**
  * An object representing a git tag
@@ -59,11 +59,12 @@ class Tag extends Object
      * @param string                  $startPoint branch to start from
      * @param string                  $message    tag message
      *
+     * @throws \RuntimeException
      * @return \GitElephant\Objects\Branch
      */
     public static function create(Repository $repository, $name, $startPoint = null, $message = null)
     {
-        $repository->getCaller()->execute(TagCommand::getInstance()->create($name, $startPoint, $message));
+        $repository->getCaller()->execute(TagCommand::getInstance($repository)->create($name, $startPoint, $message));
 
         return $repository->getTag($name);
     }
@@ -75,6 +76,9 @@ class Tag extends Object
      * @param array                   $outputLines output lines
      * @param string                  $name        name
      *
+     * @throws \RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return Commit
      */
     public static function createFromOutputLines(Repository $repository, $outputLines, $name)
@@ -91,6 +95,8 @@ class Tag extends Object
      * @param \GitElephant\Repository $repository repository instance
      * @param string                  $name       name
      *
+     * @throws \RuntimeException
+     * @throws \InvalidArgumentException
      * @internal param string $line a single tag line from the git binary
      */
     public function __construct(Repository $repository, $name)
@@ -121,7 +127,7 @@ class Tag extends Object
     {
         $this->repository
             ->getCaller()
-            ->execute(TagCommand::getInstance()->delete($this));
+            ->execute(TagCommand::getInstance($this->getRepository())->delete($this));
     }
 
     /**
@@ -131,7 +137,7 @@ class Tag extends Object
      */
     private function createFromCommand()
     {
-        $command = TagCommand::getInstance()->lists();
+        $command = TagCommand::getInstance($this->getRepository())->listTags();
         $outputLines = $this->getCaller()->execute($command, true, $this->getRepository()->getPath())->getOutputLines();
         $this->parseOutputLines($outputLines);
     }
@@ -141,8 +147,11 @@ class Tag extends Object
      *
      * @param array $outputLines output lines
      *
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\Process\Exception\InvalidArgumentException
+     * @throws \Symfony\Component\Process\Exception\LogicException
      * @throws \InvalidArgumentException
-     *
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return void
      */
     private function parseOutputLines($outputLines)
@@ -152,7 +161,7 @@ class Tag extends Object
             if ($tagString != '') {
                 if ($this->name === trim($tagString)) {
                     $lines = $this->getCaller()
-                        ->execute(RevListCommand::getInstance()->getTagCommit($this))
+                        ->execute(RevListCommand::getInstance($this->getRepository())->getTagCommit($this))
                         ->getOutputLines();
                     $this->setSha($lines[0]);
                     $found = true;
@@ -181,26 +190,6 @@ class Tag extends Object
     private function getCaller()
     {
         return $this->getRepository()->getCaller();
-    }
-
-    /**
-     * Repository setter
-     *
-     * @param \GitElephant\Repository $repository the repository variable
-     */
-    public function setRepository($repository)
-    {
-        $this->repository = $repository;
-    }
-
-    /**
-     * Repository getter
-     *
-     * @return \GitElephant\Repository
-     */
-    public function getRepository()
-    {
-        return $this->repository;
     }
 
     /**

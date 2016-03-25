@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Process;
 
+use Symfony\Component\Process\Exception\InvalidArgumentException;
+
 /**
  * ProcessUtils is a bunch of utility methods.
  *
@@ -21,7 +23,7 @@ namespace Symfony\Component\Process;
 class ProcessUtils
 {
     /**
-     * This class should not be instantiated
+     * This class should not be instantiated.
      */
     private function __construct()
     {
@@ -40,14 +42,14 @@ class ProcessUtils
         //Fix for PHP bug #49446 escapeshellarg doesn't work on Windows
         //@see https://bugs.php.net/bug.php?id=43784
         //@see https://bugs.php.net/bug.php?id=49446
-        if (defined('PHP_WINDOWS_VERSION_BUILD')) {
+        if ('\\' === DIRECTORY_SEPARATOR) {
             if ('' === $argument) {
                 return escapeshellarg($argument);
             }
 
             $escapedArgument = '';
-            $quote =  false;
-            foreach (preg_split('/(")/i', $argument, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE) as $part) {
+            $quote = false;
+            foreach (preg_split('/(")/', $argument, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE) as $part) {
                 if ('"' === $part) {
                     $escapedArgument .= '\\"';
                 } elseif (self::isSurroundedBy($part, '%')) {
@@ -70,6 +72,32 @@ class ProcessUtils
         }
 
         return escapeshellarg($argument);
+    }
+
+    /**
+     * Validates and normalizes a Process input.
+     *
+     * @param string $caller The name of method call that validates the input
+     * @param mixed  $input  The input to validate
+     *
+     * @return string The validated input
+     *
+     * @throws InvalidArgumentException In case the input is not valid
+     */
+    public static function validateInput($caller, $input)
+    {
+        if (null !== $input) {
+            if (is_resource($input)) {
+                return $input;
+            }
+            if (is_scalar($input)) {
+                return (string) $input;
+            }
+
+            throw new InvalidArgumentException(sprintf('%s only accepts strings or stream resources.', $caller));
+        }
+
+        return $input;
     }
 
     private static function isSurroundedBy($arg, $char)

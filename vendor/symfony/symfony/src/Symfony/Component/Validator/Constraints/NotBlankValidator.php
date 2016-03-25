@@ -13,11 +13,10 @@ namespace Symfony\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
+use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
- *
- * @api
  */
 class NotBlankValidator extends ConstraintValidator
 {
@@ -26,8 +25,15 @@ class NotBlankValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
+        if (!$constraint instanceof NotBlank) {
+            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\NotBlank');
+        }
+
         if (false === $value || (empty($value) && '0' != $value)) {
-            $this->context->addViolation($constraint->message);
+            $this->context->buildViolation($constraint->message)
+                ->setParameter('{{ value }}', $this->formatValue($value))
+                ->setCode(NotBlank::IS_BLANK_ERROR)
+                ->addViolation();
         }
     }
 }

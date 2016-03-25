@@ -18,3 +18,7 @@ Reference Guide
    reference/twig_helpers
    reference/doctrine_base_manager
    reference/serialization
+   reference/api
+   reference/conditional_validation
+   reference/command
+

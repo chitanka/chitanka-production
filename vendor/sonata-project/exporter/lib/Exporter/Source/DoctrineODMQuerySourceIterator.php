@@ -11,10 +11,10 @@
 
 namespace Exporter\Source;
 
-use Exporter\Exception\InvalidMethodCallException;
 use Doctrine\ODM\MongoDB\Query\Query;
-use Exporter\Source\SourceIteratorInterface;
-use Symfony\Component\Form\Util\PropertyPath;
+use Exporter\Exception\InvalidMethodCallException;
+use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Component\PropertyAccess\PropertyPath;
 
 class DoctrineODMQuerySourceIterator implements SourceIteratorInterface
 {
@@ -31,12 +31,25 @@ class DoctrineODMQuerySourceIterator implements SourceIteratorInterface
     protected $propertyPaths;
 
     /**
-     * @param \Doctrine\ODM\MongoDB\Query\Query $query  The Doctrine Query
-     * @param array               $fields Fields to export
+     * @var PropertyAccess
      */
-    public function __construct(Query $query, array $fields)
+    protected $propertyAccessor;
+
+    /**
+     * @var string default DateTime format
+     */
+    protected $dateTimeFormat;
+
+    /**
+     * @param \Doctrine\ODM\MongoDB\Query\Query $query          The Doctrine Query
+     * @param array                             $fields         Fields to export
+     * @param string                            $dateTimeFormat
+     */
+    public function __construct(Query $query, array $fields, $dateTimeFormat = 'r')
     {
         $this->query = clone $query;
+
+        $this->propertyAccessor = PropertyAccess::createPropertyAccessor();
 
         $this->propertyPaths = array();
         foreach ($fields as $name => $field) {
@@ -46,6 +59,8 @@ class DoctrineODMQuerySourceIterator implements SourceIteratorInterface
                 $this->propertyPaths[$field] = new PropertyPath($field);
             }
         }
+
+        $this->dateTimeFormat = $dateTimeFormat;
     }
 
     /**
@@ -58,7 +73,7 @@ class DoctrineODMQuerySourceIterator implements SourceIteratorInterface
         $data = array();
 
         foreach ($this->propertyPaths as $name => $propertyPath) {
-            $data[$name] = $this->getValue($propertyPath->getValue($current));
+            $data[$name] = $this->getValue($this->propertyAccessor->getValue($current, $propertyPath));
         }
 
         $this->query->getDocumentManager()->getUnitOfWork()->detach($current);
@@ -73,10 +88,10 @@ class DoctrineODMQuerySourceIterator implements SourceIteratorInterface
      */
     protected function getValue($value)
     {
-        if (is_array($value) or $value instanceof \Traversable) {
+        if (is_array($value) || $value instanceof \Traversable) {
             $value = null;
         } elseif ($value instanceof \DateTime) {
-            $value = $value->format('r');
+            $value = $value->format($this->dateTimeFormat);
         } elseif (is_object($value)) {
             $value = (string) $value;
         }
@@ -119,5 +134,21 @@ class DoctrineODMQuerySourceIterator implements SourceIteratorInterface
 
         $this->iterator = $this->query->iterate();
         $this->iterator->rewind();
+    }
+
+    /**
+     * @param string $dateTimeFormat
+     */
+    public function setDateTimeFormat($dateTimeFormat)
+    {
+        $this->dateTimeFormat = $dateTimeFormat;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDateTimeFormat()
+    {
+        return $this->dateTimeFormat;
     }
 }

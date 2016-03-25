@@ -1,13 +1,12 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
  */
 
 namespace Sonata\AdminBundle\Generator;
@@ -15,26 +14,33 @@ namespace Sonata\AdminBundle\Generator;
 use Sensio\Bundle\GeneratorBundle\Generator\Generator;
 use Sonata\AdminBundle\Model\ModelManagerInterface;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
-use Sonata\AdminBundle\Generator\AbstractBcGenerator;
 
 /**
- * @author Marek Stipek <mario.dweller@seznam.cz>
- * @author Simon Cosandey <simon.cosandey@simseo.ch>
+ * Class AdminGenerator.
+ *
+ * @author  Marek Stipek <mario.dweller@seznam.cz>
+ * @author  Simon Cosandey <simon.cosandey@simseo.ch>
  */
-class AdminGenerator extends AbstractBcGenerator
+class AdminGenerator extends Generator
 {
-    /** @var ModelManagerInterface */
+    /**
+     * @var ModelManagerInterface
+     */
     private $modelManager;
 
-    /** @var string|null */
+    /**
+     * @var string|null
+     */
     private $class;
 
-    /** @var string|null */
+    /**
+     * @var string|null
+     */
     private $file;
 
     /**
      * @param ModelManagerInterface $modelManager
-     * @param array|string $skeletonDirectories
+     * @param array|string          $skeletonDirectories
      */
     public function __construct(ModelManagerInterface $modelManager, $skeletonDirectories)
     {
@@ -44,8 +50,9 @@ class AdminGenerator extends AbstractBcGenerator
 
     /**
      * @param BundleInterface $bundle
-     * @param string $adminClassBasename
-     * @param string $modelClass
+     * @param string          $adminClassBasename
+     * @param string          $modelClass
+     *
      * @throws \RuntimeException
      */
     public function generate(BundleInterface $bundle, $adminClassBasename, $modelClass)
@@ -62,10 +69,10 @@ class AdminGenerator extends AbstractBcGenerator
             ));
         }
 
-        $this->renderFileBc('Admin.php.twig', $this->file, array(
+        $this->renderFile('Admin.php.twig', $this->file, array(
             'classBasename' => array_pop($parts),
-            'namespace' => implode('\\', $parts),
-            'fields' => $this->modelManager->getExportFields($modelClass)
+            'namespace'     => implode('\\', $parts),
+            'fields'        => $this->modelManager->getExportFields($modelClass),
         ));
     }
 

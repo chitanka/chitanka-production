@@ -11,11 +11,10 @@
 
 namespace Sonata\CoreBundle\Model;
 
+use Doctrine\Common\Persistence\ObjectManager;
+
 /**
- * Class BasePHPCRManager
- *
- * @package Sonata\CoreBundle\Model
- *
+ * Class BasePHPCRManager.
  */
 abstract class BasePHPCRManager extends BaseManager
 {
@@ -40,7 +39,7 @@ abstract class BasePHPCRManager extends BaseManager
     }
 
     /**
-     * @return \Doctrine\Common\Persistence\ObjectManager
+     * @return ObjectManager
      */
     public function getDocumentManager()
     {
@@ -48,7 +47,7 @@ abstract class BasePHPCRManager extends BaseManager
     }
 
     /**
-     * Make sure the code is compatible with legacy code
+     * Make sure the code is compatible with legacy code.
      *
      * @param $name
      *

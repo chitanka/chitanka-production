@@ -1,8 +1,8 @@
 <?php namespace App\Admin;
 
-use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
 
 class LicenseAdmin extends Admin {
@@ -36,15 +36,14 @@ class LicenseAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$formMapper->with('General attributes')
 			->add('code')
 			->add('name')
 			->add('fullname')
 			->add('free')
 			->add('copyright')
-			->add('uri');
-
+			->add('uri')
+			->end();
 	}
 
 	protected function configureDatagridFilters(DatagridMapper $datagrid) {

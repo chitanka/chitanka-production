@@ -1,29 +1,33 @@
 <?php namespace App\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 
 class InfoSuggestionType extends AbstractType {
 
 	public function buildForm(FormBuilderInterface $builder, array $options) {
 		$builder
-			->add('info', 'textarea')
-			->add('name', 'text', [
+			->add('info', TextareaType::class)
+			->add('name', TextType::class, [
 				'required' => false,
 			])
-			->add('email', 'email', [
+			->add('email', EmailType::class, [
 				'required' => false,
 			])
-			->add('save', 'submit');
+			->add('save', SubmitType::class);
 	}
 
 	public function getDefaultOptions(array $options) {
 		return [
-			'data_class' => 'App\Entity\InfoSuggestion',
+			'data_class' => \App\Entity\InfoSuggestion::class,
 		];
 	}
 
-	public function getName() {
+	public function getBlockPrefix() {
 		return 'suggest_info';
 	}
 

@@ -13,13 +13,16 @@ namespace FOS\RestBundle\View;
 
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
-use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\TemplateReference;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 use FOS\RestBundle\Util\Codes;
 
 /**
@@ -30,7 +33,7 @@ use FOS\RestBundle\Util\Codes;
  * @author Jordi Boggiano <j.boggiano@seld.be>
  * @author Lukas K. Smith <smith@pooteeweet.org>
  */
-class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInterface
+class ViewHandler implements ConfigurableViewHandlerInterface, ContainerAwareInterface
 {
     /**
      * Key format, value a callable that returns a Response instance.
@@ -97,7 +100,12 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     protected $serializeNullStrategy;
 
     /**
-     * Constructor
+     * @var ContainerInterface
+     */
+    protected $container;
+
+    /**
+     * Constructor.
      *
      * @param array  $formats              the supported formats as keys and if the given formats uses templating is denoted by a true value
      * @param int    $failedValidationCode The HTTP response status code for a failed validation
@@ -120,6 +128,16 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
         $this->serializeNull = $serializeNull;
         $this->forceRedirects = (array) $forceRedirects;
         $this->defaultEngine = $defaultEngine;
+    }
+
+    /**
+     * Sets the Container associated with this Controller.
+     *
+     * @param ContainerInterface $container A ContainerInterface instance
+     */
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
     }
 
     /**
@@ -182,7 +200,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Gets a response HTTP status code from a View instance
+     * Gets a response HTTP status code from a View instance.
      *
      * By default it will return 200. However if there is a FormInterface stored for
      * the key 'form' in the View's data it will return the failed_validation
@@ -223,7 +241,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     /**
      * Gets the router service.
      *
-     * @return \Symfony\Component\Routing\RouterInterface
+     * @return RouterInterface
      */
     protected function getRouter()
     {
@@ -294,7 +312,9 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     public function handle(View $view, Request $request = null)
     {
         if (null === $request) {
-            $request = $this->container->get('request');
+            $request = $this->container->has('request_stack')
+                ? $this->container->get('request_stack')->getCurrentRequest()
+                : $this->container->get('request');
         }
 
         $format = $view->getFormat() ?: $request->getRequestFormat();
@@ -383,7 +403,6 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
 
         if ($data instanceof FormInterface) {
             $data = array($view->getTemplateVar() => $data->getData(), 'form' => $data);
-
         } elseif (empty($data) || !is_array($data) || is_numeric((key($data)))) {
             $data = array($view->getTemplateVar() => $data);
         }
@@ -413,7 +432,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     {
         $route = $view->getRoute();
         $location = $route
-            ? $this->getRouter()->generate($route, (array) $view->getRouteParameters(), true)
+            ? $this->getRouter()->generate($route, (array) $view->getRouteParameters(), UrlGeneratorInterface::ABSOLUTE_URL)
             : $view->getLocation();
 
         if ($location) {
@@ -464,7 +483,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Returns the form from the given view if present, false otherwise
+     * Returns the form from the given view if present, false otherwise.
      *
      * @param View $view
      *
@@ -486,7 +505,7 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
     }
 
     /**
-     * Returns the data from a view. If the data is form with errors, it will return it wrapped in an ExceptionWrapper
+     * Returns the data from a view. If the data is form with errors, it will return it wrapped in an ExceptionWrapper.
      *
      * @param View $view
      *
@@ -510,8 +529,8 @@ class ViewHandler extends ContainerAware implements ConfigurableViewHandlerInter
         return $exceptionWrapperHandler->wrap(
             array(
                  'status_code' => $this->failedValidationCode,
-                 'message'     => 'Validation Failed',
-                 'errors'      => $form,
+                 'message' => 'Validation Failed',
+                 'errors' => $form,
             )
         );
     }

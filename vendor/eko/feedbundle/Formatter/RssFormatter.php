@@ -13,9 +13,10 @@ namespace Eko\FeedBundle\Formatter;
 use Eko\FeedBundle\Feed\Feed;
 use Eko\FeedBundle\Field\Item\ItemField;
 use Eko\FeedBundle\Item\Writer\ItemInterface;
+use Symfony\Component\Translation\TranslatorInterface;
 
 /**
- * RSS formatter
+ * RSS formatter.
  *
  * This class provides an RSS formatter
  *
@@ -24,20 +25,31 @@ use Eko\FeedBundle\Item\Writer\ItemInterface;
 class RssFormatter extends Formatter implements FormatterInterface
 {
     /**
-     * Construct a formatter with given feed
+     * Construct a formatter with given feed.
      *
-     * @param Feed $feed A feed instance
+     * @param TranslatorInterface $translator A Symfony translator service instance
+     * @param string|null         $domain     A Symfony translation domain
      */
-    public function __construct(Feed $feed)
+    public function __construct(TranslatorInterface $translator, $domain = null)
     {
-        $this->itemFields = array(
-            new ItemField('title', 'getFeedItemTitle', array('cdata' => true)),
-            new ItemField('description', 'getFeedItemDescription', array('cdata' => true)),
+        $this->itemFields = [
+            new ItemField('title', 'getFeedItemTitle', ['cdata' => true]),
+            new ItemField('description', 'getFeedItemDescription', ['cdata' => true]),
             new ItemField('link', 'getFeedItemLink'),
-            new ItemField('pubDate', 'getFeedItemPubDate', array('date_format' => \DateTime::RSS)),
-        );
+            new ItemField('pubDate', 'getFeedItemPubDate', ['date_format' => \DateTime::RSS]),
+        ];
 
-        parent::__construct($feed);
+        parent::__construct($translator, $domain);
+    }
+
+    /**
+     * Sets feed instance.
+     *
+     * @param Feed $feed
+     */
+    public function setFeed(Feed $feed)
+    {
+        $this->feed = $feed;
 
         $this->initialize();
     }
@@ -47,6 +59,8 @@ class RssFormatter extends Formatter implements FormatterInterface
      */
     public function initialize()
     {
+        parent::initialize();
+
         $encoding = $this->feed->get('encoding');
 
         $this->dom = new \DOMDocument('1.0', $encoding);
@@ -58,12 +72,16 @@ class RssFormatter extends Formatter implements FormatterInterface
         $channel = $this->dom->createElement('channel');
         $channel = $root->appendChild($channel);
 
-        $fields = array('title', 'description', 'link');
+        $title = $this->translate($this->feed->get('title'));
+        $title = $this->dom->createElement('title', $title);
+        $channel->appendChild($title);
 
-        foreach ($fields as $field) {
-            $element = $this->dom->createElement($field, $this->feed->get($field));
-            $channel->appendChild($element);
-        }
+        $description = $this->translate($this->feed->get('description'));
+        $description = $this->dom->createElement('description', $description);
+        $channel->appendChild($description);
+
+        $link = $this->dom->createElement('link', $this->feed->get('link'));
+        $channel->appendChild($link);
 
         $date = new \DateTime();
         $lastBuildDate = $this->dom->createElement('lastBuildDate', $date->format(\DateTime::RSS));

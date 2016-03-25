@@ -12,12 +12,14 @@ namespace Eko\FeedBundle\Formatter;
 
 use Eko\FeedBundle\Feed\Feed;
 use Eko\FeedBundle\Field\Channel\GroupChannelField;
+use Eko\FeedBundle\Field\Item\GroupItemField;
 use Eko\FeedBundle\Field\Item\ItemFieldInterface;
 use Eko\FeedBundle\Field\Item\MediaItemField;
 use Eko\FeedBundle\Item\Writer\ItemInterface;
+use Symfony\Component\Translation\TranslatorInterface;
 
 /**
- * Formatter
+ * Formatter.
  *
  * This class provides formatter methods
  *
@@ -26,34 +28,52 @@ use Eko\FeedBundle\Item\Writer\ItemInterface;
 class Formatter
 {
     /**
-     * @var Feed $feed A feed instance
+     * @var Feed A feed instance
      */
     protected $feed;
 
     /**
-     * @var \DOMDocument $dom XML DOMDocument
+     * @var TranslatorInterface
+     */
+    protected $translator;
+
+    /**
+     * @var string|null
+     */
+    protected $domain;
+
+    /**
+     * @var \DOMDocument XML DOMDocument
      */
     protected $dom;
 
     /**
-     * @var array $fields Contain item Field instances for this formatter
+     * @var array Contain item Field instances for this formatter
      */
-    protected $itemFields = array();
+    protected $itemFields = [];
 
     /**
-     * Construct a formatter with given feed
+     * Construct a formatter with given feed.
      *
-     * @param Feed $feed A feed instance
+     * @param TranslatorInterface $translator A Symfony translator service instance
+     * @param string|null         $domain     A Symfony translation domain
      */
-    public function __construct(Feed $feed)
+    public function __construct(TranslatorInterface $translator, $domain = null)
     {
-        $this->itemFields = array_merge($this->itemFields, $feed->getItemFields());
-
-        $this->feed = $feed;
+        $this->translator = $translator;
+        $this->domain = $domain;
     }
 
     /**
-     * This method render the given feed transforming the DOMDocument to XML
+     * Initializes feed.
+     */
+    public function initialize()
+    {
+        $this->itemFields = array_merge($this->itemFields, $this->feed->getItemFields());
+    }
+
+    /**
+     * This method render the given feed transforming the DOMDocument to XML.
      *
      * @return string
      */
@@ -65,7 +85,7 @@ class Formatter
     }
 
     /**
-     * Adds channel fields to given channel
+     * Adds channel fields to given channel.
      *
      * @param \DOMElement $channel
      */
@@ -77,18 +97,23 @@ class Formatter
 
                 foreach ($field->getItemFields() as $childField) {
                     $child = $this->dom->createElement($childField->getName(), $childField->getValue());
+
+                    $this->addAttributes($child, $childField);
+
                     $parent->appendChild($child);
                 }
             } else {
                 $parent = $this->dom->createElement($field->getName(), $field->getValue());
             }
 
+            $this->addAttributes($parent, $field);
+
             $channel->appendChild($parent);
         }
     }
 
     /**
-     * Format items field
+     * Format items field.
      *
      * @param ItemFieldInterface $field A item field instance
      * @param ItemInterface      $item  An entity instance
@@ -115,17 +140,19 @@ class Formatter
     }
 
     /**
-     * Format a group item field
+     * Format a group item field.
      *
-     * @param ItemFieldInterface $field An item field instance
-     * @param ItemInterface      $item  An entity instance
+     * @param GroupItemField $field An item field instance
+     * @param ItemInterface  $item  An entity instance
      *
      * @return \DOMElement
      */
-    protected function formatGroupItemField(ItemFieldInterface $field, ItemInterface $item)
+    protected function formatGroupItemField(GroupItemField $field, ItemInterface $item)
     {
         $name = $field->getName();
         $element = $this->dom->createElement($name);
+
+        $this->addAttributes($element, $field, $item);
 
         $itemFields = $field->getItemFields();
 
@@ -147,22 +174,22 @@ class Formatter
             }
         }
 
-        return array($element);
+        return [$element];
     }
 
     /**
-     * Format a media item field
+     * Format a media item field.
      *
      * @param MediaItemField $field A media item field instance
      * @param ItemInterface  $item  An entity instance
      *
-     * @return array|null|\DOMElement
-     *
      * @throws \InvalidArgumentException if media array format waiting to be returned is not well-formatted
+     *
+     * @return array|null|\DOMElement
      */
     protected function formatMediaItemField(MediaItemField $field, ItemInterface $item)
     {
-        $elements = array();
+        $elements = [];
 
         $method = $field->getMethod();
         $values = $item->{$method}();
@@ -172,7 +199,7 @@ class Formatter
         }
 
         if (!is_array($values) || (is_array($values) && isset($values['value']))) {
-            $values = array($values);
+            $values = [$values];
         }
 
         foreach ($values as $value) {
@@ -184,6 +211,8 @@ class Formatter
             $elementName = $elementName[$this->getName()];
 
             $element = $this->dom->createElement($elementName);
+
+            $this->addAttributes($element, $field, $item);
 
             switch ($this->getName()) {
                 case 'rss':
@@ -206,7 +235,7 @@ class Formatter
     }
 
     /**
-     * Format an item field
+     * Format an item field.
      *
      * @param ItemFieldInterface $field An item field instance
      * @param ItemInterface      $item  An entity instance
@@ -215,7 +244,7 @@ class Formatter
      */
     protected function formatItemField(ItemFieldInterface $field, ItemInterface $item)
     {
-        $elements = array();
+        $elements = [];
 
         $method = $field->getMethod();
         $values = $item->{$method}();
@@ -225,7 +254,7 @@ class Formatter
         }
 
         if (!is_array($values)) {
-            $values = array($values);
+            $values = [$values];
         }
 
         foreach ($values as $value) {
@@ -236,15 +265,15 @@ class Formatter
     }
 
     /**
-     * Format an item field
+     * Format an item field.
      *
      * @param ItemFieldInterface $field An item field instance
      * @param ItemInterface      $item  An entity instance
      * @param string             $value A field value
      *
-     * @return \DOMElement
-     *
      * @throws \InvalidArgumentException
+     *
+     * @return \DOMElement
      */
     protected function formatWithOptions(ItemFieldInterface $field, ItemInterface $item, $value)
     {
@@ -252,18 +281,22 @@ class Formatter
 
         $name = $field->getName();
 
+        if ($field->get('translatable')) {
+            $value = $this->translate($value);
+        }
+
         if ($field->get('cdata')) {
             $value = $this->dom->createCDATASection($value);
 
             $element = $this->dom->createElement($name);
             $element->appendChild($value);
-        } else if ($field->get('attribute')) {
+        } elseif ($field->get('attribute')) {
             if (!$field->get('attribute_name')) {
                 throw new \InvalidArgumentException("'attribute' parameter required an 'attribute_name' parameter.");
             }
 
             $element = $this->dom->createElement($name);
-            $element->setAttribute($field->get('attribute_name'), $item->getFeedItemLink());
+            $element->setAttribute($field->get('attribute_name'), $value);
         } else {
             if ($format = $field->get('date_format')) {
                 if (!$value instanceof \DateTime) {
@@ -276,6 +309,39 @@ class Formatter
             $element = $this->dom->createElement($name, $value);
         }
 
+        $this->addAttributes($element, $field, $item);
+
         return $element;
+    }
+
+    /**
+     * Add field attributes to a DOM element.
+     *
+     * @param \DOMElement        $element A XML DOM element
+     * @param ItemFieldInterface $field   A feed field instance
+     * @param ItemInterface|null $item    A feed item instance
+     */
+    protected function addAttributes(\DOMElement $element, ItemFieldInterface $field, ItemInterface $item = null)
+    {
+        foreach ($field->getAttributes() as $key => $value) {
+            if ($item) {
+                $key = method_exists($item, $key) ? call_user_func([$item, $key]) : $key;
+                $value = method_exists($item, $value) ? call_user_func([$item, $value]) : $value;
+            }
+
+            $element->setAttribute($key, $value);
+        }
+    }
+
+    /**
+     * Translates a value.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    protected function translate($value)
+    {
+        return $this->translator->trans($value, [], $this->domain);
     }
 }

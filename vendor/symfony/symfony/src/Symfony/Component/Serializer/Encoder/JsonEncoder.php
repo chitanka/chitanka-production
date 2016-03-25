@@ -12,7 +12,7 @@
 namespace Symfony\Component\Serializer\Encoder;
 
 /**
- * Encodes JSON data
+ * Encodes JSON data.
  *
  * @author Jordi Boggiano <j.boggiano@seld.be>
  */
@@ -34,26 +34,6 @@ class JsonEncoder implements EncoderInterface, DecoderInterface
     {
         $this->encodingImpl = $encodingImpl ?: new JsonEncode();
         $this->decodingImpl = $decodingImpl ?: new JsonDecode(true);
-    }
-
-    /**
-     * Returns the last encoding error (if any)
-     *
-     * @return int
-     */
-    public function getLastEncodingError()
-    {
-        return $this->encodingImpl->getLastError();
-    }
-
-    /**
-     * Returns the last decoding error (if any)
-     *
-     * @return int
-     */
-    public function getLastDecodingError()
-    {
-        return $this->decodingImpl->getLastError();
     }
 
     /**

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Sonata project.
  *
@@ -10,6 +11,7 @@
 
 namespace Exporter\Source;
 
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 
 class SymfonySitemapSourceIterator implements SourceIteratorInterface
@@ -46,7 +48,7 @@ class SymfonySitemapSourceIterator implements SourceIteratorInterface
         $parameters = array_merge($this->parameters, array_intersect_key($data, $this->parameters));
 
         if (!isset($data['url'])) {
-            $data['url'] = $this->router->generate($this->routeName, $parameters, true);
+            $data['url'] = $this->router->generate($this->routeName, $parameters, UrlGeneratorInterface::ABSOLUTE_URL);
         }
 
         return $data;

@@ -11,12 +11,11 @@
 
 namespace Symfony\Component\Validator\Constraints;
 
-use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
-use Symfony\Component\PropertyAccess\PropertyPath;
+use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
-use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Symfony\Component\Validator\Exception\RuntimeException;
+use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
@@ -25,18 +24,13 @@ use Symfony\Component\Validator\Exception\RuntimeException;
 class ExpressionValidator extends ConstraintValidator
 {
     /**
-     * @var PropertyAccessorInterface
-     */
-    private $propertyAccessor;
-
-    /**
      * @var ExpressionLanguage
      */
     private $expressionLanguage;
 
-    public function __construct(PropertyAccessorInterface $propertyAccessor)
+    public function __construct($propertyAccessor = null, ExpressionLanguage $expressionLanguage = null)
     {
-        $this->propertyAccessor = $propertyAccessor;
+        $this->expressionLanguage = $expressionLanguage;
     }
 
     /**
@@ -44,27 +38,19 @@ class ExpressionValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
-        if (null === $value || '' === $value) {
-            return;
+        if (!$constraint instanceof Expression) {
+            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\Expression');
         }
 
         $variables = array();
-
-        if (null === $this->context->getPropertyName()) {
-            $variables['this'] = $value;
-        } else {
-            // Extract the object that the property belongs to from the object
-            // graph
-            $path = new PropertyPath($this->context->getPropertyPath());
-            $parentPath = $path->getParent();
-            $root = $this->context->getRoot();
-
-            $variables['value'] = $value;
-            $variables['this'] = $parentPath ? $this->propertyAccessor->getValue($root, $parentPath) : $root;
-        }
+        $variables['value'] = $value;
+        $variables['this'] = $this->context->getObject();
 
         if (!$this->getExpressionLanguage()->evaluate($constraint->expression, $variables)) {
-            $this->context->addViolation($constraint->message);
+            $this->context->buildViolation($constraint->message)
+                ->setParameter('{{ value }}', $this->formatValue($value))
+                ->setCode(Expression::EXPRESSION_FAILED_ERROR)
+                ->addViolation();
         }
     }
 

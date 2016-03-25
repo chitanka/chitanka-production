@@ -19,6 +19,8 @@
 
 namespace GitElephant\Command;
 
+use \GitElephant\Repository;
+
 /**
  * SubCommandCommand
  *
@@ -37,7 +39,18 @@ class SubCommandCommand extends BaseCommand
     private $orderedSubjects = array();
 
     /**
-     * Clear all previuos variables
+     * constructor
+     *
+     * @param \GitElephant\Repository $repo The repository object this command 
+     *                                      will interact with
+     */
+    public function __construct(Repository $repo = null)
+    {
+        parent::__construct($repo);
+    }
+
+    /**
+     * Clear all previous variables
      */
     public function clearAll()
     {
@@ -83,7 +96,7 @@ class SubCommandCommand extends BaseCommand
     {
         $command = $this->getCommandName();
 
-        if ($command == null) {
+        if (is_null($command)) {
             throw new \RuntimeException("commandName must be specified to build a subcommand");
         }
 

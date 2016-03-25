@@ -24,9 +24,6 @@ use PhpOption\None;
 /**
  * A simple map implementation which basically wraps an array with an object oriented interface.
  *
- * @IgnoreAnnotation("template")
- * @template {K extends string} This implementation only supports strings as keys.
- *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
 class AbstractMap extends AbstractCollection implements \IteratorAggregate, MapInterface
@@ -43,10 +40,21 @@ class AbstractMap extends AbstractCollection implements \IteratorAggregate, MapI
         $this->elements[$key] = $value;
     }
 
+    public function exists($callable)
+    {
+        foreach ($this as $k => $v) {
+            if ($callable($k, $v) === true) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Sets all key/value pairs in the map.
      *
-     * @param array<string,T> $kvMap
+     * @param array $kvMap
      *
      * @return void
      */
@@ -129,6 +137,64 @@ class AbstractMap extends AbstractCollection implements \IteratorAggregate, MapI
     public function isEmpty()
     {
         return empty($this->elements);
+    }
+
+    /**
+     * Returns a new filtered map.
+     *
+     * @param callable $callable receives the element and must return true (= keep), or false (= remove).
+     *
+     * @return AbstractMap
+     */
+    public function filter($callable)
+    {
+        return $this->filterInternal($callable, true);
+    }
+
+    /**
+     * Returns a new filtered map.
+     *
+     * @param callable $callable receives the element and must return true (= remove), or false (= keep).
+     *
+     * @return AbstractMap
+     */
+    public function filterNot($callable)
+    {
+        return $this->filterInternal($callable, false);
+    }
+
+    private function filterInternal($callable, $booleanKeep)
+    {
+        $newElements = array();
+        foreach ($this->elements as $k => $element) {
+            if ($booleanKeep !== call_user_func($callable, $element)) {
+                continue;
+            }
+
+            $newElements[$k] = $element;
+        }
+
+        return $this->createNew($newElements);
+    }
+
+    public function foldLeft($initialValue, $callable)
+    {
+        $value = $initialValue;
+        foreach ($this->elements as $elem) {
+            $value = call_user_func($callable, $value, $elem);
+        }
+
+        return $value;
+    }
+
+    public function foldRight($initialValue, $callable)
+    {
+        $value = $initialValue;
+        foreach (array_reverse($this->elements) as $elem) {
+            $value = call_user_func($callable, $elem, $value);
+        }
+
+        return $value;
     }
 
     public function dropWhile($callable)

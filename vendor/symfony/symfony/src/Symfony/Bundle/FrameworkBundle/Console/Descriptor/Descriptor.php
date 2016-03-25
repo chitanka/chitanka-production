@@ -12,24 +12,26 @@
 namespace Symfony\Bundle\FrameworkBundle\Console\Descriptor;
 
 use Symfony\Component\Console\Descriptor\DescriptorInterface;
-use Symfony\Component\Console\Helper\TableHelper;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
  * @author Jean-François Simon <jeanfrancois.simon@sensiolabs.com>
+ *
+ * @internal
  */
 abstract class Descriptor implements DescriptorInterface
 {
     /**
      * @var OutputInterface
      */
-    private $output;
+    protected $output;
 
     /**
      * {@inheritdoc}
@@ -66,36 +68,36 @@ abstract class Descriptor implements DescriptorInterface
             case $object instanceof Alias:
                 $this->describeContainerAlias($object, $options);
                 break;
+            case $object instanceof EventDispatcherInterface:
+                $this->describeEventDispatcherListeners($object, $options);
+                break;
+            case is_callable($object):
+                $this->describeCallable($object, $options);
+                break;
             default:
                 throw new \InvalidArgumentException(sprintf('Object of type "%s" is not describable.', get_class($object)));
         }
     }
 
     /**
-     * Writes content to output.
+     * Returns the output.
      *
-     * @param string  $content
-     * @param bool    $decorated
+     * @return OutputInterface The output
      */
-    protected function write($content, $decorated = false)
+    protected function getOutput()
     {
-        $this->output->write($content, false, $decorated ? OutputInterface::OUTPUT_NORMAL : OutputInterface::OUTPUT_RAW);
+        return $this->output;
     }
 
     /**
      * Writes content to output.
      *
-     * @param TableHelper $table
-     * @param bool        $decorated
+     * @param string $content
+     * @param bool   $decorated
      */
-    protected function renderTable(TableHelper $table, $decorated = false)
+    protected function write($content, $decorated = false)
     {
-        if (!$decorated) {
-            $table->setCellRowFormat('%s');
-            $table->setCellHeaderFormat('%s');
-        }
-
-        $table->render($this->output);
+        $this->output->write($content, false, $decorated ? OutputInterface::OUTPUT_NORMAL : OutputInterface::OUTPUT_RAW);
     }
 
     /**
@@ -113,17 +115,6 @@ abstract class Descriptor implements DescriptorInterface
      * @param array $options
      */
     abstract protected function describeRoute(Route $route, array $options = array());
-
-    /**
-     * Describes a specific container parameter.
-     *
-     * @param mixed $parameterValue
-     * @param array $options
-     */
-    protected function describeContainerParameter($parameterValue, array $options = array())
-    {
-        $this->write($this->formatParameter($parameterValue));
-    }
 
     /**
      * Describes container parameters.
@@ -180,6 +171,33 @@ abstract class Descriptor implements DescriptorInterface
     abstract protected function describeContainerAlias(Alias $alias, array $options = array());
 
     /**
+     * Describes a container parameter.
+     *
+     * @param string $parameter
+     * @param array  $options
+     */
+    abstract protected function describeContainerParameter($parameter, array $options = array());
+
+    /**
+     * Describes event dispatcher listeners.
+     *
+     * Common options are:
+     * * name: name of listened event
+     *
+     * @param EventDispatcherInterface $eventDispatcher
+     * @param array                    $options
+     */
+    abstract protected function describeEventDispatcherListeners(EventDispatcherInterface $eventDispatcher, array $options = array());
+
+    /**
+     * Describes a callable.
+     *
+     * @param callable $callable
+     * @param array    $options
+     */
+    abstract protected function describeCallable($callable, array $options = array());
+
+    /**
      * Formats a value as string.
      *
      * @param mixed $value
@@ -211,12 +229,8 @@ abstract class Descriptor implements DescriptorInterface
         if (is_bool($value) || is_array($value) || (null === $value)) {
             $jsonString = json_encode($value);
 
-            if (!function_exists('mb_strlen')) {
-                return substr($jsonString, 0, 60).(strlen($jsonString) > 60 ? ' ...' : '');
-            }
-
-            if (mb_strlen($jsonString) > 60) {
-                return mb_substr($jsonString, 0, 60).' ...';
+            if (preg_match('/^(.{60})./us', $jsonString, $matches)) {
+                return $matches[1].'...';
             }
 
             return $jsonString;

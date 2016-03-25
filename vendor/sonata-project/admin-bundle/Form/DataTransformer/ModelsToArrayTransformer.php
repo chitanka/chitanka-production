@@ -1,9 +1,9 @@
 <?php
 
 /*
- * This file is part of the Symfony package.
+ * This file is part of the Sonata Project package.
  *
- * (c) Fabien Potencier <fabien@symfony.com>
+ * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,26 +11,56 @@
 
 namespace Sonata\AdminBundle\Form\DataTransformer;
 
-use Symfony\Component\Form\Exception\UnexpectedTypeException;
-use Symfony\Component\Form\Exception\TransformationFailedException;
-use Symfony\Component\Form\DataTransformerInterface;
-
 use Sonata\AdminBundle\Form\ChoiceList\ModelChoiceList;
+use Sonata\AdminBundle\Model\ModelManagerInterface;
+use Symfony\Component\Form\ChoiceList\LazyChoiceList;
+use Symfony\Component\Form\DataTransformerInterface;
+use Symfony\Component\Form\Exception\RuntimeException;
+use Symfony\Component\Form\Exception\TransformationFailedException;
+use Symfony\Component\Form\Exception\UnexpectedTypeException;
 
+/**
+ * Class ModelsToArrayTransformer.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class ModelsToArrayTransformer implements DataTransformerInterface
 {
+    /**
+     * @var ModelManagerInterface
+     */
+    protected $modelManager;
+
+    /**
+     * @var string
+     */
+    protected $class;
+
+    /**
+     * @var ModelChoiceList
+     */
     protected $choiceList;
 
     /**
-     * @param \Sonata\AdminBundle\Form\ChoiceList\ModelChoiceList $choiceList
+     * ModelsToArrayTransformer constructor.
+     *
+     * @param ModelChoiceList|LazyChoiceList $choiceList
+     * @param ModelManagerInterface          $modelManager
+     * @param                                $class
      */
-    public function __construct(ModelChoiceList $choiceList)
+    public function __construct($choiceList, ModelManagerInterface $modelManager, $class)
     {
-        $this->choiceList = $choiceList;
+        if (!$choiceList instanceof ModelChoiceList && !$choiceList instanceof LazyChoiceList) {
+            throw new RuntimeException('First param passed to ModelsToArrayTransformer should be instance of ModelChoiceList or LazyChoiceList');
+        }
+
+        $this->choiceList   = $choiceList;
+        $this->modelManager = $modelManager;
+        $this->class        = $class;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function transform($collection)
     {
@@ -39,51 +69,30 @@ class ModelsToArrayTransformer implements DataTransformerInterface
         }
 
         $array = array();
+        foreach ($collection as $key => $entity) {
+            $id = implode('~', $this->getIdentifierValues($entity));
 
-        if (count($this->choiceList->getIdentifier()) > 1) {
-            // load all choices
-            $availableEntities = $this->choiceList->getEntities();
-
-            foreach ($collection as $entity) {
-                // identify choices by their collection key
-                $key = array_search($entity, $availableEntities);
-                $array[] = $key;
-            }
-        } else {
-            foreach ($collection as $entity) {
-                $array[] = current($this->choiceList->getIdentifierValues($entity));
-            }
+            $array[] = $id;
         }
 
         return $array;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function reverseTransform($keys)
     {
-        $collection = $this->choiceList->getModelManager()->getModelCollectionInstance(
-            $this->choiceList->getClass()
-        );
-
-        if (!$collection instanceof \ArrayAccess) {
-            throw new UnexpectedTypeException($collection, '\ArrayAccess');
-        }
-
-        if ('' === $keys || null === $keys) {
-            return $collection;
-        }
-
         if (!is_array($keys)) {
             throw new UnexpectedTypeException($keys, 'array');
         }
 
+        $collection = $this->modelManager->getModelCollectionInstance($this->class);
         $notFound = array();
 
         // optimize this into a SELECT WHERE IN query
         foreach ($keys as $key) {
-            if ($entity = $this->choiceList->getEntity($key)) {
+            if ($entity = $this->modelManager->find($this->class, $key)) {
                 $collection[] = $entity;
             } else {
                 $notFound[] = $key;
@@ -95,5 +104,19 @@ class ModelsToArrayTransformer implements DataTransformerInterface
         }
 
         return $collection;
+    }
+
+    /**
+     * @param object $entity
+     *
+     * @return array
+     */
+    private function getIdentifierValues($entity)
+    {
+        try {
+            return $this->modelManager->getIdentifierValues($entity);
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException(sprintf('Unable to retrieve the identifier values for entity %s', ClassUtils::getClass($entity)), 0, $e);
+        }
     }
 }

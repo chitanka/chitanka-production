@@ -31,9 +31,21 @@ class BooleanNode extends ScalarNode
                 $this->getPath(),
                 gettype($value)
             ));
+            if ($hint = $this->getInfo()) {
+                $ex->addHint($hint);
+            }
             $ex->setPath($this->getPath());
 
             throw $ex;
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function isValueEmpty($value)
+    {
+        // a boolean value cannot be empty
+        return false;
     }
 }

@@ -22,7 +22,7 @@ to pass both the renderer and menu into a template:
 $twigLoader = new \Twig_Loader_Filesystem(array(
     // path to your templates
 ));
-$twig = new \Twig_Environment($twigLoader);
+$twig = new \Twig_Environment($twigLoader); // you can add the charset (i.e. ISO-8859-1) in the array of options if you need 
 
 $itemMatcher = new \Knp\Menu\Matcher\Matcher();
 // setup some renderer
@@ -159,7 +159,7 @@ $pimple['menu_sidebar'] = ... //
 // $rendererProvider = ...
 $menuProvider = new \Knp\Menu\Provider\PimpleProvider(
     $pimple,
-    array('main' => 'main_menu', 'sidebar' => 'menu_sidebar')
+    array('main' => 'menu_main', 'sidebar' => 'menu_sidebar')
 );
 $helper = new \Knp\Menu\Twig\Helper($rendererProvider, $menuProvider);
 $menuExtension = new \Knp\Menu\Twig\MenuExtension($helper);
@@ -181,6 +181,8 @@ menu object in the other functions:
 {{ knp_menu_render(['main', 'Comments', 'My comments'], {'depth': 2}) }}
 
 {% set item = knp_menu_get('sidebar', ['First section']) %}
+
+{% set breacrumbs_array = knp_menu_get_breadcrumbs_array('main') %}
 ```
 
 In some cases, you may want to build the menu differently according to the
@@ -273,3 +275,21 @@ want.
 >**NOTE**
 >The built-in templates contains some additional blocks to make it easier
 >to customize it when using the inheritance.
+
+Twig integration reference
+--------------------------
+
+### Functions
+
+* `knp_menu_get('menuName' [, ['Path', 'To', 'Item'], ['options']])`: retrieve an item of the menu
+* `knp_menu_render('menuName' [, ['options'], 'rendererName'])`: render a menu
+* `knp_menu_get_breadcrumbs_array('menuName' [, 'subItem'])`: get an array that represent the breadcrubs of the current page (according to the menu)
+
+### Filters
+
+* `knp_menu_as_string(menuNode [, $separator])`: generate a string representation of the menu item
+
+### Tests
+
+* `knp_menu_current`: check if the item is the current one
+* `knp_menu_ancestor`: check if the item is the ancestor of a current item

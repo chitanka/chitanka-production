@@ -1,6 +1,7 @@
 <?php
+
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -10,23 +11,45 @@
 
 namespace Sonata\AdminBundle\Util;
 
-use Symfony\Component\Form\FormBuilder;
+use Symfony\Component\Form\FormBuilderInterface;
 
+/**
+ * Class FormBuilderIterator.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class FormBuilderIterator extends \RecursiveArrayIterator
 {
+    /**
+     * @var \ReflectionProperty
+     */
     protected static $reflection;
 
+    /**
+     * @var FormBuilderInterface
+     */
     protected $formBuilder;
 
+    /**
+     * @var array
+     */
     protected $keys = array();
 
+    /**
+     * @var bool|string
+     */
     protected $prefix;
 
     /**
-     * @param \Symfony\Component\Form\FormBuilder $formBuilder
-     * @param bool                                $prefix
+     * @var \ArrayIterator
      */
-    public function __construct(FormBuilder $formBuilder, $prefix = false)
+    protected $iterator;
+
+    /**
+     * @param FormBuilderInterface $formBuilder
+     * @param bool                 $prefix
+     */
+    public function __construct(FormBuilderInterface $formBuilder, $prefix = false)
     {
         $this->formBuilder = $formBuilder;
         $this->prefix      = $prefix ? $prefix : $formBuilder->getName();
@@ -36,11 +59,11 @@ class FormBuilderIterator extends \RecursiveArrayIterator
     /**
      * @static
      *
-     * @param \Symfony\Component\Form\FormBuilder $formBuilder
+     * @param FormBuilderInterface $formBuilder
      *
      * @return array
      */
-    private static function getKeys(FormBuilder $formBuilder)
+    private static function getKeys(FormBuilderInterface $formBuilder)
     {
         if (!self::$reflection) {
             self::$reflection = new \ReflectionProperty(get_class($formBuilder), 'children');
@@ -51,7 +74,7 @@ class FormBuilderIterator extends \RecursiveArrayIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function rewind()
     {
@@ -59,7 +82,7 @@ class FormBuilderIterator extends \RecursiveArrayIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function valid()
     {
@@ -67,7 +90,7 @@ class FormBuilderIterator extends \RecursiveArrayIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function key()
     {
@@ -77,7 +100,7 @@ class FormBuilderIterator extends \RecursiveArrayIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function next()
     {
@@ -85,7 +108,7 @@ class FormBuilderIterator extends \RecursiveArrayIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function current()
     {
@@ -93,7 +116,7 @@ class FormBuilderIterator extends \RecursiveArrayIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getChildren()
     {
@@ -101,7 +124,7 @@ class FormBuilderIterator extends \RecursiveArrayIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function hasChildren()
     {

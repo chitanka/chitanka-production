@@ -16,10 +16,13 @@ use Sonata\BlockBundle\Model\Block;
 
 class ServiceLoader implements BlockLoaderInterface
 {
+    /**
+     * @var string[]
+     */
     protected $types;
 
     /**
-     * @param array $types
+     * @param string[] $types
      */
     public function __construct(array $types)
     {
@@ -38,12 +41,12 @@ class ServiceLoader implements BlockLoaderInterface
             ));
         }
 
-        $block = new Block;
+        $block = new Block();
         $block->setId(uniqid());
         $block->setType($configuration['type']);
         $block->setEnabled(true);
-        $block->setCreatedAt(new \DateTime);
-        $block->setUpdatedAt(new \DateTime);
+        $block->setCreatedAt(new \DateTime());
+        $block->setUpdatedAt(new \DateTime());
         $block->setSettings(isset($configuration['settings']) ? $configuration['settings'] : array());
 
         return $block;

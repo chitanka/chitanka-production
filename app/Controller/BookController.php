@@ -1,11 +1,11 @@
 <?php namespace App\Controller;
 
 use App\Entity\Book;
-use App\Pagination\Pager;
-use App\Legacy\Setup;
 use App\Generator\DownloadFile;
-use App\Util\Stringy;
+use App\Legacy\Setup;
+use App\Pagination\Pager;
 use App\Service\SearchService;
+use App\Util\Stringy;
 use Doctrine\ORM\NoResultException;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -51,8 +51,8 @@ class BookController extends Controller {
 		return [
 			'category' => $category,
 			'parents' => array_reverse($category->getAncestors()),
-			'books' => $bookRepo->findByCategory($category, $page, $limit),
-			'pager'    => new Pager($page, $category->getNrOfBooks(), $limit),
+			'books' => $bookRepo->findByCategory($category->getDescendantIdsAndSelf(), $page, $limit),
+			'pager' => new Pager($page, $category->getNrOfBooks(), $limit),
 			'route_params' => ['slug' => $slug],
 		];
 	}

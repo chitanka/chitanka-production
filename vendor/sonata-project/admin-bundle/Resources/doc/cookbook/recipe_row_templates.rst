@@ -1,7 +1,7 @@
 Row templates
 =============
 
-From Sonata-2.2 it is possible to define a template per row for the list action.
+Since Sonata-2.2 it is possible to define a template per row for the list action.
 The default template is a standard table but there are circumstances where this
 type of layout might not be suitable. By defining a custom template for the row,
 you can tweak the layout into something like this:
@@ -10,7 +10,6 @@ you can tweak the layout into something like this:
    :align: center
    :alt: Inline Row from the SonataNewsBundle
    :width: 700px
-
 
 The recipe
 ----------
@@ -42,7 +41,7 @@ Two template keys need to be set:
             <call method="setTemplates">
                 <argument type="collection">
                     <argument key="inner_list_row">
-                        YourNSYourBundle:Admin:inner_row_comment.html.twig
+                        AppBundle:Admin:inner_row_comment.html.twig
                     </argument>
                     <argument key="base_list_field">
                         SonataAdminBundle:CRUD:base_list_flat_field.html.twig
@@ -51,7 +50,6 @@ Two template keys need to be set:
             </call>
         </service>
 
-
 Create your customized template
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -59,7 +57,7 @@ Once the templates are defined, create the template to render the row:
 
 .. code-block:: jinja
 
-    {# This file is YourNSYourBundle:Admin:inner_row_comment.html.twig #}
+    {# AppBundle:Admin:inner_row_comment.html.twig #}
 
     {# Extend the default template, which provides batch and action cells #}
     {#     as well as the valid colspan computation #}
@@ -67,7 +65,8 @@ Once the templates are defined, create the template to render the row:
 
     {% block row %}
 
-        {# you can use fields define in the the Admin class #}
+        {# you can use fields defined in the the Admin class #}
+
         {{ object|render_list_element(admin.list['name']) }} -
         {{ object|render_list_element(admin.list['url']) }} -
         {{ object|render_list_element(admin.list['email']) }} <br />

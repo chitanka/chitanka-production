@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -14,14 +14,16 @@ namespace Sonata\AdminBundle\Builder;
 use Sonata\AdminBundle\Admin\AdminInterface;
 use Sonata\AdminBundle\Route\RouteCollection;
 
+/**
+ * Interface RouteBuilderInterface.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 interface RouteBuilderInterface
 {
-
     /**
-     * @abstract
-     *
-     * @param \Sonata\AdminBundle\Admin\AdminInterface  $admin
-     * @param \Sonata\AdminBundle\Route\RouteCollection $collection
+     * @param AdminInterface  $admin
+     * @param RouteCollection $collection
      */
     public function build(AdminInterface $admin, RouteCollection $collection);
 }

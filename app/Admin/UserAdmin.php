@@ -1,10 +1,10 @@
 <?php namespace App\Admin;
 
-use Sonata\AdminBundle\Form\FormMapper;
+use App\Entity\User;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
-use App\Entity\User;
 
 class UserAdmin extends Admin {
 	protected $baseRoutePattern = 'user';
@@ -41,8 +41,8 @@ class UserAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$translation = $this->getTranslation();
+		$formMapper->with('General attributes')
 			->add('username')
 			//->add('password')
 			->add('realname')
@@ -50,13 +50,14 @@ class UserAdmin extends Admin {
 			->add('allowemail')
 			->add('groups', 'choice', [
 				'required' => false,
-				'choices' => array_combine(User::getGroupList(), User::getGroupList()),
+				'choices' => $translation->getUserGroupChoices(),
 				'multiple' => true,
 				//'expanded' => true,
 			])
 			->add('news')
 			//->add('opts')
-			->add('token');
+			->add('token')
+			->end();
 	}
 
 	protected function configureDatagridFilters(DatagridMapper $datagrid) {

@@ -1,31 +1,35 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
  */
 
 namespace Sonata\AdminBundle\Generator;
 
 use Sensio\Bundle\GeneratorBundle\Generator\Generator;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
-use Sonata\AdminBundle\Generator\AbstractBcGenerator;
 
 /**
- * @author Marek Stipek <mario.dweller@seznam.cz>
- * @author Simon Cosandey <simon.cosandey@simseo.ch>
+ * Class ControllerGenerator.
+ *
+ * @author  Marek Stipek <mario.dweller@seznam.cz>
+ * @author  Simon Cosandey <simon.cosandey@simseo.ch>
  */
-class ControllerGenerator extends AbstractBcGenerator
+class ControllerGenerator extends Generator
 {
-    /** @var string|null */
+    /**
+     * @var string|null
+     */
     private $class;
 
-    /** @var string|null */
+    /**
+     * @var string|null
+     */
     private $file;
 
     /**
@@ -38,7 +42,8 @@ class ControllerGenerator extends AbstractBcGenerator
 
     /**
      * @param BundleInterface $bundle
-     * @param string $controllerClassBasename
+     * @param string          $controllerClassBasename
+     *
      * @throws \RuntimeException
      */
     public function generate(BundleInterface $bundle, $controllerClassBasename)
@@ -59,9 +64,9 @@ class ControllerGenerator extends AbstractBcGenerator
             ));
         }
 
-        $this->renderFileBc('AdminController.php.twig', $this->file, array(
+        $this->renderFile('AdminController.php.twig', $this->file, array(
             'classBasename' => array_pop($parts),
-            'namespace' => implode('\\', $parts)
+            'namespace'     => implode('\\', $parts),
         ));
     }
 

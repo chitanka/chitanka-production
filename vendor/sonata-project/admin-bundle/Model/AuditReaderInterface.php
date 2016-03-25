@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,6 +11,11 @@
 
 namespace Sonata\AdminBundle\Model;
 
+/**
+ * Interface AuditReaderInterface.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 interface AuditReaderInterface
 {
     /**
@@ -38,4 +43,12 @@ interface AuditReaderInterface
      * @param string $id
      */
     public function findRevisions($className, $id);
+
+    /**
+     * @param string $className
+     * @param int    $id
+     * @param int    $oldRevision
+     * @param int    $newRevision
+     */
+    public function diff($className, $id, $oldRevision, $newRevision);
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Sonata package.
  *
@@ -10,6 +11,8 @@
 
 namespace Sonata\CoreBundle\Model;
 
+use Sonata\DatagridBundle\Pager\PagerInterface;
+
 /**
  * Class PageableManagerInterface.
  *
@@ -18,12 +21,12 @@ namespace Sonata\CoreBundle\Model;
 interface PageableManagerInterface
 {
     /**
-     * @param array   $criteria
-     * @param integer $page
-     * @param integer $limit
-     * @param array   $sort
+     * @param array $criteria
+     * @param int   $page
+     * @param int   $limit
+     * @param array $sort
      *
-     * @return \Sonata\DatagridBundle\Pager\PagerInterface
+     * @return PagerInterface
      */
     public function getPager(array $criteria, $page, $limit = 10, array $sort = array());
 }

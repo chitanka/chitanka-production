@@ -1,33 +1,38 @@
 <?php
+
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
  */
+
 namespace Sonata\AdminBundle\Datagrid;
 
 use Sonata\AdminBundle\Admin\AdminInterface;
 use Sonata\AdminBundle\Admin\FieldDescriptionInterface;
-use Sonata\AdminBundle\Datagrid\DatagridInterface;
 use Sonata\AdminBundle\Builder\DatagridBuilderInterface;
 use Sonata\AdminBundle\Mapper\BaseMapper;
 
 /**
- * This class is use to simulate the Form API
+ * Class DatagridMapper
+ * This class is use to simulate the Form API.
  *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
 class DatagridMapper extends BaseMapper
 {
+    /**
+     * @var DatagridInterface
+     */
     protected $datagrid;
 
     /**
-     * @param \Sonata\AdminBundle\Builder\DatagridBuilderInterface $datagridBuilder
-     * @param DatagridInterface                                    $datagrid
-     * @param \Sonata\AdminBundle\Admin\AdminInterface             $admin
+     * @param DatagridBuilderInterface $datagridBuilder
+     * @param DatagridInterface        $datagrid
+     * @param AdminInterface           $admin
      */
     public function __construct(DatagridBuilderInterface $datagridBuilder, DatagridInterface $datagrid, AdminInterface $admin)
     {
@@ -43,10 +48,11 @@ class DatagridMapper extends BaseMapper
      * @param array  $filterOptions
      * @param string $fieldType
      * @param array  $fieldOptions
+     * @param array  $fieldDescriptionOptions
      *
      * @return DatagridMapper
      */
-    public function add($name, $type = null, array $filterOptions = array(), $fieldType = null, $fieldOptions = null)
+    public function add($name, $type = null, array $filterOptions = array(), $fieldType = null, $fieldOptions = null, array $fieldDescriptionOptions = array())
     {
         if (is_array($fieldOptions)) {
             $filterOptions['field_options'] = $fieldOptions;
@@ -56,21 +62,25 @@ class DatagridMapper extends BaseMapper
             $filterOptions['field_type'] = $fieldType;
         }
 
-        $filterOptions['field_name'] = isset($filterOptions['field_name']) ? $filterOptions['field_name'] : substr(strrchr('.'.$name,'.'), 1);
-
         if ($name instanceof FieldDescriptionInterface) {
             $fieldDescription = $name;
             $fieldDescription->mergeOptions($filterOptions);
-        } elseif (is_string($name) && !$this->admin->hasFilterFieldDescription($name)) {
+        } elseif (is_string($name)) {
+            if ($this->admin->hasFilterFieldDescription($name)) {
+                throw new \RuntimeException(sprintf('Duplicate field name "%s" in datagrid mapper. Names should be unique.', $name));
+            }
+
+            if (!isset($filterOptions['field_name'])) {
+                $filterOptions['field_name'] = substr(strrchr('.'.$name, '.'), 1);
+            }
+
             $fieldDescription = $this->admin->getModelManager()->getNewFieldDescriptionInstance(
                 $this->admin->getClass(),
                 $name,
-                $filterOptions
+                array_merge($filterOptions, $fieldDescriptionOptions)
             );
-        } elseif (is_string($name) && $this->admin->hasFilterFieldDescription($name)) {
-            throw new \RuntimeException(sprintf('The field "%s" is already defined', $name));
         } else {
-            throw new \RuntimeException('invalid state');
+            throw new \RuntimeException('Unknown field name in datagrid mapper. Field name should be either of FieldDescriptionInterface interface or string.');
         }
 
         // add the field with the DatagridBuilder
@@ -80,9 +90,7 @@ class DatagridMapper extends BaseMapper
     }
 
     /**
-     * @param string $name
-     *
-     * @return \Sonata\AdminBundle\Filter\FilterInterface
+     * {@inheritdoc}
      */
     public function get($name)
     {
@@ -90,9 +98,7 @@ class DatagridMapper extends BaseMapper
     }
 
     /**
-     * @param string $key
-     *
-     * @return boolean
+     * {@inheritdoc}
      */
     public function has($key)
     {
@@ -100,9 +106,7 @@ class DatagridMapper extends BaseMapper
     }
 
     /**
-     * @param string $key
-     *
-     * @return \Sonata\AdminBundle\Datagrid\DatagridMapper
+     * {@inheritdoc}
      */
     public function remove($key)
     {
@@ -113,9 +117,7 @@ class DatagridMapper extends BaseMapper
     }
 
     /**
-     * @param array $keys field names
-     *
-     * @return \Sonata\AdminBundle\Datagrid\ListMapper
+     * {@inheritdoc}
      */
     public function reorder(array $keys)
     {

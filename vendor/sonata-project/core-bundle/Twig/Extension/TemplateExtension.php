@@ -33,7 +33,7 @@ class TemplateExtension extends \Twig_Extension
     protected $translator;
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param bool                $debug        Is Symfony debug enabled?
      * @param TranslatorInterface $translator   Symfony Translator service
@@ -47,13 +47,13 @@ class TemplateExtension extends \Twig_Extension
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getFilters()
     {
         return array(
-            'sonata_slugify'    => new \Twig_Filter_Method($this, 'slugify'),
-            'sonata_urlsafeid'  => new \Twig_Filter_Method($this, 'getUrlsafeIdentifier'),
+            new \Twig_SimpleFilter('sonata_slugify', array($this, 'slugify')),
+            new \Twig_SimpleFilter('sonata_urlsafeid', array($this, 'getUrlsafeIdentifier')),
         );
     }
 
@@ -68,7 +68,7 @@ class TemplateExtension extends \Twig_Extension
     }
 
     /**
-     * Slugify a text
+     * Slugify a text.
      *
      * @param $text
      *
@@ -84,7 +84,7 @@ class TemplateExtension extends \Twig_Extension
 
         // transliterate
         if (function_exists('iconv')) {
-            $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
+            $text = iconv('UTF-8', 'ASCII//TRANSLIT', $text);
         }
 
         // lowercase

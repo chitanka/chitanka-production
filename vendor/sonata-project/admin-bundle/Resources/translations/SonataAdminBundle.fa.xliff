@@ -34,6 +34,10 @@
                 <source>btn_filter</source>
                 <target>فیلتر</target>
             </trans-unit>
+            <trans-unit id="btn_advanced_filters">
+                <source>btn_advanced_filters</source>
+                <target>btn_advanced_filters</target>
+            </trans-unit>
             <trans-unit id="btn_update">
                 <source>btn_update</source>
                 <target>به روز رسانی</target>
@@ -158,6 +162,10 @@
                 <source>flash_edit_error</source>
                 <target>در هنگام به روزرسانی خطا به وقوع پیوست.</target>
             </trans-unit>
+            <trans-unit id="flash_lock_error">
+                <source>flash_lock_error</source>
+                <target>flash_lock_error</target>
+            </trans-unit>
             <trans-unit id='flash_batch_delete_success'>
                 <source>flash_batch_delete_success</source>
                 <target>عنصر با موفقیت به حذف شد.</target>
@@ -174,9 +182,13 @@
                 <source>flash_delete_success</source>
                 <target>عنصر با موفقیت حذف شد.</target>
             </trans-unit>
+            <trans-unit id="form_not_available">
+                <source>form_not_available</source>
+                <target>form_not_available</target>
+            </trans-unit>
             <trans-unit id="link_breadcrumb_dashboard">
                 <source>breadcrumb.link_dashboard</source>
-                <target>&#8962;</target>
+                <target><![CDATA[<i class="fa fa-home"></i>]]></target>
             </trans-unit>
             <trans-unit id="title_delete">
                 <source>title_delete</source>
@@ -302,6 +314,10 @@
                 <source>td_action</source>
                 <target>عمل</target>
             </trans-unit>
+            <trans-unit id="td_compare">
+                <source>td_compare</source>
+                <target>td_compare</target>
+            </trans-unit>
             <trans-unit id="td_revision">
                 <source>td_revision</source>
                 <target>اصلاحیات</target>
@@ -314,9 +330,21 @@
                 <source>td_username</source>
                 <target>نویسنده</target>
             </trans-unit>
+            <trans-unit id="td_role">
+                <source>td_role</source>
+                <target>td_role</target>
+            </trans-unit>
             <trans-unit id="label_view_revision">
                 <source>label_view_revision</source>
                 <target>دیدن اصلاحیه</target>
+            </trans-unit>
+            <trans-unit id="label_compare_revision">
+                <source>label_compare_revision</source>
+                <target>label_compare_revision</target>
+            </trans-unit>
+            <trans-unit id="list_results_count_prefix">
+                <source>list_results_count_prefix</source>
+                <target>list_results_count_prefix</target>
             </trans-unit>
             <trans-unit id="list_results_count">
                 <source>list_results_count</source>
@@ -324,7 +352,23 @@
             </trans-unit>
             <trans-unit id="label_export_download">
                 <source>label_export_download</source>
-                <target>دانلود : </target>
+                <target>دانلود</target>
+            </trans-unit>
+            <trans-unit id="export_format_json">
+                <source>export_format_json</source>
+                <target>JSON</target>
+            </trans-unit>
+            <trans-unit id="export_format_xml">
+                <source>export_format_xml</source>
+                <target>XML</target>
+            </trans-unit>
+            <trans-unit id="export_format_csv">
+                <source>export_format_csv</source>
+                <target>CSV</target>
+            </trans-unit>
+            <trans-unit id="export_format_xls">
+                <source>export_format_xls</source>
+                <target>XLS</target>
             </trans-unit>
             <trans-unit id="loading_information">
                 <source>loading_information</source>
@@ -343,52 +387,84 @@
                 <target>رد کردن</target>
             </trans-unit>
             <trans-unit id="label_per_page">
-              <source>label_per_page</source>
-              <target>در هر صفحه</target>
+                <source>label_per_page</source>
+                <target>در هر صفحه</target>
             </trans-unit>
             <trans-unit id="list_select">
-              <source>list_select</source>
-              <target>list_select</target>
+                <source>list_select</source>
+                <target>انتخاب</target>
             </trans-unit>
             <trans-unit id="confirm_exit">
                 <source>confirm_exit</source>
-                <target>confirm_exit</target>
+                <target>خروج ؟</target>
             </trans-unit>
             <trans-unit id="link_edit_acl">
-              <source>link_edit_acl</source>
-              <target>link_edit_acl</target>
+                <source>link_edit_acl</source>
+                <target>ویرایش دسترسی</target>
             </trans-unit>
             <trans-unit id="btn_update_acl">
-              <source>btn_update_acl</source>
-              <target>btn_update_acl</target>
+                <source>btn_update_acl</source>
+                <target>به روز رسانی دسترسی</target>
             </trans-unit>
             <trans-unit id="flash_acl_update_success">
                 <source>flash_acl_edit_success</source>
-                <target>flash_acl_update_success</target>
+                <target>دسترسی به روز رسانی شد</target>
             </trans-unit>
             <trans-unit id="link_action_acl">
                 <source>link_action_acl</source>
-                <target>link_action_acl</target>
+                <target>دسترسی</target>
             </trans-unit>
             <trans-unit id="short_object_description_placeholder">
-              <source>short_object_description_placeholder</source>
-              <target>short_object_description_placeholder</target>
+                <source>short_object_description_placeholder</source>
+                <target>دسترسی</target>
             </trans-unit>
             <trans-unit id="title_search_results">
                 <source>title_search_results</source>
-                <target>title_search_results</target>
+                <target>نتایج جستجو</target>
             </trans-unit>
             <trans-unit id="search_placeholder">
                 <source>search_placeholder</source>
-                <target>search_placeholder</target>
+                <target>جستجو</target>
             </trans-unit>
             <trans-unit id="no_results_found">
                 <source>no_results_found</source>
-                <target>no_results_found</target>
+                <target>نتیجه ای در برنداشت</target>
             </trans-unit>
             <trans-unit id="add_new_entry">
                 <source>add_new_entry</source>
-                <target>add_new_entry</target>
+                <target>افزودن</target>
+            </trans-unit>
+            <trans-unit id="link_actions">
+                <source>link_actions</source>
+                <target>اقدامات</target>
+            </trans-unit>
+            <trans-unit id="noscript_warning">
+                <source>noscript_warning</source>
+                <target>اسکریپ فعال نمی باشد</target>
+            </trans-unit>
+            <trans-unit id="message_form_group_empty">
+                <source>message_form_group_empty</source>
+                <target>گروه نمی تواند خالی باشد</target>
+            </trans-unit>
+            <trans-unit id="link_filters">
+                <source>link_filters</source>
+                <target>فیلترها</target>
+            </trans-unit>
+            <trans-unit id="stats_view_more">
+                <source>stats_view_more</source>
+                <target>stats_view_more</target>
+            </trans-unit>
+            <trans-unit id="title_select_subclass">
+                <source>title_select_subclass</source>
+                <target>title_select_subclass</target>
+            </trans-unit>
+            <trans-unit id="no_subclass_available">
+                <source>no_subclass_available</source>
+                <target>no_subclass_available</target>
+            </trans-unit>
+            <trans-unit id="label_unknown_user">
+                <source>label_unknown_user</source>
+                <target>label_unknown_user</target>
             </trans-unit>
         </body>
     </file>

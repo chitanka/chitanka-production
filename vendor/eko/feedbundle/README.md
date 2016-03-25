@@ -11,12 +11,12 @@ Features
 --------
 
  * Generate XML feeds (RSS & Atom formats)
+ * Easy to configure & use
  * Items based on your entities
  * Add groups of items
  * Add enclosure media tags
+ * Translate your feed data
  * Read XML feeds and populate your Symfony entities
- * Easy to configurate & use
- * Available on packagist (to install via composer)
  * Dump your feeds into a file via a Symfony console command
 
 Installation
@@ -61,6 +61,7 @@ The following configuration lines are required:
 ```yaml
 eko_feed:
     hydrator: your_hydrator.custom.service # Optional, if you use entity hydrating with a custom hydrator
+    translation_domain: test # Optional, if you want to use a custom translation domain
     feeds:
         article:
             title:       'My articles/posts'
@@ -68,6 +69,12 @@ eko_feed:
             link:        'http://vincent.composieux.fr'
             encoding:    'utf-8'
             author:      'Vincent Composieux' # Only required for Atom feeds
+```
+You can set link as route:
+```yaml
+link:
+    route_name: acme_blog_main_index
+    route_params: {id: 2} # necessary if route cantains required parameters
 ```
 
 ### 2) Implement the ItemInterface
@@ -159,7 +166,7 @@ class BlogController extends Controller
 
 Please note that for better performances you can add a cache control.
 
-Moreover, entities objects can be added separatly with add method:
+Moreover, entities objects can be added separately with add method:
 
 ```php
 <?php
@@ -196,7 +203,7 @@ $feed->addItemField(new ItemField('fake_custom', 'getFeedItemCustom'));
 
 Of course, `getFeedItemCustom()` method needs to be declared in your entity.
 
-##### Add a group of custom item fields
+##### Add a group of custom item fields (optionally, with attributes)
 
 You can also add group item fields using this way, if your method returns an array:
 
@@ -205,7 +212,11 @@ You can also add group item fields using this way, if your method returns an arr
 $feed = $this->get('eko_feed.feed.manager')->get('article');
 $feed->add(new FakeEntity());
 $feed->addItemField(
-    new GroupItemField('categories', new ItemField('category', 'getFeedCategoriesCustom'))
+    new GroupItemField(
+        'categories',
+        new ItemField('category', 'getFeedCategoriesCustom', array(), array('category-attribute', 'test'),
+        array('categories-attribute', 'getAttributeValue')
+    )
 );
 ```
 
@@ -336,7 +347,6 @@ $feedDumpService
         ->setFilename($filename)
         ->setFormat($format)
         ->setLimit($limit)
-        ->setRootDir($rootDir)
         ->setDirection($direction)
         ->setOrderBy($orderBy)
     ;
@@ -354,6 +364,7 @@ If you only want to read an XML feed, here is the way:
 ```php
 <?php
 $reader = $this->get('eko_feed.feed.reader');
+$reader->setHydrator(new DefaultHydrator());
 $feed = $reader->load('http://php.net/feed.atom')->get();
 ```
 
@@ -368,6 +379,7 @@ Just load the feed and call the populate method with your entity name which need
 ```php
 <?php
 $reader = $this->get('eko_feed.feed.reader');
+$reader->setHydrator(new DefaultHydrator());
 $items = $reader->load('http://php.net/feed.atom')->populate('MyNamespace\Entity\Name');
 ```
 
@@ -385,6 +397,20 @@ $items = $reader->load('http://php.net/feed.atom')->populate('MyNamespace\Entity
 ```
 
 This way, your custom hydrator will be used instead of the `Eko\FeedBundle\Hydrator\DefaultHydrator`
+
+### Define a custom feed formatter
+
+You can define your own feed formatter by using the following tag:
+
+```xml
+<service id="acme.my_bundle.formatter.custom" class="Acme\MyBundle\Feed\Formatter\CustomFormatter">
+    <tag name="eko_feed.formatter" format="custom"></tag>
+
+    <argument type="service" id="translator" />
+</service>
+```
+
+Then, use it by simply calling `$feed->render('custom')`.
 
 Contributors
 ------------

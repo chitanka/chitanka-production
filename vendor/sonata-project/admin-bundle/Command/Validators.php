@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,6 +11,11 @@
 
 namespace Sonata\AdminBundle\Command;
 
+/**
+ * Class Validators.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class Validators
 {
     /**
@@ -19,6 +24,7 @@ class Validators
      * @param string $username
      *
      * @return mixed
+     *
      * @throws \InvalidArgumentException
      */
     public static function validateUsername($username)
@@ -36,6 +42,7 @@ class Validators
      * @param string $shortcut
      *
      * @return array
+     *
      * @throws \InvalidArgumentException
      */
     public static function validateEntityName($shortcut)
@@ -55,6 +62,7 @@ class Validators
      * @param string $class
      *
      * @return string
+     *
      * @throws \InvalidArgumentException
      */
     public static function validateClass($class)
@@ -74,6 +82,7 @@ class Validators
      * @param string $adminClassBasename
      *
      * @return string
+     *
      * @throws \InvalidArgumentException
      */
     public static function validateAdminClassBasename($adminClassBasename)
@@ -93,6 +102,7 @@ class Validators
      * @param string $controllerClassBasename
      *
      * @return string
+     *
      * @throws \InvalidArgumentException
      */
     public static function validateControllerClassBasename($controllerClassBasename)
@@ -128,6 +138,7 @@ class Validators
      * @param string $serviceId
      *
      * @return string
+     *
      * @throws \InvalidArgumentException
      */
     public static function validateServiceId($serviceId)

@@ -1,7 +1,7 @@
 <?php namespace App\Admin;
 
-use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
 
 class BookAuthorAdmin extends Admin {
@@ -30,10 +30,10 @@ class BookAuthorAdmin extends Admin {
 	}
 
 	protected function configureFormFields(FormMapper $formMapper) {
-		$formMapper->with('General attributes');
-		$formMapper
+		$formMapper->with('General attributes')
 			//->add('book')
-			->add('person', 'sonata_type_model_list', ['required' => false]);
+			->add('person', 'sonata_type_model_list', ['required' => false])
+			->end();
 	}
 
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Sonata project.
  *
@@ -11,17 +12,15 @@
 namespace Sonata\BlockBundle\Block\Service;
 
 use Sonata\AdminBundle\Form\FormMapper;
-use Sonata\AdminBundle\Validator\ErrorElement;
-
 use Sonata\BlockBundle\Block\BaseBlockService;
 use Sonata\BlockBundle\Block\BlockContextInterface;
 use Sonata\BlockBundle\Model\BlockInterface;
-
+use Sonata\CoreBundle\Model\Metadata;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Render children pages
+ * Render children pages.
  *
  * @author Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
@@ -39,24 +38,16 @@ class ContainerBlockService extends BaseBlockService
                 array('code', 'text', array('required' => false)),
                 array('layout', 'textarea', array()),
                 array('class', 'text', array('required' => false)),
-                array('template', 'sonata_type_container_template_choice', array())
-            )
+                array('template', 'sonata_type_container_template_choice', array()),
+            ),
         ));
 
         $formMapper->add('children', 'sonata_type_collection', array(), array(
             'admin_code' => 'sonata.page.admin.block',
-            'edit'   => 'inline',
-            'inline' => 'table',
-            'sortable' => 'position'
+            'edit'       => 'inline',
+            'inline'     => 'table',
+            'sortable'   => 'position',
         ));
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function validateBlock(ErrorElement $errorElement, BlockInterface $block)
-    {
-        // TODO: Implement validateBlock() method.
     }
 
     /**
@@ -74,7 +65,7 @@ class ContainerBlockService extends BaseBlockService
     /**
      * {@inheritdoc}
      */
-    public function setDefaultSettings(OptionsResolverInterface $resolver)
+    public function configureSettings(OptionsResolver $resolver)
     {
         $resolver->setDefaults(array(
             'code'        => '',
@@ -85,15 +76,7 @@ class ContainerBlockService extends BaseBlockService
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * Returns a decorator object/array from the container layout setting
+     * Returns a decorator object/array from the container layout setting.
      *
      * @param string $layout
      *
@@ -113,5 +96,15 @@ class ContainerBlockService extends BaseBlockService
         );
 
         return $decorator;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getBlockMetadata($code = null)
+    {
+        return new Metadata($this->getName(), (!is_null($code) ? $code : $this->getName()), false, 'SonataBlockBundle', array(
+            'class' => 'fa fa-square-o',
+        ));
     }
 }

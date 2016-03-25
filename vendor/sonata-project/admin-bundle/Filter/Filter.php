@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,16 +11,31 @@
 
 namespace Sonata\AdminBundle\Filter;
 
-use Sonata\AdminBundle\Filter\FilterInterface;
-
+/**
+ * Class Filter.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 abstract class Filter implements FilterInterface
 {
+    /**
+     * @var string|null
+     */
     protected $name = null;
 
+    /**
+     * @var mixed|null
+     */
     protected $value = null;
 
+    /**
+     * @var array
+     */
     protected $options = array();
 
+    /**
+     * @var string
+     */
     protected $condition;
 
     /**
@@ -45,7 +60,8 @@ abstract class Filter implements FilterInterface
      */
     public function getFormName()
     {
-        /* Symfony default form class sadly can't handle
+        /*
+           Symfony default form class sadly can't handle
            form element with dots in its name (when data
            get bound, the default dataMapper is a PropertyPathMapper).
            So use this trick to avoid any issue.
@@ -93,6 +109,26 @@ abstract class Filter implements FilterInterface
     /**
      * {@inheritdoc}
      */
+    public function getFieldOption($name, $default = null)
+    {
+        if (isset($this->options['field_options'][$name]) && is_array($this->options['field_options'])) {
+            return $this->options['field_options'][$name];
+        }
+
+        return $default;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setFieldOption($name, $value)
+    {
+        $this->options['field_options'][$name] = $value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getLabel()
     {
         return $this->getOption('label');
@@ -114,7 +150,7 @@ abstract class Filter implements FilterInterface
         $fieldName = $this->getOption('field_name');
 
         if (!$fieldName) {
-            throw new \RunTimeException(sprintf('The option `field_name` must be set for field : `%s`', $this->getName()));
+            throw new \RuntimeException(sprintf('The option `field_name` must be set for field: `%s`', $this->getName()));
         }
 
         return $fieldName;
@@ -136,7 +172,7 @@ abstract class Filter implements FilterInterface
         $fieldMapping = $this->getOption('field_mapping');
 
         if (!$fieldMapping) {
-            throw new \RunTimeException(sprintf('The option `field_mapping` must be set for field : `%s`', $this->getName()));
+            throw new \RuntimeException(sprintf('The option `field_mapping` must be set for field: `%s`', $this->getName()));
         }
 
         return $fieldMapping;
@@ -150,23 +186,29 @@ abstract class Filter implements FilterInterface
         $associationMapping = $this->getOption('association_mapping');
 
         if (!$associationMapping) {
-            throw new \RunTimeException(sprintf('The option `association_mapping` must be set for field : `%s`', $this->getName()));
+            throw new \RuntimeException(sprintf('The option `association_mapping` must be set for field: `%s`', $this->getName()));
         }
 
         return $associationMapping;
     }
 
     /**
-     * @param array $options
+     * Set options.
      *
-     * @return void
+     * @param array $options
      */
     public function setOptions(array $options)
     {
-        $this->options = array_merge($this->getDefaultOptions(), $options);
+        $this->options = array_merge(
+            array('show_filter' => null, 'advanced_filter' => true),
+            $this->getDefaultOptions(),
+            $options
+        );
     }
 
     /**
+     * Get options.
+     *
      * @return array
      */
     public function getOptions()
@@ -175,9 +217,9 @@ abstract class Filter implements FilterInterface
     }
 
     /**
-     * @param mixed $value
+     * Set value.
      *
-     * @return void
+     * @param mixed $value
      */
     public function setValue($value)
     {
@@ -185,6 +227,8 @@ abstract class Filter implements FilterInterface
     }
 
     /**
+     * Get value.
+     *
      * @return mixed
      */
     public function getValue()
@@ -201,13 +245,11 @@ abstract class Filter implements FilterInterface
 
         return isset($values['value'])
             && false !== $values['value']
-            && "" !== $values['value'];
+            && '' !== $values['value'];
     }
 
     /**
-     * @param string $condition
-     *
-     * @return void
+     * {@inheritdoc}
      */
     public function setCondition($condition)
     {
@@ -215,7 +257,7 @@ abstract class Filter implements FilterInterface
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public function getCondition()
     {
@@ -223,7 +265,7 @@ abstract class Filter implements FilterInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getTranslationDomain()
     {

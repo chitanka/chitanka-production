@@ -1,6 +1,7 @@
 <?php
+
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -12,12 +13,20 @@ namespace Sonata\AdminBundle\Util;
 
 use Symfony\Component\Form\FormView;
 
+/**
+ * Class FormViewIterator.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class FormViewIterator implements \RecursiveIterator
 {
-    protected $formView;
+    /**
+     * @var \ArrayIterator
+     */
+    protected $iterator;
 
     /**
-     * @param \Symfony\Component\Form\FormView $formView
+     * @param FormView $formView
      */
     public function __construct(FormView $formView)
     {
@@ -25,15 +34,15 @@ class FormViewIterator implements \RecursiveIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getChildren()
     {
-        return new FormViewIterator($this->current());
+        return new self($this->current());
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function hasChildren()
     {
@@ -41,7 +50,7 @@ class FormViewIterator implements \RecursiveIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function current()
     {
@@ -49,7 +58,7 @@ class FormViewIterator implements \RecursiveIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function next()
     {
@@ -57,7 +66,7 @@ class FormViewIterator implements \RecursiveIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function key()
     {
@@ -65,7 +74,7 @@ class FormViewIterator implements \RecursiveIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function valid()
     {
@@ -73,7 +82,7 @@ class FormViewIterator implements \RecursiveIterator
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function rewind()
     {

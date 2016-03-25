@@ -1,45 +1,64 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
  */
 
 namespace Sonata\AdminBundle\Form\Type;
 
-use Symfony\Component\Form\Extension\Core\ChoiceList\ChoiceListInterface;
-use Symfony\Component\Form\FormBuilderInterface;
+use Sonata\AdminBundle\Form\ChoiceList\ModelChoiceList;
+use Sonata\AdminBundle\Form\ChoiceList\ModelChoiceLoader;
+use Sonata\AdminBundle\Form\DataTransformer\LegacyModelsToArrayTransformer;
+use Sonata\AdminBundle\Form\DataTransformer\ModelsToArrayTransformer;
+use Sonata\AdminBundle\Form\DataTransformer\ModelToIdTransformer;
+use Sonata\AdminBundle\Form\EventListener\MergeCollectionListener;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\Options;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
-
-use Sonata\AdminBundle\Form\EventListener\MergeCollectionListener;
-use Sonata\AdminBundle\Form\ChoiceList\ModelChoiceList;
-use Sonata\AdminBundle\Form\DataTransformer\ModelsToArrayTransformer;
-use Sonata\AdminBundle\Form\DataTransformer\ModelToIdTransformer;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 
 /**
- * This type define a standard select input with a + sign to add new associated object
+ * Class ModelType
+ * This type define a standard select input with a + sign to add new associated object.
  *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
 class ModelType extends AbstractType
 {
     /**
-     * {@inheritDoc}
+     * @var PropertyAccessorInterface
+     */
+    protected $propertyAccessor;
+
+    public function __construct(PropertyAccessorInterface $propertyAccessor)
+    {
+        $this->propertyAccessor = $propertyAccessor;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         if ($options['multiple']) {
+            if (array_key_exists('choice_loader', $options) && $options['choice_loader'] !== null) { // SF2.7+
+                $builder->addViewTransformer(new ModelsToArrayTransformer($options['choice_list'], $options['model_manager'], $options['class']), true);
+            } else {
+                $builder->addViewTransformer(new LegacyModelsToArrayTransformer($options['choice_list']), true);
+            }
+
             $builder
                 ->addEventSubscriber(new MergeCollectionListener($options['model_manager']))
-                ->addViewTransformer(new ModelsToArrayTransformer($options['choice_list']), true);
+            ;
         } else {
             $builder
                 ->addViewTransformer(new ModelToIdTransformer($options['model_manager'], $options['class']), true)
@@ -59,11 +78,56 @@ class ModelType extends AbstractType
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
+     *
+     * @todo Remove it when bumping requirements to SF 2.7+
      */
     public function setDefaultOptions(OptionsResolverInterface $resolver)
     {
-        $resolver->setDefaults(array(
+        $this->configureOptions($resolver);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function configureOptions(OptionsResolver $resolver)
+    {
+        $options = array();
+        $propertyAccessor = $this->propertyAccessor;
+        if (interface_exists('Symfony\Component\Form\ChoiceList\Loader\ChoiceLoaderInterface')) { // SF2.7+
+            $options['choice_loader'] = function (Options $options, $previousValue) use ($propertyAccessor) {
+                if ($previousValue && count($choices = $previousValue->getChoices())) {
+                    return $choices;
+                }
+
+                return new ModelChoiceLoader(
+                    $options['model_manager'],
+                    $options['class'],
+                    $options['property'],
+                    $options['query'],
+                    $options['choices'],
+                    $propertyAccessor
+                );
+
+            };
+        } else {
+            $options['choice_list'] = function (Options $options, $previousValue) use ($propertyAccessor) {
+                if ($previousValue && count($choices = $previousValue->getChoices())) {
+                    return $choices;
+                }
+
+                return new ModelChoiceList(
+                    $options['model_manager'],
+                    $options['class'],
+                    $options['property'],
+                    $options['query'],
+                    $options['choices'],
+                    $propertyAccessor
+                );
+            };
+        }
+
+        $resolver->setDefaults(array_merge($options, array(
             'compound'          => function (Options $options) {
                 if (isset($options['multiple']) && $options['multiple']) {
                     if (isset($options['expanded']) && $options['expanded']) {
@@ -91,30 +155,17 @@ class ModelType extends AbstractType
             'class'             => null,
             'property'          => null,
             'query'             => null,
-            'choices'           => null,
+            'choices'           => array(),
             'preferred_choices' => array(),
             'btn_add'           => 'link_add',
             'btn_list'          => 'link_list',
             'btn_delete'        => 'link_delete',
             'btn_catalogue'     => 'SonataAdminBundle',
-            'choice_list'       => function (Options $options, $previousValue) {
-                if ($previousValue instanceof ChoiceListInterface && count($choices = $previousValue->getChoices())) {
-                    return $choices;
-                }
-
-                return new ModelChoiceList(
-                    $options['model_manager'],
-                    $options['class'],
-                    $options['property'],
-                    $options['query'],
-                    $options['choices']
-                );
-            }
-        ));
+        )));
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getParent()
     {
@@ -122,9 +173,19 @@ class ModelType extends AbstractType
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
+     *
+     * @todo Remove when dropping Symfony <2.8 support
      */
     public function getName()
+    {
+        return $this->getBlockPrefix();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getBlockPrefix()
     {
         return 'sonata_type_model';
     }

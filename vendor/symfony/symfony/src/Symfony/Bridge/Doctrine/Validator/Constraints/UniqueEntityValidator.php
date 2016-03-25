@@ -29,9 +29,6 @@ class UniqueEntityValidator extends ConstraintValidator
      */
     private $registry;
 
-    /**
-     * @param ManagerRegistry $registry
-     */
     public function __construct(ManagerRegistry $registry)
     {
         $this->registry = $registry;
@@ -46,6 +43,10 @@ class UniqueEntityValidator extends ConstraintValidator
      */
     public function validate($entity, Constraint $constraint)
     {
+        if (!$constraint instanceof UniqueEntity) {
+            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\UniqueEntity');
+        }
+
         if (!is_array($constraint->fields) && !is_string($constraint->fields)) {
             throw new UnexpectedTypeException($constraint->fields, 'array');
         }
@@ -64,7 +65,7 @@ class UniqueEntityValidator extends ConstraintValidator
             $em = $this->registry->getManager($constraint->em);
 
             if (!$em) {
-               throw new ConstraintDefinitionException(sprintf('Object manager "%s" does not exist.', $constraint->em));
+                throw new ConstraintDefinitionException(sprintf('Object manager "%s" does not exist.', $constraint->em));
             }
         } else {
             $em = $this->registry->getManagerForClass(get_class($entity));
@@ -80,7 +81,7 @@ class UniqueEntityValidator extends ConstraintValidator
         $criteria = array();
         foreach ($fields as $fieldName) {
             if (!$class->hasField($fieldName) && !$class->hasAssociation($fieldName)) {
-                throw new ConstraintDefinitionException(sprintf("The field '%s' is not mapped by Doctrine, so it cannot be validated for uniqueness.", $fieldName));
+                throw new ConstraintDefinitionException(sprintf('The field "%s" is not mapped by Doctrine, so it cannot be validated for uniqueness.', $fieldName));
             }
 
             $criteria[$fieldName] = $class->reflFields[$fieldName]->getValue($entity);
@@ -95,22 +96,15 @@ class UniqueEntityValidator extends ConstraintValidator
                  * getter methods in the Proxy are being bypassed.
                  */
                 $em->initializeObject($criteria[$fieldName]);
-
-                $relatedClass = $em->getClassMetadata($class->getAssociationTargetClass($fieldName));
-                $relatedId = $relatedClass->getIdentifierValues($criteria[$fieldName]);
-
-                if (count($relatedId) > 1) {
-                    throw new ConstraintDefinitionException(
-                        "Associated entities are not allowed to have more than one identifier field to be " .
-                        "part of a unique constraint in: ".$class->getName()."#".$fieldName
-                    );
-                }
-                $criteria[$fieldName] = array_pop($relatedId);
             }
         }
 
         $repository = $em->getRepository(get_class($entity));
         $result = $repository->{$constraint->repositoryMethod}($criteria);
+
+        if ($result instanceof \IteratorAggregate) {
+            $result = $result->getIterator();
+        }
 
         /* If the result is a MongoCursor, it must be advanced to the first
          * element. Rewinding should have no ill effect if $result is another
@@ -131,7 +125,11 @@ class UniqueEntityValidator extends ConstraintValidator
         }
 
         $errorPath = null !== $constraint->errorPath ? $constraint->errorPath : $fields[0];
+        $invalidValue = isset($criteria[$errorPath]) ? $criteria[$errorPath] : $criteria[$fields[0]];
 
-        $this->context->addViolationAt($errorPath, $constraint->message, array(), $criteria[$fields[0]]);
+        $this->context->buildViolation($constraint->message)
+            ->atPath($errorPath)
+            ->setInvalidValue($invalidValue)
+            ->addViolation();
     }
 }

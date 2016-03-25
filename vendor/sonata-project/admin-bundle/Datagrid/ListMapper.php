@@ -1,27 +1,33 @@
 <?php
+
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
  */
+
 namespace Sonata\AdminBundle\Datagrid;
 
 use Sonata\AdminBundle\Admin\AdminInterface;
-use Sonata\AdminBundle\Admin\FieldDescriptionInterface;
 use Sonata\AdminBundle\Admin\FieldDescriptionCollection;
+use Sonata\AdminBundle\Admin\FieldDescriptionInterface;
 use Sonata\AdminBundle\Builder\ListBuilderInterface;
 use Sonata\AdminBundle\Mapper\BaseMapper;
 
 /**
- * This class is used to simulate the Form API
+ * Class ListMapper
+ * This class is used to simulate the Form API.
  *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
 class ListMapper extends BaseMapper
 {
+    /**
+     * @var FieldDescriptionCollection
+     */
     protected $list;
 
     /**
@@ -47,7 +53,8 @@ class ListMapper extends BaseMapper
         $fieldDescriptionOptions['identifier'] = true;
 
         if (!isset($fieldDescriptionOptions['route']['name'])) {
-            $fieldDescriptionOptions['route']['name'] = 'edit';
+            $routeName = ($this->admin->isGranted('EDIT') && $this->admin->hasRoute('edit')) ? 'edit' : 'show';
+            $fieldDescriptionOptions['route']['name'] = $routeName;
         }
 
         if (!isset($fieldDescriptionOptions['route']['parameters'])) {
@@ -71,7 +78,7 @@ class ListMapper extends BaseMapper
         // Change deprecated inline action "view" to "show"
         if ($name == '_action' && $type == 'actions') {
             if (isset($fieldDescriptionOptions['actions']['view'])) {
-                trigger_error('Inline action "view" is deprecated since version 2.2.4. Use inline action "show" instead.', E_USER_DEPRECATED);
+                @trigger_error('Inline action "view" is deprecated since version 2.2.4 and will be removed in 3.0. Use inline action "show" instead.', E_USER_DEPRECATED);
 
                 $fieldDescriptionOptions['actions']['show'] = $fieldDescriptionOptions['actions']['view'];
 
@@ -79,17 +86,26 @@ class ListMapper extends BaseMapper
             }
         }
 
+        // Ensure batch and action pseudo-fields are tagged as virtual
+        if (in_array($type, array('actions', 'batch', 'select'))) {
+            $fieldDescriptionOptions['virtual_field'] = true;
+        }
+
         if ($name instanceof FieldDescriptionInterface) {
             $fieldDescription = $name;
             $fieldDescription->mergeOptions($fieldDescriptionOptions);
-        } elseif (is_string($name) && !$this->admin->hasListFieldDescription($name)) {
+        } elseif (is_string($name)) {
+            if ($this->admin->hasListFieldDescription($name)) {
+                throw new \RuntimeException(sprintf('Duplicate field name "%s" in list mapper. Names should be unique.', $name));
+            }
+
             $fieldDescription = $this->admin->getModelManager()->getNewFieldDescriptionInstance(
                 $this->admin->getClass(),
                 $name,
                 $fieldDescriptionOptions
             );
         } else {
-            throw new \RuntimeException('Unknown or duplicate field name in list mapper. Field name should be either of FieldDescriptionInterface interface or string. Names should be unique.');
+            throw new \RuntimeException('Unknown field name in list mapper. Field name should be either of FieldDescriptionInterface interface or string.');
         }
 
         if (!$fieldDescription->getLabel()) {
@@ -103,9 +119,7 @@ class ListMapper extends BaseMapper
     }
 
     /**
-     * @param string $name
-     *
-     * @return FieldDescriptionInterface
+     * {@inheritdoc}
      */
     public function get($name)
     {
@@ -113,9 +127,7 @@ class ListMapper extends BaseMapper
     }
 
     /**
-     * @param string $key
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function has($key)
     {
@@ -123,9 +135,7 @@ class ListMapper extends BaseMapper
     }
 
     /**
-     * @param string $key
-     *
-     * @return ListMapper
+     * {@inheritdoc}
      */
     public function remove($key)
     {
@@ -136,9 +146,7 @@ class ListMapper extends BaseMapper
     }
 
     /**
-     * @param array $keys field names
-     *
-     * @return ListMapper
+     * {@inheritdoc}
      */
     public function reorder(array $keys)
     {

@@ -19,8 +19,10 @@
 
 namespace GitElephant\Command;
 
-use GitElephant\Objects\Branch;
-use GitElephant\Objects\TreeishInterface;
+use \GitElephant\Objects\Author;
+use \GitElephant\Objects\Branch;
+use \GitElephant\Objects\TreeishInterface;
+use \GitElephant\Repository;
 
 /**
  * Main command generator (init, status, add, commit, checkout)
@@ -39,11 +41,14 @@ class MainCommand extends BaseCommand
     const GIT_RESET    = 'reset';
 
     /**
-     * @return MainCommand
+     * constructor
+     *
+     * @param \GitElephant\Repository $repo The repository object this command 
+     *                                      will interact with
      */
-    public static function getInstance()
+    public function __construct(Repository $repo = null)
     {
-        return new self();
+        parent::__construct($repo);
     }
 
     /**
@@ -51,6 +56,7 @@ class MainCommand extends BaseCommand
      *
      * @param bool $bare
      *
+     * @throws \RuntimeException
      * @return MainCommand
      */
     public function init($bare = false)
@@ -69,6 +75,7 @@ class MainCommand extends BaseCommand
      *
      * @param bool $porcelain
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function status($porcelain = false)
@@ -89,6 +96,7 @@ class MainCommand extends BaseCommand
      *
      * @param string $what what should be added to the repository
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function add($what = '.')
@@ -106,6 +114,7 @@ class MainCommand extends BaseCommand
      *
      * @param string $what what should be removed from the stage
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function unstage($what)
@@ -121,22 +130,33 @@ class MainCommand extends BaseCommand
     /**
      * Commit
      *
-     * @param string $message  the commit message
-     * @param bool   $stageAll commit all changes
+     * @param string        $message  the commit message
+     * @param bool          $stageAll commit all changes
+     * @param string|Author $author   override the author for this commit
      *
+     * @throws \RuntimeException
      * @throws \InvalidArgumentException
      * @return string
      */
-    public function commit($message, $stageAll = false)
+    public function commit($message, $stageAll = false, $author = null, $allowEmpty = false)
     {
         $this->clearAll();
-        if (trim($message) == '' || $message == null) {
+        if (trim($message) === '' || is_null($message)) {
             throw new \InvalidArgumentException(sprintf('You can\'t commit without message'));
         }
         $this->addCommandName(self::GIT_COMMIT);
 
         if ($stageAll) {
             $this->addCommandArgument('-a');
+        }
+
+        if ($author !== null) {
+            $this->addCommandArgument('--author');
+            $this->addCommandArgument($author);
+        }
+
+        if ($allowEmpty) {
+            $this->addCommandArgument('--allow-empty');
         }
 
         $this->addCommandArgument('-m');
@@ -150,6 +170,7 @@ class MainCommand extends BaseCommand
      *
      * @param string|Branch $ref the reference to checkout
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function checkout($ref)
@@ -176,6 +197,7 @@ class MainCommand extends BaseCommand
      * @param string|Object $from source path
      * @param string|Object $to   destination path
      *
+     * @throws \RuntimeException
      * @throws \InvalidArgumentException
      * @return string
      */
@@ -207,6 +229,7 @@ class MainCommand extends BaseCommand
      * @param bool          $recursive recurse
      * @param bool          $force     force
      *
+     * @throws \RuntimeException
      * @throws \InvalidArgumentException
      * @return string
      */

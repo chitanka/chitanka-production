@@ -75,9 +75,9 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * This method should not be invoked.
      *
-     * @param string|int|FormBuilderInterface     $child
-     * @param string|FormTypeInterface            $type
-     * @param array                               $options
+     * @param string|int|FormBuilderInterface $child
+     * @param string|FormTypeInterface        $type
+     * @param array                           $options
      *
      * @throws BadMethodCallException
      */
@@ -135,7 +135,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * @param string $name
      *
-     * @return bool    Always returns false.
+     * @return bool Always returns false.
      */
     public function has($name)
     {
@@ -252,6 +252,8 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     public function setAttribute($name, $value)
     {
         $this->attributes[$name] = $value;
+
+        return $this;
     }
 
     /**
@@ -260,6 +262,8 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     public function setAttributes(array $attributes)
     {
         $this->attributes = $attributes;
+
+        return $this;
     }
 
     /**
@@ -279,13 +283,15 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Set whether the button is disabled.
      *
-     * @param bool    $disabled Whether the button is disabled
+     * @param bool $disabled Whether the button is disabled
      *
      * @return ButtonBuilder The button builder.
      */
     public function setDisabled($disabled)
     {
         $this->disabled = $disabled;
+
+        return $this;
     }
 
     /**
@@ -307,7 +313,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * This method should not be invoked.
      *
-     * @param bool    $errorBubbling
+     * @param bool $errorBubbling
      *
      * @throws BadMethodCallException
      */
@@ -321,7 +327,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * This method should not be invoked.
      *
-     * @param bool    $required
+     * @param bool $required
      *
      * @throws BadMethodCallException
      */
@@ -349,7 +355,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * This method should not be invoked.
      *
-     * @param bool    $mapped
+     * @param bool $mapped
      *
      * @throws BadMethodCallException
      */
@@ -363,7 +369,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * This method should not be invoked.
      *
-     * @param bool    $byReference
+     * @param bool $byReference
      *
      * @throws BadMethodCallException
      */
@@ -377,21 +383,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * This method should not be invoked.
      *
-     * @param bool    $virtual
-     *
-     * @throws BadMethodCallException
-     */
-    public function setVirtual($virtual)
-    {
-        throw new BadMethodCallException('Buttons cannot be virtual.');
-    }
-
-    /**
-     * Unsupported method.
-     *
-     * This method should not be invoked.
-     *
-     * @param bool    $compound
+     * @param bool $compound
      *
      * @throws BadMethodCallException
      */
@@ -410,6 +402,8 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     public function setType(ResolvedFormTypeInterface $type)
     {
         $this->type = $type;
+
+        return $this;
     }
 
     /**
@@ -417,7 +411,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * This method should not be invoked.
      *
-     * @param array $data
+     * @param mixed $data
      *
      * @throws BadMethodCallException
      */
@@ -431,7 +425,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * This method should not be invoked.
      *
-     * @param bool    $locked
+     * @param bool $locked
      *
      * @throws BadMethodCallException
      */
@@ -446,8 +440,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      * This method should not be invoked.
      *
      * @param FormFactoryInterface $formFactory
-     *
-     * @return void
      *
      * @throws BadMethodCallException
      */
@@ -489,13 +481,15 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      */
     public function setRequestHandler(RequestHandlerInterface $requestHandler)
     {
-        throw new BadMethodCallException('Buttons do not support form processors.');
+        throw new BadMethodCallException('Buttons do not support request handlers.');
     }
 
     /**
      * Unsupported method.
      *
-     * @param bool    $initialize
+     * @param bool $initialize
+     *
+     * @return ButtonBuilder
      *
      * @throws BadMethodCallException
      */
@@ -511,7 +505,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Unsupported method.
      *
-     * @param bool    $inheritData
+     * @param bool $inheritData
      *
      * @throws BadMethodCallException
      */
@@ -536,8 +530,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
 
     /**
      * Unsupported method.
-     *
-     * @return null Always returns null.
      */
     public function getEventDispatcher()
     {
@@ -553,8 +545,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
 
     /**
      * Unsupported method.
-     *
-     * @return null Always returns null.
      */
     public function getPropertyPath()
     {
@@ -563,7 +553,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Unsupported method.
      *
-     * @return bool    Always returns false.
+     * @return bool Always returns false.
      */
     public function getMapped()
     {
@@ -573,7 +563,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Unsupported method.
      *
-     * @return bool    Always returns false.
+     * @return bool Always returns false.
      */
     public function getByReference()
     {
@@ -583,17 +573,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Unsupported method.
      *
-     * @return bool    Always returns false.
-     */
-    public function getVirtual()
-    {
-        return false;
-    }
-
-    /**
-     * Unsupported method.
-     *
-     * @return bool    Always returns false.
+     * @return bool Always returns false.
      */
     public function getCompound()
     {
@@ -632,8 +612,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
 
     /**
      * Unsupported method.
-     *
-     * @return null Always returns null.
      */
     public function getDataMapper()
     {
@@ -642,7 +620,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Unsupported method.
      *
-     * @return bool    Always returns false.
+     * @return bool Always returns false.
      */
     public function getRequired()
     {
@@ -652,7 +630,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Returns whether the button is disabled.
      *
-     * @return bool    Whether the button is disabled.
+     * @return bool Whether the button is disabled.
      */
     public function getDisabled()
     {
@@ -662,7 +640,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Unsupported method.
      *
-     * @return bool    Always returns false.
+     * @return bool Always returns false.
      */
     public function getErrorBubbling()
     {
@@ -671,8 +649,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
 
     /**
      * Unsupported method.
-     *
-     * @return null Always returns null.
      */
     public function getEmptyData()
     {
@@ -693,7 +669,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * @param string $name The attribute name.
      *
-     * @return bool    Whether the attribute exists.
+     * @return bool Whether the attribute exists.
      */
     public function hasAttribute($name)
     {
@@ -715,8 +691,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
 
     /**
      * Unsupported method.
-     *
-     * @return null Always returns null.
      */
     public function getData()
     {
@@ -724,8 +698,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
 
     /**
      * Unsupported method.
-     *
-     * @return null Always returns null.
      */
     public function getDataClass()
     {
@@ -734,7 +706,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Unsupported method.
      *
-     * @return bool    Always returns false.
+     * @return bool Always returns false.
      */
     public function getDataLocked()
     {
@@ -743,8 +715,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
 
     /**
      * Unsupported method.
-     *
-     * @return null Always returns null.
      */
     public function getFormFactory()
     {
@@ -752,8 +722,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
 
     /**
      * Unsupported method.
-     *
-     * @return null Always returns null.
      */
     public function getAction()
     {
@@ -761,8 +729,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
 
     /**
      * Unsupported method.
-     *
-     * @return null Always returns null.
      */
     public function getMethod()
     {
@@ -770,8 +736,6 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
 
     /**
      * Unsupported method.
-     *
-     * @return null Always returns null.
      */
     public function getRequestHandler()
     {
@@ -780,7 +744,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Unsupported method.
      *
-     * @return bool    Always returns false.
+     * @return bool Always returns false.
      */
     public function getAutoInitialize()
     {
@@ -790,7 +754,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Unsupported method.
      *
-     * @return bool    Always returns false.
+     * @return bool Always returns false.
      */
     public function getInheritData()
     {
@@ -812,7 +776,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
      *
      * @param string $name The option name,
      *
-     * @return bool    Whether the option exists.
+     * @return bool Whether the option exists.
      */
     public function hasOption($name)
     {
@@ -835,7 +799,7 @@ class ButtonBuilder implements \IteratorAggregate, FormBuilderInterface
     /**
      * Unsupported method.
      *
-     * @return int     Always returns 0.
+     * @return int Always returns 0.
      */
     public function count()
     {

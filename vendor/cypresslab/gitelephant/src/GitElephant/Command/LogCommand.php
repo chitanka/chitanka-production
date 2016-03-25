@@ -19,9 +19,10 @@
 
 namespace GitElephant\Command;
 
-use GitElephant\Objects\Object;
-use GitElephant\Objects\Branch;
-use GitElephant\Objects\TreeishInterface;
+use \GitElephant\Objects\Object;
+use \GitElephant\Objects\Branch;
+use \GitElephant\Objects\TreeishInterface;
+use \GitElephant\Repository;
 
 /**
  * Log command generator
@@ -34,11 +35,14 @@ class LogCommand extends BaseCommand
     const GIT_LOG = 'log';
 
     /**
-     * @return LogCommand
+     * constructor
+     *
+     * @param \GitElephant\Repository $repo The repository object this command 
+     *                                      will interact with
      */
-    public static function getInstance()
+    public function __construct(Repository $repo = null)
     {
-        return new self();
+        parent::__construct($repo);
     }
 
     /**
@@ -49,6 +53,7 @@ class LogCommand extends BaseCommand
      * @param int|null                                $limit  limit to n entries
      * @param int|null                                $offset skip n entries
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function showObjectLog(Object $obj, $branch = null, $limit = null, $offset = null)
@@ -75,6 +80,7 @@ class LogCommand extends BaseCommand
      * @param int|null                                     $offset      skip n entries
      * @param boolean|false                                $firstParent skip commits brought in to branch by a merge
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function showLog($ref, $path = null, $limit = null, $offset = null, $firstParent = false)

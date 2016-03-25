@@ -19,7 +19,8 @@
 
 namespace GitElephant\Command;
 
-use GitElephant\Objects\Tag;
+use \GitElephant\Objects\Tag;
+use \GitElephant\Repository;
 
 /**
  * Tag command generator
@@ -31,11 +32,14 @@ class TagCommand extends BaseCommand
     const TAG_COMMAND = 'tag';
 
     /**
-     * @return TagCommand
+     * constructor
+     *
+     * @param \GitElephant\Repository $repo The repository object this command 
+     *                                      will interact with
      */
-    public static function getInstance()
+    public function __construct(Repository $repo = null)
     {
-        return new self();
+        parent::__construct($repo);
     }
 
     /**
@@ -45,13 +49,14 @@ class TagCommand extends BaseCommand
      * @param string|null $startPoint the new tag start point.
      * @param null        $message    the tag message
      *
+     * @throws \RuntimeException
      * @return string the command
      */
     public function create($name, $startPoint = null, $message = null)
     {
         $this->clearAll();
         $this->addCommandName(self::TAG_COMMAND);
-        if (null != $message) {
+        if (null !== $message) {
             $this->addCommandArgument('-m');
             $this->addCommandArgument($message);
         }
@@ -68,9 +73,10 @@ class TagCommand extends BaseCommand
     /**
      * Lists tags
      *
+     * @throws \RuntimeException
      * @return string the command
      */
-    public function lists()
+    public function listTags()
     {
         $this->clearAll();
         $this->addCommandName(self::TAG_COMMAND);
@@ -79,10 +85,26 @@ class TagCommand extends BaseCommand
     }
 
     /**
+     * Lists tags
+     *
+     * @deprecated This method uses an unconventional name but is being left in
+     *             place to remain compatible with existing code relying on it.
+     *             New code should be written to use listTags().
+     *
+     * @throws \RuntimeException
+     * @return string the command
+     */
+    public function lists()
+    {
+        return $this->listTags();
+    }
+
+    /**
      * Delete a tag
      *
      * @param string|Tag $tag The name of tag, or the Tag instance to delete
      *
+     * @throws \RuntimeException
      * @return string the command
      */
     public function delete($tag)

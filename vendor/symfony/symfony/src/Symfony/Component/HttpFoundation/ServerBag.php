@@ -65,18 +65,29 @@ class ServerBag extends ParameterBag
             }
 
             if (null !== $authorizationHeader) {
-                if (0 === stripos($authorizationHeader, 'basic')) {
+                if (0 === stripos($authorizationHeader, 'basic ')) {
                     // Decode AUTHORIZATION header into PHP_AUTH_USER and PHP_AUTH_PW when authorization header is basic
-                    $exploded = explode(':', base64_decode(substr($authorizationHeader, 6)));
+                    $exploded = explode(':', base64_decode(substr($authorizationHeader, 6)), 2);
                     if (count($exploded) == 2) {
                         list($headers['PHP_AUTH_USER'], $headers['PHP_AUTH_PW']) = $exploded;
                     }
-                } elseif (empty($this->parameters['PHP_AUTH_DIGEST']) && (0 === stripos($authorizationHeader, 'digest'))) {
+                } elseif (empty($this->parameters['PHP_AUTH_DIGEST']) && (0 === stripos($authorizationHeader, 'digest '))) {
                     // In some circumstances PHP_AUTH_DIGEST needs to be set
                     $headers['PHP_AUTH_DIGEST'] = $authorizationHeader;
                     $this->parameters['PHP_AUTH_DIGEST'] = $authorizationHeader;
+                } elseif (0 === stripos($authorizationHeader, 'bearer ')) {
+                    /*
+                     * XXX: Since there is no PHP_AUTH_BEARER in PHP predefined variables,
+                     *      I'll just set $headers['AUTHORIZATION'] here.
+                     *      http://php.net/manual/en/reserved.variables.server.php
+                     */
+                    $headers['AUTHORIZATION'] = $authorizationHeader;
                 }
             }
+        }
+
+        if (isset($headers['AUTHORIZATION'])) {
+            return $headers;
         }
 
         // PHP_AUTH_USER/PHP_AUTH_PW

@@ -1,25 +1,34 @@
 <?php
+
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
  */
+
 namespace Sonata\AdminBundle\Route;
 
-use Sonata\AdminBundle\Builder\RouteBuilderInterface;
 use Sonata\AdminBundle\Admin\AdminInterface;
+use Sonata\AdminBundle\Builder\RouteBuilderInterface;
 use Sonata\AdminBundle\Model\AuditManagerInterface;
 
+/**
+ * Class QueryStringBuilder.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class QueryStringBuilder implements RouteBuilderInterface
 {
+    /**
+     * @var AuditManagerInterface
+     */
     protected $manager;
 
     /**
-     * @param \Sonata\AdminBundle\Model\AuditManagerInterface $manager
+     * @param AuditManagerInterface $manager
      */
     public function __construct(AuditManagerInterface $manager)
     {
@@ -27,8 +36,8 @@ class QueryStringBuilder implements RouteBuilderInterface
     }
 
     /**
-     * @param \Sonata\AdminBundle\Admin\AdminInterface  $admin
-     * @param \Sonata\AdminBundle\Route\RouteCollection $collection
+     * @param AdminInterface  $admin
+     * @param RouteCollection $collection
      */
     public function build(AdminInterface $admin, RouteCollection $collection)
     {
@@ -43,6 +52,7 @@ class QueryStringBuilder implements RouteBuilderInterface
         if ($this->manager->hasReader($admin->getClass())) {
             $collection->add('history', '/audit-history');
             $collection->add('history_view_revision', '/audit-history-view');
+            $collection->add('history_compare_revisions', '/audit-history-compare');
         }
 
         if ($admin->isAclEnabled()) {

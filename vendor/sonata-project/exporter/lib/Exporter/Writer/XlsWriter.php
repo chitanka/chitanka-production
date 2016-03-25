@@ -11,8 +11,6 @@
 
 namespace Exporter\Writer;
 
-use Exporter\Exception\InvalidDataFormatException;
-
 class XlsWriter implements WriterInterface
 {
     protected $filename;
@@ -46,7 +44,7 @@ class XlsWriter implements WriterInterface
     public function open()
     {
         $this->file = fopen($this->filename, 'w', false);
-        fwrite($this->file, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><meta name=ProgId content=Excel.Sheet><meta name=Generator content=\"https://github.com/sonata-project/exporter\"></head><body><table>");
+        fwrite($this->file, '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta name=ProgId content=Excel.Sheet><meta name=Generator content="https://github.com/sonata-project/exporter"></head><body><table>');
     }
 
     /**
@@ -54,7 +52,7 @@ class XlsWriter implements WriterInterface
      */
     public function close()
     {
-        fwrite($this->file, "</table></body></html>");
+        fwrite($this->file, '</table></body></html>');
         fclose($this->file);
     }
 
@@ -71,7 +69,7 @@ class XlsWriter implements WriterInterface
         }
         fwrite($this->file, '</tr>');
 
-        $this->position++;
+        ++$this->position;
     }
 
     /**
@@ -91,7 +89,7 @@ class XlsWriter implements WriterInterface
                 fwrite($this->file, sprintf('<th>%s</th>', $header));
             }
             fwrite($this->file, '</tr>');
-            $this->position++;
+            ++$this->position;
         }
     }
 }

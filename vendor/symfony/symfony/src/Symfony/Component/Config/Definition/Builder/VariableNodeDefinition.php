@@ -21,7 +21,7 @@ use Symfony\Component\Config\Definition\VariableNode;
 class VariableNodeDefinition extends NodeDefinition
 {
     /**
-     * Instantiate a Node
+     * Instantiate a Node.
      *
      * @return VariableNode The node
      */
@@ -61,5 +61,4 @@ class VariableNodeDefinition extends NodeDefinition
 
         return $node;
     }
-
 }

@@ -20,8 +20,9 @@
 
 namespace GitElephant\Command;
 
-use GitElephant\Objects\Branch;
-use GitElephant\Objects\Remote;
+use \GitElephant\Objects\Branch;
+use \GitElephant\Objects\Remote;
+use \GitElephant\Repository;
 
 /**
  * Class PushCommand
@@ -31,17 +32,21 @@ class PushCommand extends BaseCommand
     const GIT_PUSH_COMMAND = 'push';
 
     /**
-     * @return PushCommand
+     * constructor
+     *
+     * @param \GitElephant\Repository $repo The repository object this command 
+     *                                      will interact with
      */
-    public static function getInstance()
+    public function __construct(Repository $repo = null)
     {
-        return new self();
+        parent::__construct($repo);
     }
 
     /**
      * @param Remote|string $remote
      * @param Branch|string $branch
      *
+     * @throws \RuntimeException
      * @return string
      */
     public function push($remote = 'origin', $branch = 'master')

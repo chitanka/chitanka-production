@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -13,15 +13,26 @@ namespace Sonata\AdminBundle\Filter;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Class FilterFactory.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class FilterFactory implements FilterFactoryInterface
 {
+    /**
+     * @var ContainerInterface
+     */
     protected $container;
 
+    /**
+     * @var string[]
+     */
     protected $types;
 
     /**
-     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-     * @param array                                                     $types
+     * @param ContainerInterface $container
+     * @param string[]           $types
      */
     public function __construct(ContainerInterface $container, array $types = array())
     {
@@ -30,13 +41,7 @@ class FilterFactory implements FilterFactoryInterface
     }
 
     /**
-     * @throws \RunTimeException
-     *
-     * @param string $name
-     * @param string $type
-     * @param array  $options
-     *
-     * @return \Sonata\AdminBundle\Filter\FilterInterface
+     * {@inheritdoc}
      */
     public function create($name, $type, array $options = array())
     {

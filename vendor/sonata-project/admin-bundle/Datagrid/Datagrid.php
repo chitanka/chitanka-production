@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,49 +11,76 @@
 
 namespace Sonata\AdminBundle\Datagrid;
 
-use Sonata\AdminBundle\Datagrid\PagerInterface;
-use Sonata\AdminBundle\Datagrid\ProxyQueryInterface;
-use Sonata\AdminBundle\Filter\FilterInterface;
 use Sonata\AdminBundle\Admin\FieldDescriptionCollection;
 use Sonata\AdminBundle\Admin\FieldDescriptionInterface;
-
-use Symfony\Component\Form\FormBuilder;
-use Symfony\Component\Form\Exception\UnexpectedTypeException;
+use Sonata\AdminBundle\Filter\FilterInterface;
 use Symfony\Component\Form\CallbackTransformer;
+use Symfony\Component\Form\Exception\UnexpectedTypeException;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormInterface;
 
+/**
+ * Class Datagrid.
+ *
+ * @author  Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ */
 class Datagrid implements DatagridInterface
 {
     /**
+     * The filter instances.
      *
-     * The filter instances
      * @var array
      */
     protected $filters = array();
 
+    /**
+     * @var array
+     */
     protected $values;
 
+    /**
+     * @var FieldDescriptionCollection
+     */
     protected $columns;
 
+    /**
+     * @var PagerInterface
+     */
     protected $pager;
 
+    /**
+     * @var bool
+     */
     protected $bound = false;
 
+    /**
+     * @var ProxyQueryInterface
+     */
     protected $query;
 
+    /**
+     * @var FormBuilderInterface
+     */
     protected $formBuilder;
 
+    /**
+     * @var FormInterface
+     */
     protected $form;
 
+    /**
+     * @var array
+     */
     protected $results;
 
     /**
      * @param ProxyQueryInterface        $query
      * @param FieldDescriptionCollection $columns
      * @param PagerInterface             $pager
-     * @param FormBuilder                $formBuilder
+     * @param FormBuilderInterface       $formBuilder
      * @param array                      $values
      */
-    public function __construct(ProxyQueryInterface $query, FieldDescriptionCollection $columns, PagerInterface $pager, FormBuilder $formBuilder, array $values = array())
+    public function __construct(ProxyQueryInterface $query, FieldDescriptionCollection $columns, PagerInterface $pager, FormBuilderInterface $formBuilder, array $values = array())
     {
         $this->pager       = $pager;
         $this->query       = $query;
@@ -101,8 +128,8 @@ class Datagrid implements DatagridInterface
 
         $this->formBuilder->add('_sort_by', 'hidden');
         $this->formBuilder->get('_sort_by')->addViewTransformer(new CallbackTransformer(
-            function($value) { return $value; },
-            function($value) { return $value instanceof FieldDescriptionInterface ? $value->getName() : $value; }
+            function ($value) { return $value; },
+            function ($value) { return $value instanceof FieldDescriptionInterface ? $value->getName() : $value; }
         ));
 
         $this->formBuilder->add('_sort_order', 'hidden');
@@ -110,7 +137,7 @@ class Datagrid implements DatagridInterface
         $this->formBuilder->add('_per_page', 'hidden');
 
         $this->form = $this->formBuilder->getForm();
-        $this->form->bind($this->values);
+        $this->form->submit($this->values);
 
         $data = $this->form->getData();
 
@@ -121,7 +148,7 @@ class Datagrid implements DatagridInterface
 
         if (isset($this->values['_sort_by'])) {
             if (!$this->values['_sort_by'] instanceof FieldDescriptionInterface) {
-                throw new UnexpectedTypeException($this->values['_sort_by'],'FieldDescriptionInterface');
+                throw new UnexpectedTypeException($this->values['_sort_by'], 'FieldDescriptionInterface');
             }
 
             if ($this->values['_sort_by']->isSortable()) {
@@ -130,8 +157,33 @@ class Datagrid implements DatagridInterface
             }
         }
 
-        $this->pager->setMaxPerPage(isset($this->values['_per_page']) ? $this->values['_per_page'] : 25);
-        $this->pager->setPage(isset($this->values['_page']) ? $this->values['_page'] : 1);
+        $maxPerPage = 25;
+        if (isset($this->values['_per_page'])) {
+            // check for `is_array` can be safely removed if php 5.3 support will be dropped
+            if (is_array($this->values['_per_page'])) {
+                if (isset($this->values['_per_page']['value'])) {
+                    $maxPerPage = $this->values['_per_page']['value'];
+                }
+            } else {
+                $maxPerPage = $this->values['_per_page'];
+            }
+        }
+        $this->pager->setMaxPerPage($maxPerPage);
+
+        $page = 1;
+        if (isset($this->values['_page'])) {
+            // check for `is_array` can be safely removed if php 5.3 support will be dropped
+            if (is_array($this->values['_page'])) {
+                if (isset($this->values['_page']['value'])) {
+                    $page = $this->values['_page']['value'];
+                }
+            } else {
+                $page = $this->values['_page'];
+            }
+        }
+
+        $this->pager->setPage($page);
+
         $this->pager->setQuery($this->query);
         $this->pager->init();
 
@@ -201,7 +253,7 @@ class Datagrid implements DatagridInterface
     {
         $this->values[$name] = array(
             'type'  => $operator,
-            'value' => $value
+            'value' => $value,
         );
     }
 
@@ -212,6 +264,21 @@ class Datagrid implements DatagridInterface
     {
         foreach ($this->filters as $name => $filter) {
             if ($filter->isActive()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasDisplayableFilters()
+    {
+        foreach ($this->filters as $name => $filter) {
+            $showFilter = $filter->getOption('show_filter', null);
+            if (($filter->isActive() && $showFilter === null) || ($showFilter === true)) {
                 return true;
             }
         }

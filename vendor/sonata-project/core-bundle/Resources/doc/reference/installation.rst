@@ -4,25 +4,19 @@
 Installation
 ============
 
-* Add ``SonataCoreBundle`` to your ``vendor/bundles`` directory with the `deps` file:
+The easiest way to install ``SonataCoreBundle`` is to require it with Composer:
 
-.. code-block:: json
+.. code-block:: bash
 
-    // composer.json
+    $ php composer.phar require sonata-project/core-bundle
 
-    "require": {
-    //...
-        "sonata-project/core-bundle": "~2.2@dev",
-    //...
-    }
+Alternatively, you could add a dependency into your ``composer.json`` file directly.
 
-
-* Add ``SonataCoreBundle`` to your application kernel:
+Now, enable the bundle in the kernel:
 
 .. code-block:: php
 
     <?php
-
     // app/AppKernel.php
 
     public function registerBundles()
@@ -34,16 +28,33 @@ Installation
         );
     }
 
-* Create a configuration file ``sonata_core.yml`` with this content:
+Configuration
+=============
 
-.. code-block:: yaml
+.. configuration-block::
 
-    sonata_core: ~
+    .. code-block:: yaml
 
-* Update the ``config.yml`` with the new resource to import:
+        # app/config/config.yml
 
-.. code-block:: yaml
+        sonata_core: ~
 
-    imports:
-        #...
-        - { resource: sonata_core.yml }
+When using bootstrap, some widgets need to be wrapped in a special ``div`` element
+depending on whether you are using the standard style for your forms or the
+horizontal style.
+
+If you are using the horizontal style, you will need to configure the
+corresponding configuration node accordingly:
+
+.. configuration-block::
+
+    .. code-block:: yaml
+
+        # app/config/config.yml
+
+        sonata_core:
+            form_type: horizontal
+
+Please note that if you are using the admin bundle, this is actually optional:
+The core bundle extension will detect if the configuration node that deals with
+the form style in the admin bundle is set and will configure the core bundle for you.
