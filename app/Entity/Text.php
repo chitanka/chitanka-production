@@ -7,7 +7,6 @@ use App\Legacy\Setup;
 use App\Legacy\SfbParserSimple;
 use App\Service\ContentService;
 use App\Util\Char;
-use App\Util\Date;
 use App\Util\File;
 use App\Util\Language;
 use App\Util\Stringy;
@@ -486,7 +485,7 @@ class Text extends BaseWork implements  \JsonSerializable {
 	public function addTextAuthors(TextAuthor $textAuthor) { $this->addTextAuthor($textAuthor); }
 
 	public function setTextAuthors($textAuthors) { $this->textAuthors = $textAuthors; }
-	/** @return \Doctrine\Common\Collections\ArrayCollection */
+	/** @return ArrayCollection|TextAuthor[] */
 	public function getTextAuthors() { return $this->textAuthors; }
 
 	public function addTextTranslator(TextTranslator $textTranslator) {
@@ -499,7 +498,7 @@ class Text extends BaseWork implements  \JsonSerializable {
 	public function addTextTranslators(TextTranslator $textTranslator) { $this->addTextTranslator($textTranslator); }
 
 	public function setTextTranslators($textTranslators) { $this->textTranslators = $textTranslators; }
-	/** @return \Doctrine\Common\Collections\ArrayCollection */
+	/** @return ArrayCollection|TextTranslator[] */
 	public function getTextTranslators() { return $this->textTranslators; }
 
 	public function getBooks() { return $this->books; }
@@ -908,7 +907,7 @@ EOS;
 			$rows[] = $row;
 		}
 
-		if ($rows) {
+		if (!empty($rows)) {
 			$isoEntryDate = $this->createdAt->format('Y-m-d');
 			if ( "$isoEntryDate 24" < $rows[0]['date'] ) {
 				array_unshift($rows, ['date' => $isoEntryDate, 'comment' => 'Добавяне']);

@@ -169,12 +169,12 @@ class EpubFile {
 	}
 
 	private function getAuthorTags() {
+		$tags = [];
 		if ($this->obj instanceof Book) {
 			$tags = $this->getBookAuthorTags($this->obj);
-		} else {
+		} else if ($this->obj instanceof Text) {
 			$tags = $this->getTextAuthorTags($this->obj);
 		}
-
 		return implode("\n", $tags);
 	}
 
@@ -225,7 +225,7 @@ class EpubFile {
 	private function getSubjectTags() {
 		$tags = [];
 		foreach ($this->obj->getLabels() as $label) {
-			$tags[] = "<dc:subject>$label</dc:subject>";
+			$tags[] = "<dc:subject>{$label->getName()}</dc:subject>";
 		}
 
 		return implode("\n", $tags);
