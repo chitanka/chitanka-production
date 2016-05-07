@@ -20,11 +20,12 @@ class WikiSiteAdmin extends Admin {
 
 	protected function configureListFields(ListMapper $listMapper) {
 		$listMapper
+			->add('code')
 			->addIdentifier('name')
 			->add('url')
 			->add('_action', 'actions', [
 				'actions' => [
-					'view' => [],
+					'show' => [],
 					'edit' => [],
 					'delete' => [],
 				]

@@ -2,7 +2,7 @@
 	{% import 'App::link.html.twig' as link %}
 	<div class="media book-media" itemscope itemtype="http://schema.org/Book">
 		<div class="media-left">
-			{{ _self.cover(book, 90) }}
+			{{ _self.cover(book, 120) }}
 		</div>
 		<div class="media-body">
 			<a href="{{ path('book_show', {'id': book.id ~'-'~ book.slug}) }}"
@@ -80,5 +80,5 @@
 {% endmacro %}
 
 {% macro qrcode(book) %}
-	<a href="http://bg.wikipedia.org/wiki/QR_%D0%BA%D0%BE%D0%B4" class="qrcode"><img src="{{ url('book_show', {'id': book.id ~'-'~ book.slug})|qrcode }}"></a>
+	<a href="//bg.wikipedia.org/wiki/QR_%D0%BA%D0%BE%D0%B4" class="qrcode"><img src="{{ url('book_show', {'id': book.id ~'-'~ book.slug})|qrcode }}"></a>
 {% endmacro %}

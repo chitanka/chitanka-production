@@ -1,6 +1,5 @@
 <?php namespace App\Admin;
 
-use App\Entity\User;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
@@ -21,6 +20,7 @@ class UserAdmin extends Admin {
 			->add('news')
 			->add('opts')
 			->add('token')
+			->add('publisher')
 		;
 	}
 
@@ -32,7 +32,7 @@ class UserAdmin extends Admin {
 			->add('touched')
 			->add('_action', 'actions', [
 				'actions' => [
-					'view' => [],
+					'show' => [],
 					'edit' => [],
 					'delete' => [],
 				]
@@ -57,6 +57,7 @@ class UserAdmin extends Admin {
 			->add('news')
 			//->add('opts')
 			->add('token')
+			->add('publisher')
 			->end();
 	}
 

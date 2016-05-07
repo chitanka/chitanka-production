@@ -6,13 +6,10 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class CRUDController extends BaseController {
 
-	private $user;
-
 	public function configure() {
-		if ( ! $this->getUser()->inGroup('admin')) {
+		if ( ! $this->isAuthorized()) {
 			throw new HttpException(401);
 		}
-
 		parent::configure();
 	}
 
@@ -20,14 +17,10 @@ class CRUDController extends BaseController {
 	 * @return User
 	 */
 	public function getUser() {
-		return $this->user ?: $this->user = User::initUser($this->getRepository('User'));
+		return $this->get('security.token_storage')->getToken()->getUser();
 	}
 
-	/**
-	 * @param string $entityName
-	 */
-	private function getRepository($entityName) {
-		return $this->get('doctrine.orm.entity_manager')->getRepository('App:'.$entityName);
+	protected function isAuthorized() {
+		return $this->getUser()->inGroup(User::GROUP_ADMIN);
 	}
-
 }
