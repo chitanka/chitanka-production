@@ -645,7 +645,7 @@ HTML;
 		if ($dbrow['pub_year']) {
 			$lines[] = '<b>Година:</b> ' . $dbrow['pub_year'];
 		}
-		if ($dbrow['available_at']) {
+		if ($dbrow['available_at'] && $dbrow['available_at'] != '0000-00-00') {
 			$lines[] = '<b>Дата на достъп:</b> ' . (new \DateTime($dbrow['available_at']))->format('d.m.Y');
 		}
 		$lines[] = $dbrow['comment'];
@@ -1392,6 +1392,7 @@ EOS;
 	}
 
 	private function initData($id) {
+		/* @var $entry WorkEntry */
 		$entry = $this->repo()->find($id);
 		if (!$entry) {
 			throw new NotFoundHttpException("Няма запис с номер $id.");
