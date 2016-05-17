@@ -81,7 +81,7 @@ class SfbToFb2Converter extends SfbConverter {
 		/** save all binary data here */
 		$binaryTextFileName,
 
-		$_inStanza             = false,
+		$_inStanza = [false, false, false, false, false, false], // support up to five levels of nested poems
 
 		// process subheaders as they were titles
 		$_subheaderAsTitle     = false,
@@ -89,7 +89,7 @@ class SfbToFb2Converter extends SfbConverter {
 		/*
 			Track the last saved content for every block.
 			Used for a dirty hack in isEmptySection()
-		*/
+		 */
 		$_lastSaved            = array();
 
 	/**
@@ -370,13 +370,11 @@ class SfbToFb2Converter extends SfbConverter {
 
 
 	/**
-	 * @param mixed $genre  Allowed values:
-	 *     - string
-	 *     - array, e.g.
-	 *         array(
+	 * @param string|array $genre  Array format:
+	 *         [
 	 *           "nonfiction",
 	 *           "sci_history" => 50 // used for the match attribute
-	 *         )
+	 *         ]
 	 */
 	public function setGenre($genre) {
 		$this->genre = (array) $genre;
@@ -482,12 +480,12 @@ class SfbToFb2Converter extends SfbConverter {
 
 
 	/**
-	* Enable tracking of the last saved content.
-	* Useful for detecting empty sections.
-	* @see isEmptySection()
-	*
-	* @param $text  The text to save
-	*/
+	 * Enable tracking of the last saved content.
+	 * Useful for detecting empty sections.
+	 * @see isEmptySection()
+	 *
+	 * @param string $text  The text to save
+	 */
 	protected function save($text, $forceEmpty = false) {
 		$this->_lastSaved[$this->_curBlock] = $text;
 		parent::save($text, $forceEmpty);
@@ -498,8 +496,8 @@ class SfbToFb2Converter extends SfbConverter {
 
 
 	/**
-	* @param $lnes  Header lines
-	*/
+	 * @param array $lines  Header lines
+	 */
 	protected function inHeader($lines) {
 		$_lines = $lines;
 
@@ -529,7 +527,7 @@ class SfbToFb2Converter extends SfbConverter {
 
 
 	/**
-	*/
+	 */
 	protected function isEmptySection() {
 		return $this->_lastSaved[$this->_curBlock] == '<section>'
 			|| $this->_lastSaved[$this->_curBlock] == '</epigraph>'
@@ -541,7 +539,7 @@ class SfbToFb2Converter extends SfbConverter {
 
 
 	/**
-	*/
+	 */
 	protected function imageIsOnSectionStart() {
 		return $this->_lastSaved[$this->_curBlock] == '</epigraph>'
 			|| strpos($this->_lastSaved[$this->_curBlock], '<title>') === 0;
@@ -552,9 +550,9 @@ class SfbToFb2Converter extends SfbConverter {
 
 
 	/**
-	* @param $titleLines  Title lines
-	* @param $marker      A title marker (self::TITLE_X)
-	*/
+	 * @param array $titleLines  Title lines
+	 * @param string $marker     A title marker (self::TITLE_X)
+	 */
 	protected function inTitle($titleLines, $marker) {
 		$text = '';
 		foreach ($titleLines as $titleLine) {
@@ -707,9 +705,7 @@ class SfbToFb2Converter extends SfbConverter {
 			$this->openStanza();
 		}
 
-		$this->saveTemp('paragraphPrefix', $this->paragraphPrefix);
-		$this->saveTemp('paragraphSuffix', $this->paragraphSuffix);
-
+		$this->storeParagraphAffixes();
 		$this->paragraphPrefix = $this->out->getStartTag($this->blockStyleElement, array($this->blockStyleAttribute => $this->ltext)) . $this->paragraphPrefix;
 		$this->paragraphSuffix .= $this->out->getEndTag($this->blockStyleElement);
 	}
@@ -718,9 +714,7 @@ class SfbToFb2Converter extends SfbConverter {
 		if ( $this->isInPoem() ) {
 			$this->closeStanzaIfAny();
 		}
-
-		$this->paragraphPrefix = $this->getTemp('paragraphPrefix');
-		$this->paragraphSuffix = $this->getTemp('paragraphSuffix');
+		$this->restoreParagraphAffixes();
 	}
 
 
@@ -878,30 +872,30 @@ class SfbToFb2Converter extends SfbConverter {
 
 
 	protected function openStanzaIfNone() {
-		if ( ! $this->_inStanza ) {
+		if ($this->_inStanza[$this->_poemsEntered] === false) {
 			$this->openStanza();
 		}
 	}
 
 	protected function closeStanzaIfAny() {
-		if ( $this->_inStanza ) {
+		if ($this->_inStanza[$this->_poemsEntered]) {
 			$this->closeStanza();
 		}
 	}
 
 	protected function openStanza() {
 		$this->closeStanzaIfAny();
-		$this->_inStanza = true;
+		$this->_inStanza[$this->_poemsEntered] = true;
 		$this->saveStartTag($this->stanzaElement);
 	}
 
 	protected function closeStanza() {
-		$this->_inStanza = false;
+		$this->_inStanza[$this->_poemsEntered] = false;
 		$this->saveEndTag($this->stanzaElement);
 	}
 
 	protected function isInStanza() {
-		return $this->_inStanza;
+		return $this->_inStanza[$this->_poemsEntered];
 	}
 
 
@@ -1017,9 +1011,9 @@ class SfbToFb2Converter extends SfbConverter {
 
 
 	/**
-	* Save an image data in the binary box.
-	* If the same image was already saved, only return the corresponding ID.
-	*/
+	 * Save an image data in the binary box.
+	 * If the same image was already saved, only return the corresponding ID.
+	 */
 	protected function saveBinaryText($id, $src) {
 		$src = str_replace('thumb/', '', $src); // no thumbs for now
 		$content = file_get_contents($src);

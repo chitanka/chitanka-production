@@ -93,8 +93,8 @@ class SfbToHtmlConverter extends SfbConverter {
 
 
 	/**
-	* @param $lnes  Header lines
-	*/
+	 * @param $lnes  Header lines
+	 */
 	protected function getHeaderText($lines) {
 		return implode('<br />', $lines);
 	}
@@ -147,7 +147,7 @@ class SfbToHtmlConverter extends SfbConverter {
 
 
 	protected function prepareVerseNumber() {
-		$this->paragraphPrefix = $this->getVerseAnchor() . ' ';
+		$this->paragraphPrefix = $this->getVerseAnchor();
 	}
 
 	protected function clearVerseNumber() {
@@ -354,8 +354,8 @@ class SfbToHtmlConverter extends SfbConverter {
 
 
 	/**
-	* Return an element ID for a reference to a note
-	*/
+	 * Return an element ID for a reference to a note
+	 */
 	protected function getRefId($nr) {
 		return 'ref_' . self::getNoteNr($nr);
 	}

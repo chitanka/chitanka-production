@@ -41,24 +41,24 @@ class XmlElement {
 	}
 
 	/**
-		Creates an HTML table.
-
-		@param string $caption Table caption
-		@param array $data Array of arrays, i.e.
-			array(
-				array(CELL, CELL, ...),
-				array(CELL, CELL, ...),
-				...
-			)
-			CELL can be:
-			— a string — equivalent to a simple table cell
-			— an array:
-				— first element must be an associative array for cell attributes;
-					if this array contains a key 'type' with the value 'header',
-					then the cell is rendered as a header cell
-				— second element must be a string representing the cell content
-		@param array $attrs Optional associative array for table attributes
-	*/
+	 *	Creates an HTML table.
+	 *
+	 *	@param string $caption Table caption
+	 *	@param array $data Array of arrays, i.e.
+	 *		array(
+	 *			array(CELL, CELL, ...),
+	 *			array(CELL, CELL, ...),
+	 *			...
+	 *		)
+	 *		CELL can be:
+	 *		— a string — equivalent to a simple table cell
+	 *		— an array:
+	 *			— first element must be an associative array for cell attributes;
+	 *				if this array contains a key 'type' with the value 'header',
+	 *				then the cell is rendered as a header cell
+	 *			— second element must be a string representing the cell content
+	 *	@param array $attrs Optional associative array for table attributes
+	 */
 	public function simpleTable($caption, $data, $attrs = array()) {
 		$ext = $this->makeAttribs($attrs);
 		$t = "\n<table class=\"content\"$ext>";
@@ -104,12 +104,12 @@ class XmlElement {
 	}
 
 	/**
-	* Generate an anchor name for a given string.
-	*
-	* @param string  $text    A string
-	* @param bool    $unique  Always generate a unique name
-	*                         (consider all previously generated names)
-	*/
+	 * Generate an anchor name for a given string.
+	 *
+	 * @param string  $text    A string
+	 * @param bool    $unique  Always generate a unique name
+	 *                         (consider all previously generated names)
+	 */
 	public function getAnchorName($text, $unique = true) {
 		$text = Char::cyr2lat($text);
 		$text = strtolower($text);
