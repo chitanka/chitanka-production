@@ -79,14 +79,16 @@ class Book extends BaseWork implements \JsonSerializable {
 	private $origTitle;
 
 	/**
-	 * @var string
-	 * @ORM\Column(type="string", length=2)
+	 * @var Language
+	 * @ORM\ManyToOne(targetEntity="Language")
+	 * @ORM\JoinColumn(name="lang", referencedColumnName="code", nullable=false)
 	 */
 	private $lang;
 
 	/**
-	 * @var string
-	 * @ORM\Column(type="string", length=3, nullable=true)
+	 * @var Language
+	 * @ORM\ManyToOne(targetEntity="Language")
+	 * @ORM\JoinColumn(name="orig_lang", referencedColumnName="code", nullable=false)
 	 */
 	private $origLang;
 
@@ -286,13 +288,14 @@ class Book extends BaseWork implements \JsonSerializable {
 		return $this->authors;
 	}
 
-	public function getAuthorNamesString() {
-		$authors = [];
-		foreach ($this->getAuthors() as $author) {
-			$authors[] = $author->getName();
-		}
+	public function getAuthorNames() {
+		return array_map(function(Person $author) {
+			return $author->getName();
+		}, $this->getAuthors());
+	}
 
-		return implode(', ', $authors);
+	public function getAuthorNamesString() {
+		return implode(', ', $this->getAuthorNames());
 	}
 
 	public function addAuthor($author) {
