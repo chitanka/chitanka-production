@@ -1,6 +1,13 @@
 <?php namespace App\Entity;
 
+use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
+
 abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
+
+	const ALIAS = 'e';
+	const DEFAULT_CACHE_LIFETIME = 3600;
+	const RANDOM_CACHE_LIFETIME = 300;
 
 	protected $queryableFields = [];
 
@@ -66,11 +73,13 @@ abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
 	 * @return int
 	 */
 	public function getCount($where = null) {
-		$qb = $this->createQueryBuilder('e')->select('COUNT(e.id)');
+		$qb = $this->createQueryBuilder(self::ALIAS)->select('COUNT('.self::ALIAS.'.id)');
 		if ($where !== null) {
 			$qb->andWhere($where);
 		}
-		return $qb->getQuery()->getSingleScalarResult();
+		return $qb->getQuery()
+			->useResultCache(true, self::DEFAULT_CACHE_LIFETIME)
+			->getSingleScalarResult();
 	}
 
 	/**
@@ -94,27 +103,27 @@ abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
 	 * @return Entity
 	 */
 	public function getRandomEntities($limit = 3, $where = null) {
-		$entities = [];
-		while (count($entities) < $limit) {
-			$randomEntity = $this->getRandom($where);
-			if ($randomEntity === null) {
-				break;
+		$cacheKey = static::class."_random_{$limit}_{$where}";
+		return $this->fetchFromCache($cacheKey, function() use ($limit, $where) {
+			$entities = [];
+			while (count($entities) < $limit) {
+				$randomEntity = $this->getRandom($where, 0);
+				if ($randomEntity === null) {
+					break;
+				}
+				$entities[$randomEntity->getId()] = $randomEntity;
 			}
-			$entities[$randomEntity->getId()] = $randomEntity;
-		}
-		return $entities;
+			return $entities;
+		}, self::RANDOM_CACHE_LIFETIME);
 	}
 
 	/**
 	 * @param string $where
+	 * @param int $cacheLifetime
 	 * @return Entity
 	 */
-	public function getRandom($where = null) {
-		try {
-			return $this->getRandomQuery($where)->getSingleResult();
-		} catch (\Doctrine\ORM\NoResultException $e) {
-			return null;
-		}
+	public function getRandom($where = null, $cacheLifetime = null) {
+		return $this->getRandomQuery($where, null, $cacheLifetime)->getOneOrNullResult();
 	}
 
 	/**
@@ -122,25 +131,69 @@ abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
 	 * @return int
 	 */
 	public function getRandomId($where = null) {
-		return $this->getRandomQuery($where, 'e.id')->getSingleScalarResult();
+		return $this->getRandomQuery($where, self::ALIAS.'.id')->getSingleScalarResult();
 	}
 
 	/**
 	 * @param string $where
 	 * @param string $select
+	 * @param int $cacheLifetime
 	 * @return \Doctrine\ORM\Query
 	 */
-	protected function getRandomQuery($where = null, $select = null) {
+	protected function getRandomQuery($where = null, $select = null, $cacheLifetime = null) {
 		$qb = $this->getEntityManager()->createQueryBuilder()
-			->select($select ?: 'e')
-			->from($this->getEntityName(), 'e');
+			->select($select ?: self::ALIAS)
+			->from($this->getEntityName(), self::ALIAS);
 		if ($where !== null) {
 			$qb->andWhere($where);
 		}
-		$query = $qb->getQuery()
+		$query = $qb->getQuery();
+		$cacheKey = md5($query->getSQL());
+		$cacheLifetime = $cacheLifetime !== null ? $cacheLifetime : self::RANDOM_CACHE_LIFETIME;
+		$randomId = $this->fetchFromCache($cacheKey, function() use ($where) {
+			return rand(1, $this->getCount($where)) - 1;
+		}, $cacheLifetime);
+		$query
 			->setMaxResults(1)
-			->setFirstResult(rand(1, $this->getCount($where)) - 1);
+			->setFirstResult($randomId)
+			->useResultCache(true, self::DEFAULT_CACHE_LIFETIME);
 
+		return $query;
+	}
+
+	/**
+	 * Finds entities by a set of criteria.
+	 * Override to use cache.
+	 *
+	 * @param array      $criteria
+	 * @param array|null $orderBy
+	 * @param int|null   $limit
+	 * @param int|null   $offset
+	 *
+	 * @return array The objects.
+	 */
+	public function findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null) {
+		return $this->createFindQuery($criteria, $orderBy, $limit, $offset)->getResult();
+	}
+
+	/**
+	 * Finds a single entity by a set of criteria.
+	 * Override to use cache.
+	 *
+	 * @param array $criteria
+	 * @param array|null $orderBy
+	 * @return mixed
+	 */
+	public function findOneBy(array $criteria, array $orderBy = null) {
+		return $this->createFindQuery($criteria, $orderBy, 1)->getOneOrNullResult();
+	}
+
+	protected function createFindQuery(array $criteria, array $orderBy = null, $limit = null, $offset = null) {
+		$queryBuilder = $this->createQueryBuilder(self::ALIAS);
+		$this->addCriteriaToQueryBuilder($queryBuilder, $criteria);
+		$this->addOrderingToQueryBuilder($queryBuilder, $orderBy);
+		$query = $this->addLimitingToQuery($queryBuilder->getQuery(), $limit, $offset);
+		$query->useResultCache(true, self::DEFAULT_CACHE_LIFETIME);
 		return $query;
 	}
 
@@ -155,8 +208,10 @@ abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
 			return [];
 		}
 		return $this->getQueryBuilder($orderBy)
-			->where(sprintf('e.id IN (%s)', implode(',', $ids)))
-			->getQuery()->getResult();
+			->where(sprintf(self::ALIAS.'.id IN (%s)', implode(',', $ids)))
+			->getQuery()
+			->useResultCache(true, self::DEFAULT_CACHE_LIFETIME)
+			->getResult();
 	}
 
 	/**
@@ -170,8 +225,10 @@ abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
 		}
 
 		return $this->getQueryBuilder($orderBy)
-			->where(sprintf('e.id IN (%s)', implode(',', $ids)))
-			->getQuery()->getArrayResult();
+			->where(sprintf(self::ALIAS.'.id IN (%s)', implode(',', $ids)))
+			->getQuery()
+			->useResultCache(true, self::DEFAULT_CACHE_LIFETIME)
+			->getArrayResult();
 	}
 
 	/**
@@ -227,7 +284,7 @@ abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
 		$tests = [];
 		foreach (explode(',', $params['by']) as $field) {
 			if (in_array($field, $this->queryableFields)) {
-				$tests[] = "e.$field $op ?1";
+				$tests[] = self::ALIAS.".$field $op ?1";
 			}
 		}
 		if (empty($tests)) {
@@ -236,7 +293,8 @@ abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
 
 		$query = $this->getQueryBuilder()
 			->where(implode(' OR ', $tests))->setParameter(1, $param)
-			->getQuery();
+			->getQuery()
+			->useResultCache(true, self::DEFAULT_CACHE_LIFETIME);
 		if (isset($params['limit'])) {
 			$query->setMaxResults($params['limit']);
 		}
@@ -250,7 +308,7 @@ abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
 	/**
 	 *
 	 * @param string $orderBys
-	 * @return \Doctrine\ORM\QueryBuilder
+	 * @return QueryBuilder
 	 */
 	public function getQueryBuilder($orderBys = null) {
 		$qb = $this->createQueryBuilder('e');
@@ -265,7 +323,7 @@ abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
 					list($field, $order) = explode(' ', ltrim($orderBy));
 				}
 				if (strpos($field, '.') === false) {
-					$field = "e.$field";
+					$field = self::ALIAS.".$field";
 				}
 				$qb->addOrderBy($field, $order);
 			}
@@ -280,5 +338,50 @@ abstract class EntityRepository extends \Doctrine\ORM\EntityRepository {
 	 */
 	protected function stringForLikeClause($s) {
 		return "%".str_replace(' ', '%', $s)."%";
+	}
+
+	protected function addCriteriaToQueryBuilder(QueryBuilder $queryBuilder, array $criteria) {
+		foreach ($criteria as $field => $value) {
+			$queryBuilder->andWhere(self::ALIAS . ".{$field} = :{$field}")->setParameter($field, $value);
+		}
+		return $queryBuilder;
+	}
+
+	protected function addOrderingToQueryBuilder(QueryBuilder $queryBuilder, array $ordering = null) {
+		if ($ordering !== null) {
+			foreach ($ordering as $field => $dir) {
+				$queryBuilder->addOrderBy(self::ALIAS .'.'. $field, $dir);
+			}
+		}
+		return $queryBuilder;
+	}
+
+	protected function addLimitingToQuery(Query $query, $limit, $offset = null) {
+		if ($limit !== null) {
+			$query->setMaxResults($limit);
+		}
+		if ($offset !== null) {
+			$query->setFirstResult($offset);
+		}
+		return $query;
+	}
+
+	/**
+	 * @param string $cacheKey
+	 * @param callable $dataGenerator
+	 * @param int $lifetime
+	 * @return mixed
+	 */
+	protected function fetchFromCache($cacheKey, $dataGenerator, $lifetime = self::DEFAULT_CACHE_LIFETIME) {
+		if (!$lifetime) {
+			return $dataGenerator();
+		}
+		$cacheDriver = $this->_em->getConfiguration()->getQueryCacheImpl();
+		$data = $cacheDriver->fetch($cacheKey);
+		if (!$data) {
+			$data = $dataGenerator();
+			$cacheDriver->save($cacheKey, $data, $lifetime);
+		}
+		return $data;
 	}
 }

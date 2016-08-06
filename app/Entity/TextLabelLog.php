@@ -4,6 +4,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass="App\Entity\TextLabelLogRepository")
+ * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  * @ORM\Table(
  *  indexes={
  *    @ORM\Index(name="text_idx", columns={"text_id"}),
@@ -28,7 +29,7 @@ class TextLabelLog extends Entity {
 
 	/**
 	 * @var Label
-	 * @ORM\ManyToOne(targetEntity="Label")
+	 * @ORM\ManyToOne(targetEntity="Label", inversedBy="logs")
 	 */
 	private $label;
 

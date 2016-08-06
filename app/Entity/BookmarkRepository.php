@@ -24,7 +24,7 @@ class BookmarkRepository extends EntityRepository {
 	public function getByUser(User $user, $page = 1, $limit = null, $orderBys = 't.title ASC') {
 		$ids = $this->getIdsByUser($user, $page, $limit, $orderBys);
 
-		return empty($ids) ? [] : $this->getByIds($ids, $orderBys);
+		return empty($ids) ? [] : $this->findByIds($ids, $orderBys);
 	}
 
 	/**
@@ -37,8 +37,8 @@ class BookmarkRepository extends EntityRepository {
 	public function getIdsByUser(User $user, $page, $limit, $orderBys = 't.title ASC') {
 		$dql = sprintf('SELECT e.id FROM %s e LEFT JOIN e.text t WHERE e.user = %d ORDER BY %s', $this->getEntityName(), $user->getId(), $orderBys);
 		$query = $this->setPagination($this->_em->createQuery($dql), $page, $limit);
+		$query->useResultCache(true, self::DEFAULT_CACHE_LIFETIME);
 		$ids = $query->getResult('id');
-
 		return $ids;
 	}
 
@@ -59,10 +59,9 @@ class BookmarkRepository extends EntityRepository {
 	public function getValidTextIds($user, $textIds) {
 		if (is_array($textIds)) {
 			$textIds = implode(',', $textIds);
-		} else {
-			$textIds = preg_replace('/[^\d,]/', '', $textIds);
-			$textIds = preg_replace('/,,+/', ',', trim($textIds, ','));
 		}
+		$textIds = preg_replace('/[^\d,]/', '', $textIds);
+		$textIds = preg_replace('/,,+/', ',', trim($textIds, ','));
 
 		if (empty($textIds)) {
 			return [];
@@ -72,15 +71,6 @@ class BookmarkRepository extends EntityRepository {
 		$validTextIds = $this->_em->getConnection()->executeQuery($sql)->fetchAll(\PDO::FETCH_COLUMN);
 
 		return $validTextIds;
-	}
-
-	/**
-	 * @param array $ids
-	 * @param string $orderBy
-	 * @return array
-	 */
-	public function getByIds($ids, $orderBy = null) {
-		return WorkSteward::joinPersonKeysForWorks(parent::getByIds($ids, $orderBy));
 	}
 
 	/**
