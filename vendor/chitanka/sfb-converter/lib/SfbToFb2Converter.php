@@ -156,7 +156,7 @@ class SfbToFb2Converter extends SfbConverter {
 			'<?xml version="1.0" encoding="UTF-8"?>',
 			$this->out->getStartTag($this->rootElement, array(
 				'xmlns'   => 'http://www.gribuser.ru/xml/fictionbook/2.0',
-				'xmlns:l' => 'http://www.w3.org/1999/xlink',
+				'xmlns:xlink' => 'http://www.w3.org/1999/xlink',
 			)),
 			$this->getStylesheet(),
 			$this->getDescription(),
@@ -300,7 +300,7 @@ class SfbToFb2Converter extends SfbConverter {
 			return '';
 		}
 		return $this->out->xmlElement('coverpage', $this->out->getEmptyTag(
-			'image', array('l:href' => '#'.$this->coverpage)
+			'image', array('xlink:href' => '#'.$this->coverpage)
 		));
 	}
 
@@ -857,6 +857,10 @@ class SfbToFb2Converter extends SfbConverter {
 			$this->openStanzaIfNone();
 			$this->overwriteParagraphElement($this->verseElement);
 		}
+		else if ( $this->isInNote() ) {
+			$this->saveStartTag($this->paragraphElement);
+			return;
+		}
 		parent::doParagraphStart();
 	}
 
@@ -931,7 +935,7 @@ class SfbToFb2Converter extends SfbConverter {
 
 	public function getNoteLink($curReference) {
 		return $this->out->xmlElement('a', $curReference, array(
-			'l:href' => '#' . self::getNoteId($curReference),
+			'xlink:href' => '#' . self::getNoteId($curReference),
 			'type'   => 'note',
 		));
 	}
@@ -996,7 +1000,7 @@ class SfbToFb2Converter extends SfbConverter {
 	}
 
 	protected function getImage($src, $id, $alt, $title, $url, $size, $align) {
-		$attrs = array('l:href' => '#' . $this->saveBinaryText($id, $src));
+		$attrs = array('xlink:href' => '#' . $this->saveBinaryText($id, $src));
 		if ( $this->isInBlockImage() && $this->acceptsBlockImage() ) {
 			$attrs += array(
 				'alt'    => $alt,
@@ -1080,7 +1084,7 @@ class SfbToFb2Converter extends SfbConverter {
 
 	protected function doInternalLinkElement($target, $text) {
 		return $this->out->xmlElement('a', $text, array(
-			'l:href'  => $this->internalLinkTarget . "#$target",
+			'xlink:href'  => $this->internalLinkTarget . "#$target",
 		), false);
 	}
 
