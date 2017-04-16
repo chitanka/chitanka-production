@@ -1,5 +1,6 @@
 <?php namespace App\Legacy;
 
+use App\Entity\User;
 use App\Entity\WorkEntry;
 use App\Pagination\Pager;
 use App\Util\Char;
@@ -333,9 +334,7 @@ class WorkPage extends Page {
 		// update main entry
 		$set = [
 			'date' => $this->date,
-			'status' => $this->isEditDone()
-				? ( $this->isReady() ? WorkEntry::STATUS_6 : WorkEntry::STATUS_5 )
-				: WorkEntry::STATUS_3
+			'status' => $this->entry->hasOpenContribs() ? WorkEntry::STATUS_3 : ( $this->isReady() ? WorkEntry::STATUS_6 : WorkEntry::STATUS_5 ),
 		];
 		$this->controller->em()->getConnection()->update(self::DB_TABLE, $set, $pkey);
 
@@ -549,14 +548,14 @@ EOS;
 	}
 
 	private function makeWorkListItem($dbrow) {
-		$entry = $this->repo()->find($dbrow['id']);
+		$entry = $this->repo()->find($dbrow['id']);/* @var $entry WorkEntry */
 		$author = strtr($dbrow['author'], [', '=>',']);
 		$author = $this->makeAuthorLink($author);
 		$userlink = $this->makeUserLinkWithEmail($dbrow['username'], $dbrow['email'], $dbrow['allowemail']);
 		$info = $this->makeWorkEntryInfo($dbrow);
 		$title = "<i>$dbrow[title]</i>";
 		$file = '';
-		if ($entry->isAvailable()) {
+		if ($this->canSeeEntryFiles($entry)) {
 			if ( ! empty($dbrow['tmpfiles']) ) {
 				$file = $this->makeFileLink($dbrow['tmpfiles']);
 			} else if ( ! empty($dbrow['uplfile']) ) {
@@ -583,9 +582,9 @@ EOS;
 			$musers = '';
 			foreach ($entry->getContribs() as $contrib) {
 				$uinfo = $this->makeExtraInfo("{$contrib->getComment()} ({$contrib->getProgress()}%)");
-				$ufile = $contrib->getUplfile() == '' || !$entry->isAvailable()
-					? ''
-					: $this->makeFileLink($contrib->getUplfile(), $contrib->getUser()->getUsername());
+				$ufile = !empty($contrib->getUplfile()) && $this->canSeeEntryFiles($entry)
+					? $this->makeFileLink($contrib->getUplfile(), $contrib->getUser()->getUsername())
+					: '';
 				if ($contrib->getUser()->getId() == $dbrow['user_id']) {
 					$userlink = "$userlink $uinfo $ufile";
 					continue;
@@ -729,12 +728,10 @@ HTML;
 	}
 
 	private function makeForm() {
-		if (isset($this->entry) && !$this->entry->isAvailable() && !$this->thisUserCanDeleteEntry()) {
-			return '<div class="alert alert-danger">Този запис ще бъде наличен след '.$this->entry->getAvailableAt('d.m.Y').'.</div>';
-		}
-
 		$entry = $this->entry ?: new WorkEntry();
-		$this->title .= ' — '.(empty($this->entryId) ? 'Добавяне' : 'Редактиране');
+		if (!$this->entry) {
+			$this->title = 'Нов запис' .' — '. $this->title;
+		}
 		$helpTop = empty($this->entryId) ? $this->makeAddEntryHelp() : '';
 		$tabs = '';
 		foreach ($this->tabs as $type => $text) {
@@ -785,7 +782,8 @@ HTML;
 			$button = $delete = '';
 		}
 
-		$alertIfDeleted = isset($this->entry) && $this->entry->isDeleted() ? '<div class="alert alert-danger">Този запис е изтрит.</div>' : '';
+		$alertUnavailable = $this->canSeeEntryFiles($entry) ? '' : '<div class="alert alert-danger">Качените файлове ще бъдат налични след '.$entry->getAvailableAt('d.m.Y').'.</div>';
+		$alertIfDeleted = $entry->isDeleted() ? '<div class="alert alert-danger">Този запис е изтрит.</div>' : '';
 		$helpBot = $this->isSingleUser($this->workType) ? $this->makeSingleUserHelp() : '';
 		$scanuser = $this->out->hiddenField('user', $this->scanuser);
 		$workType = $this->out->hiddenField('workType', $this->workType);
@@ -801,6 +799,7 @@ HTML;
 
 		return <<<EOS
 
+$alertUnavailable
 $alertIfDeleted
 $helpTop
 <div style="clear:both"></div>
@@ -1021,7 +1020,7 @@ JS;
 			: $this->out->link( $this->makeTmpFilePath($this->tmpfiles), Stringy::limitLength($this->tmpfiles)) .
 			($this->tfsize > 0 ? " ($this->tfsize&#160;MiB)" : '');
 
-		return <<<EOS
+		$form = <<<EOS
 	<div class="form-group">
 		<label for="entry_status" class="col-sm-2 control-label">Етап:</label>
 		<div class="col-sm-10">
@@ -1037,6 +1036,9 @@ JS;
 			<input type="date" name="availableAt" id="availableAt" class="form-control" value="$this->availableAt">
 		</div>
 	</div>
+EOS;
+		if ($this->canSeeEntryFiles($this->entry)) {
+			$form .= <<<EOS
 	<div class="form-group">
 		<label for="file" class="col-sm-2 control-label">Файл:</label>
 		<div class="col-sm-10">
@@ -1052,6 +1054,8 @@ JS;
 		</div>
 	</div>
 EOS;
+		}
+		return $form;
 	}
 
 	private function makeAdminOnlyFields() {
@@ -1131,7 +1135,7 @@ FIELDS;
 		$maxFileSize = $this->out->makeMaxFileSizeField();
 		$maxUploadSizeInMiB = Legacy::getMaxUploadSizeInMiB();
 
-		return <<<EOS
+		$form = <<<EOS
 	<div class="form-group">
 		<label for="entry_status" class="col-sm-2 control-label">Етап:</label>
 		<div class="col-sm-10">
@@ -1145,6 +1149,9 @@ FIELDS;
 			<input type="date" name="availableAt" id="availableAt" class="form-control" value="$this->availableAt">
 		</div>
 	</div>
+EOS;
+		if ($this->canSeeEntryFiles($this->entry)) {
+			$form .= <<<EOS
 	<div class="form-group">
 		<label for="file" class="col-sm-2 control-label">Файл:</label>
 		<div class="col-sm-10">
@@ -1160,6 +1167,8 @@ FIELDS;
 		</div>
 	</div>
 EOS;
+		}
+		return $form;
 	}
 
 	private function makeMultiEditInput() {
@@ -1282,7 +1291,7 @@ EOS;
 			$class = $this->nextRowClass($class);
 			$ulink = $this->makeUserLinkWithEmail($contrib->getUser()->getUsername(), $contrib->getUser()->getEmail(), $contrib->getUser()->getAllowemail());
 			$comment = strtr($contrib->getComment(), ["\n" => "<br>\n"]);
-			if ($contrib->getUplfile() != '') {
+			if (!empty($contrib->getUplfile()) && $this->canSeeEntryFiles($this->entry)) {
 				$comment .= ' ' . $this->makeFileLink($contrib->getUplfile(), $contrib->getUser()->getUsername(), $contrib->getFilesize());
 			}
 			$progressbar = $this->makeProgressBar($contrib->getProgress());
@@ -1441,16 +1450,7 @@ EOS;
 		}
 
 		$this->entry = $entry;
-	}
-
-	private function isEditDone() {
-		$key = [
-			'entry_id' => $this->entryId,
-			'is_frozen' => false,
-			'progress < 100',
-			'deleted_at IS NULL',
-		];
-		return ! $this->db->exists(self::DB_TABLE2, $key);
+		$this->title = $this->entry->getTitle() .' — '. $this->title;
 	}
 
 	private function isSingleUser($type = null) {
@@ -1512,6 +1512,10 @@ EOS;
 			default:
 				return $this->user->isAuthenticated();
 		}
+	}
+
+	private function canSeeEntryFiles(WorkEntry $entry) {
+		return $entry->isAvailable() || $this->user->inGroup(User::GROUP_WORKROOM_MEMBER);
 	}
 
 	private function informScanUser($entryId) {
@@ -1582,6 +1586,11 @@ EOS;
 	/** @return \App\Entity\WorkEntryRepository */
 	private function repo() {
 		return $this->controller->em()->getWorkEntryRepository();
+	}
+
+	/** @return \Doctrine\ORM\EntityRepository */
+	private function contribRepo() {
+		return $this->controller->em()->getWorkContribRepository();
 	}
 
 	private function nextRowClass($curRowClass = '') {
