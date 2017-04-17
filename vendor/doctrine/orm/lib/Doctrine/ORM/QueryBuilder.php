@@ -886,7 +886,7 @@ class QueryBuilder
      * EntityRepository->createQueryBuilder(), which creates the initial FROM clause and do not allow you to update it
      * setting an index by.
      *
-     * <code>
+     * <code>?
      *     $qb = $userRepository->createQueryBuilder('u')
      *         ->indexBy('u', 'u.id');
      *

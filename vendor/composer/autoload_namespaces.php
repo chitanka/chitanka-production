@@ -13,6 +13,7 @@ return array(
     'Psr\\Log\\' => array($vendorDir . '/psr/log'),
     'PhpOption\\' => array($vendorDir . '/phpoption/phpoption/src'),
     'PhpCollection' => array($vendorDir . '/phpcollection/phpcollection/src'),
+    'Pagerfanta\\' => array($vendorDir . '/pagerfanta/pagerfanta/src'),
     'Michelf' => array($vendorDir . '/michelf/php-markdown'),
     'Metadata\\' => array($vendorDir . '/jms/metadata/src'),
     'Less' => array($vendorDir . '/oyejorge/less.php/lib'),

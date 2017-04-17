@@ -14,6 +14,7 @@ return array(
     'Zend\\Http\\' => array($vendorDir . '/zendframework/zend-http/src'),
     'Zend\\Feed\\' => array($vendorDir . '/zendframework/zend-feed/src'),
     'Zend\\Escaper\\' => array($vendorDir . '/zendframework/zend-escaper/src'),
+    'WhiteOctober\\PagerfantaBundle\\' => array($vendorDir . '/white-october/pagerfanta-bundle'),
     'Symfony\\Polyfill\\Util\\' => array($vendorDir . '/symfony/polyfill-util'),
     'Symfony\\Polyfill\\Php70\\' => array($vendorDir . '/symfony/polyfill-php70'),
     'Symfony\\Polyfill\\Php56\\' => array($vendorDir . '/symfony/polyfill-php56'),

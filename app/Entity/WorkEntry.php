@@ -211,6 +211,14 @@ class WorkEntry extends Entity implements RoutedItemInterface, \JsonSerializable
 	/** @return User */
 	public function getUser() { return $this->user; }
 
+	public function canShowFilesTo(User $user) {
+		return $this->isAvailable() || $this->belongsTo($user) || $user->inGroup([User::GROUP_WORKROOM_MEMBER, User::GROUP_WORKROOM_SUPERVISOR, User::GROUP_WORKROOM_ADMIN]);
+	}
+
+	public function belongsTo(User $user) {
+		return $this->user->getId() === $user->getId();
+	}
+
 	public function setComment($comment) { $this->comment = $comment; }
 	public function getComment() { return $this->comment; }
 
@@ -229,6 +237,7 @@ class WorkEntry extends Entity implements RoutedItemInterface, \JsonSerializable
 
 	public function setIsFrozen($isFrozen) { $this->isFrozen = $isFrozen; }
 	public function getIsFrozen() { return $this->isFrozen; }
+	public function isFrozen() { return $this->isFrozen; }
 
 	public function getAvailableAt($format = null) {
 		if ($format !== null && $this->availableAt instanceof DateTime) {
@@ -296,6 +305,9 @@ class WorkEntry extends Entity implements RoutedItemInterface, \JsonSerializable
 		return $this;
 	}
 	public function getCommentThread() { return $this->commentThread; }
+	public function getNbComments() {
+		return $this->commentThread ? $this->commentThread->getNumComments() : 0;
+	}
 
 	public function getDeletedAt() { return $this->deletedAt; }
 
@@ -320,7 +332,7 @@ class WorkEntry extends Entity implements RoutedItemInterface, \JsonSerializable
 	 */
 	public function getContribs() {
 		$contribs = [];
-		foreach ($this->contribs as $contrib/*@var $contrib WorkContrib*/) {
+		foreach ($this->contribs as $contrib) {
 			if (!$contrib->isDeleted()) {
 				$contribs[] = $contrib;
 			}
@@ -330,7 +342,7 @@ class WorkEntry extends Entity implements RoutedItemInterface, \JsonSerializable
 
 	public function getOpenContribs() {
 		$openContribs = [];
-		foreach ($this->getContribs() as $contrib/*@var $contrib WorkContrib*/) {
+		foreach ($this->getContribs() as $contrib) {
 			if (!$contrib->isFinished()) {
 				$openContribs[] = $contrib;
 			}
@@ -340,6 +352,15 @@ class WorkEntry extends Entity implements RoutedItemInterface, \JsonSerializable
 
 	public function hasOpenContribs() {
 		return $this->getOpenContribs() > 0;
+	}
+
+	public function hasContribForUser(User $user) {
+		foreach ($this->getContribs() as $contrib) {
+			if ($contrib->belongsTo($user)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** {@inheritdoc} */
