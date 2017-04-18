@@ -149,10 +149,6 @@ class WorkPage extends Page {
 			$this->title .= ' — ' . $this->data_scanuser_view->getUsername();
 		}
 
-		if ($this->entryId) {
-			$this->initData($this->entryId);
-		}
-
 		$this->initPaginationFields();
 	}
 
@@ -167,7 +163,10 @@ class WorkPage extends Page {
 	}
 
 	protected function processSubmission() {
-		if ( !empty($this->entryId) && !$this->thisUserCanEditEntry($this->entry, $this->workType) ) {
+		if ($this->entryId) {
+			$this->entry = $this->repo()->find($this->entryId);
+		}
+		if ($this->entry && !$this->thisUserCanEditEntry($this->entry, $this->workType)) {
 			$this->addMessage('Нямате права да редактирате този запис.', true);
 			return $this->makeLists();
 		}
@@ -261,7 +260,7 @@ class WorkPage extends Page {
 			$curDate = new \DateTime;
 			$set += ['deleted_at' => $curDate->format('Y-m-d H:i:s'), 'is_frozen' => 0];
 			$this->controller->em()->getConnection()->update(DBT_WORK, $set, ['id' => $this->entryId]);
-			if ( $this->isMultiUser($this->workType) ) {
+			if ( $this->isMultiUser() ) {
 				$this->controller->em()->getConnection()->update(DBT_WORK_MULTI, ['deleted_at' => $curDate->format('Y-m-d H:i:s')], ['entry_id' => $this->entryId]);
 			}
 			$this->addMessage("Произведението „{$this->btitle}“ беше премахнато от списъка.");
@@ -386,6 +385,9 @@ class WorkPage extends Page {
 	protected function buildContent() {
 		if ($this->viewList == 'listonly') {
 			return $this->makeWorkList();
+		}
+		if ($this->entryId) {
+			$this->initData($this->entryId);
 		}
 		$content = $this->makeUserGuideLink();
 		if ($this->subaction == 'edit') {
@@ -563,7 +565,7 @@ EOS;
 		} else {
 			$sisFrozen = '';
 		}
-		if ($this->isMultiUser($entry->getType())) {
+		if ($entry->isMultiUser()) {
 			$musers = '';
 			foreach ($entry->getContribs() as $contrib) {
 				$uinfo = $this->makeExtraInfo("{$contrib->getComment()} ({$contrib->getProgress()}%)");
@@ -732,7 +734,7 @@ HTML;
 			}
 			$tabs .= "<li class='$class'><a href='$url'>$text</a></li>";
 		}
-		if ( $this->isSingleUser($this->workType) ) {
+		if ( $this->isSingleUser() ) {
 			$editFields = $this->makeSingleUserEditFields();
 			$extra = '';
 		} else {
@@ -765,14 +767,12 @@ HTML;
 
 		$alertUnavailable = $entry->canShowFilesTo($this->user) ? '<div class="alert alert-info">Качените файлове ще бъдат достъпни за обикновените потребители след '.$entry->getAvailableAt('d.m.Y').'.</div>' : '<div class="alert alert-danger">Качените файлове ще бъдат налични след '.$entry->getAvailableAt('d.m.Y').'.</div>';
 		$alertIfDeleted = $entry->isDeleted() ? '<div class="alert alert-danger">Този запис е изтрит.</div>' : '';
-		$helpBot = $this->isSingleUser($this->workType) ? $this->makeSingleUserHelp() : '';
+		$helpBot = $this->isSingleUser() ? $this->makeSingleUserHelp() : '';
 		$scanuser = $this->out->hiddenField('user', $this->scanuser);
 		$workType = $this->out->hiddenField('workType', $this->workType);
 		$bypass = $this->out->hiddenField('bypass', $this->bypassExisting);
 		$action = $this->controller->generateUrlForLegacyCode('workroom');
 		$this->addJs($this->createCommentsJavascript($this->entryId));
-
-		$corrections = $this->createCorrectionsView();
 
 		$adminFields = $this->userIsAdmin() ? $this->makeAdminOnlyFields() : '';
 		$user = $this->controller->em()->getUserRepository()->find($this->scanuser);
@@ -847,78 +847,12 @@ $helpTop
 	</div>
 </div>
 
-	$corrections
-
 <div id="fos_comment_thread"></div>
 
 <div id="helpBottom">
 $helpBot
 </div>
 EOS;
-	}
-
-	private function createCorrectionsView() {
-		if (!$this->canShowCorrections()) {
-			return '';
-		}
-		// same domain as main site - for ajax
-		$newFile = str_replace('http://static.chitanka.info', '', $this->tmpfiles);
-		$dmpPath = $this->container->getParameter('assets_base_urls') . '/vendor/js/diff_match_patch.js';
-		return <<<CORRECTIONS
-<fieldset>
-	<legend>Корекции</legend>
-	<button onclick="jQuery(this).hide(); showWorkroomDiff('#corrections')">Показване</button>
-	<pre id="corrections" style="display: none; white-space: pre-wrap; /* css-3 */ white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */ white-space: -pre-wrap; /* Opera 4-6 */ white-space: -o-pre-wrap; /* Opera 7 */ word-wrap: break-word; /* Internet Explorer 5.5+ */">
-	Зареждане...
-	</pre>
-</fieldset>
-<script src="$dmpPath"></script>
-<script>
-function showWorkroomDiff(target) {
-	function doDiff(currentContent, newContent) {
-		var dmp = new diff_match_patch();
-		var d = dmp.diff_main(currentContent, newContent);
-		dmp.diff_cleanupSemantic(d);
-		var ds = dmp.diff_prettyHtml(d);
-		var out = '';
-		var sl = ds.split('<br>');
-		var inIns = inDel = false;
-		var prevLine = 1;
-		for ( var i = 0, len = sl.length; i < len; i++ ) {
-			if ( sl[i].indexOf('<ins') != -1 ) inIns = true;
-			if ( sl[i].indexOf('<del') != -1 ) inDel = true;
-			if ( inIns || inDel ) {
-				var line = i+1;
-				if (prevLine < line-1) {
-					out += '		<span style="opacity: .1">[…]</span><br>';
-				}
-				out += '<span style="color: blue">' + line + ':</span>	' + sl[i] +'<br>';
-				prevLine = line;
-			}
-			if ( sl[i].indexOf('</ins>') != -1 ) inIns = false;
-			if ( sl[i].indexOf('</del>') != -1 ) inDel = false;
-		}
-
-		out = out.replace(/&para;/g, '<span style="opacity:.1">¶</span>');
-
-		$(target).html(out);
-	}
-	$(target).show();
-    $.get('$newFile', function(newContent) {
-		// TODO find a better way to find the current text source
-		var m = newContent.match(/(http:\/\/chitanka.info\/(book|text)\/\d+)/);
-		if (m) {
-			var curContentUrl = m[1]+'.sfb';
-			$.get(curContentUrl, function(curContent){
-				doDiff(curContent, newContent);
-			});
-		} else {
-			$(target).text('Съдържанието на източника не беше открито.');
-		}
-	});
-}
-</script>
-CORRECTIONS;
 	}
 
 	private function createCommentsJavascript($entry) {
@@ -970,12 +904,6 @@ $(document)
 JS;
 	}
 
-	private function canShowCorrections() {
-		return strpos($this->btitle, '(корекция)') !== false
-			&& strpos($this->tmpfiles, 'chitanka.info') !== false
-			&& File::isSFB($this->absTmpDir.'/'.basename($this->tmpfiles));
-	}
-
 	private function makeSubmitButton() {
 		$submit = $this->out->submitButton('Запис', '', null, true, ['class' => 'btn btn-primary']);
 		$cancel = sprintf('<a href="%s" title="Към основния списък">Отказ</a>', $this->controller->generateUrlForLegacyCode('workroom'));
@@ -1018,7 +946,7 @@ JS;
 		</div>
 	</div>
 EOS;
-		if ($this->entry->canShowFilesTo($this->user)) {
+		if ($this->entry && $this->entry->canShowFilesTo($this->user)) {
 			$form .= <<<EOS
 	<div class="form-group">
 		<label for="file" class="col-sm-2 control-label">Файл:</label>
@@ -1131,7 +1059,7 @@ FIELDS;
 		</div>
 	</div>
 EOS;
-		if ($this->entry->canShowFilesTo($this->user)) {
+		if ($this->entry && $this->entry->canShowFilesTo($this->user)) {
 			$form .= <<<EOS
 	<div class="form-group">
 		<label for="file" class="col-sm-2 control-label">Файл:</label>
@@ -1280,7 +1208,7 @@ EOS;
 				$class .= ' isFrozen';
 				$progressbar .= ' (замразена)';
 			}
-			$deleteForm = $this->controller->renderViewForLegacyCode('App:Workroom:contrib_delete_form.html.twig', ['contrib' => ['id' => $contrib->getId()]]);
+			$deleteForm = $this->controller->renderViewForLegacyCode('Workroom/contrib_delete_form.html.twig', ['contrib' => ['id' => $contrib->getId()]]);
 			$date = $contrib->getDate()->format('d.m.Y');
 			$l .= <<<EOS
 
@@ -1312,25 +1240,9 @@ EOS;
 	}
 
 	private function makePageHelp() {
-		$regUrl = $this->controller->generateUrlForLegacyCode('register');
-		$ext = $this->user->isAnonymous() ? "е необходимо първо да се <a href=\"$regUrl\">регистрирате</a> (не се притеснявайте, ще ви отнеме най-много 10–20 секунди, колкото и бавно да пишете). След това се върнете на тази страница и" : '';
-		$umarker = $this->getUserTypeMarker(1);
-		$banYearThreshold = $this->container->getParameter('workroom_ban_year_threshold');
-
-		return <<<EOS
-
-<p>Тук може да разгледате списък на произведенията, които се подготвят за добавяне в библиотеката.</p>
-<p>За да започнете подготовката на нов текст, $ext последвайте връзката „Добавяне на нов запис“. В случай че нямате възможност сами да сканирате текстове, може да се присъедините към коригирането на заглавията, отбелязани ето така: $umarker.</p>
-<p>Бързината на добавянето на нови текстове в библиотеката зависи както от броя на грешките, останали след сканирането и разпознаването, така и от форма&#768;та на текста. Най-бързо ще бъдат добавяни отлично коригирани текстове, правилно преобразувани във <a href="http://wiki.chitanka.info/SFB">формат SFB</a>.</p>
-<div class="alert alert-danger error newbooks-notice media" style="margin:1em 0">
-	<div class="pull-left">
-		<span class="fa fa-warning"></span>
-	</div>
-	<div class="media-body">
-		Разрешено е да се добавят само книги, издадени на български преди $banYearThreshold г. Изключение се прави за онези текстове, които са пратени от авторите си, както и за фен-преводи.
-	</div>
-</div>
-EOS;
+		return $this->controller->renderViewForLegacyCode('Workroom/intro.html.twig', [
+			'banYearThreshold' => $this->container->getParameter('workroom_ban_year_threshold'),
+		]);
 	}
 
 	private function makeAddEntryHelp() {
@@ -1434,22 +1346,18 @@ EOS;
 		$this->title = $this->entry->getTitle() .' — '. $this->title;
 	}
 
-	private function isSingleUser($type = null) {
-		if ($type === null) $type = $this->workType;
-
-		return $type == 0;
+	private function isSingleUser() {
+		return $this->workType == WorkEntry::TYPE_SINGLE_USER;
 	}
-	private function isMultiUser($type = null) {
-		if ($type === null) $type = $this->workType;
-
-		return $type == 1;
+	private function isMultiUser() {
+		return $this->workType == WorkEntry::TYPE_MULTI_USER;
 	}
 
 	private function thisUserCanEditEntry(WorkEntry $entry, $type) {
 		if ($this->user->isAnonymous()) {
 			return false;
 		}
-		if ($this->userIsSupervisor() || $type == 1) {
+		if ($this->userIsSupervisor() || $type == WorkEntry::TYPE_MULTI_USER) {
 			return true;
 		}
 		return $entry->belongsTo($this->user);
