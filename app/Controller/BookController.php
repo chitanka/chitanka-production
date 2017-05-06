@@ -4,6 +4,7 @@ use App\Entity\Book;
 use App\Generator\DownloadFile;
 use App\Legacy\Setup;
 use App\Pagination\Pager;
+use App\Service\ContentService;
 use App\Service\SearchService;
 use App\Util\Stringy;
 use Doctrine\ORM\NoResultException;
@@ -90,7 +91,7 @@ class BookController extends Controller {
 		];
 	}
 
-	public function showAction($id, $_format) {
+	public function showAction(Request $request, $id, $_format) {
 		list($id) = explode('-', $id); // remove optional slug
 		try {
 			$book = $this->em()->getBookRepository()->get($id);
@@ -124,6 +125,8 @@ class BookController extends Controller {
 			case 'pic':
 				Setup::doSetup($this->container);
 				break;
+			case 'cover':
+				return $this->urlRedirect('/'.ContentService::getCover($book->getId(), $request->get('size', 300)));
 			case 'html':
 			default:
 		}

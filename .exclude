@@ -18,5 +18,7 @@ var/spool/*
 .DS_Store
 .exclude
 .include
+/vendor/fortawesome
+/vendor/twbs
 # for BC
 app/console

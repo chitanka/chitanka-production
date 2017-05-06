@@ -50,17 +50,17 @@ class WorkPage extends Page {
 		'waiting' => 'Търси се коректор',
 	];
 	private $statusClasses = [
-		WorkEntry::STATUS_0 => 'fa fa-square-o status-plan',
-		WorkEntry::STATUS_1 => 'fa fa-square status-scan',
-		WorkEntry::STATUS_2 => 'fa fa-circle-o status-waiting',
-		WorkEntry::STATUS_3 => 'fa fa-dot-circle-o status-edit',
-		WorkEntry::STATUS_4 => 'fa fa-code status-format',
-		WorkEntry::STATUS_5 => 'fa fa-question-circle status-forcheck',
-		WorkEntry::STATUS_6 => 'fa fa-check-circle status-checked',
-		WorkEntry::STATUS_7 => 'fa fa-circle status-done',
-		'all' => 'fa fa-tasks',
-		'my' => 'fa fa-user',
-		'waiting' => 'fa fa-search-plus status-waiting',
+		WorkEntry::STATUS_0 => 'fa fa-fw fa-square-o status-plan',
+		WorkEntry::STATUS_1 => 'fa fa-fw fa-square status-scan',
+		WorkEntry::STATUS_2 => 'fa fa-fw fa-circle-o status-waiting',
+		WorkEntry::STATUS_3 => 'fa fa-fw fa-dot-circle-o status-edit',
+		WorkEntry::STATUS_4 => 'fa fa-fw fa-code status-format',
+		WorkEntry::STATUS_5 => 'fa fa-fw fa-question-circle status-forcheck',
+		WorkEntry::STATUS_6 => 'fa fa-fw fa-check-circle status-checked',
+		WorkEntry::STATUS_7 => 'fa fa-fw fa-circle status-done',
+		'all' => 'fa fa-fw fa-tasks',
+		'my' => 'fa fa-fw fa-user',
+		'waiting' => 'fa fa-fw fa-search-plus status-waiting',
 	];
 
 	private $fileWhiteList = [
@@ -95,13 +95,12 @@ class WorkPage extends Page {
 	private $tfsize;
 	private $editComment;
 	private $uplfile;
-	private $multidata = [];
+	private $contribsByUser = [];
 
 	private $searchQuery;
 	private $form;
 	private $bypassExisting;
 	private $date;
-	private $rowclass;
 	private $viewList;
 
 	public function __construct($fields) {
@@ -114,6 +113,9 @@ class WorkPage extends Page {
 		$this->subaction = $this->request->value( $this->FF_SUBACTION, '', 1 );
 
 		$this->entryId = (int) $this->request->value('id');
+		if ($this->entryId) {
+			$this->entry = $this->repo()->find($this->entryId);
+		}
 		$this->workType = (int) $this->request->value('workType', 0, 3);
 		$this->btitle = $this->request->value('title');
 		$this->author = $this->request->value('author');
@@ -139,7 +141,6 @@ class WorkPage extends Page {
 		$this->form = $this->request->value('form');
 		$this->bypassExisting = (int) $this->request->value('bypass', 0);
 		$this->date = date('Y-m-d H:i:s');
-		$this->rowclass = null;
 		$this->viewList = $this->request->value($this->FF_VIEW_LIST, $this->defViewList, null, $this->viewLists);
 
 		if ( !empty($this->subaction) && !empty($this->viewTypes[$this->subaction]) ) {
@@ -163,9 +164,6 @@ class WorkPage extends Page {
 	}
 
 	protected function processSubmission() {
-		if ($this->entryId) {
-			$this->entry = $this->repo()->find($this->entryId);
-		}
 		if ($this->entry && !$this->thisUserCanEditEntry($this->entry, $this->workType)) {
 			$this->addMessage('Нямате права да редактирате този запис.', true);
 			return $this->makeLists();
@@ -178,8 +176,8 @@ class WorkPage extends Page {
 		}
 
 		switch ($this->workType) {
-			case 0: return $this->updateMainUserData();
-			case 1: return $this->updateMultiUserData();
+			case WorkEntry::TYPE_SINGLE_USER: return $this->updateMainUserData();
+			case WorkEntry::TYPE_MULTI_USER: return $this->updateMultiUserData();
 		}
 	}
 
@@ -271,8 +269,7 @@ class WorkPage extends Page {
 		}
 
 		if ( $this->handleUpload() && !empty($this->uplfile) ) {
-			$set['uplfile'] = $this->uplfile;
-			$set['tmpfiles'] = $this->makeTmpFilePath(self::rawurlencode($this->uplfile), true);
+			$set['tmpfiles'] = $set['uplfile'] = $this->makeTmpFilePath(self::rawurlencode($this->uplfile));
 			$set['tfsize'] = Number::int_b2m(filesize("{$this->absTmpDir}/{$this->uplfile}"));
 		}
 		if ($this->entryId) {
@@ -319,7 +316,7 @@ class WorkPage extends Page {
 			$set['filesize'] = $this->request->value('filesize');
 		}
 		if ( $this->handleUpload() && !empty($this->uplfile) ) {
-			$set['uplfile'] = $this->uplfile;
+			$set['uplfile'] = $this->makeTmpFilePath(self::rawurlencode($this->uplfile));
 		}
 		if ($this->entry->hasContribForUser($this->user)) {
 			$this->controller->em()->getConnection()->update(DBT_WORK_MULTI, $set, $key);
@@ -362,7 +359,7 @@ class WorkPage extends Page {
 			shell_exec($com);
 		}
 
-		$this->addMessage("Файлът беше качен. Благодарим ви за положения труд!");
+		$this->addMessage("Файлът беше качен. Благодарности за положения труд!");
 
 		return true;
 	}
@@ -408,13 +405,23 @@ HTML;
 	}
 
 	private function makeUserGuideLink() {
-		return '<div class="float-right"><a href="http://wiki.chitanka.info/Workroom" title="Наръчник за работното ателие"><span class="fa fa-info-circle"></span> Наръчник за работното ателие</a></div>';
+		return '<div class="float-right"><a href="//wiki.chitanka.info/Workroom" title="Наръчник за работното ателие"><span class="fa fa-info-circle"></span> Наръчник за работното ателие</a></div>';
 	}
 
 	private function makeLists() {
-		$o = $this->makePageHelp()
-			. $this->makeSearchForm()
-			. '<div class="standalone">' . $this->makeNewEntryLink() . '</div>'
+		$o = $this->controller->renderViewForLegacyCode('Workroom/intro.html.twig', [
+				'banYearThreshold' => $this->container->getParameter('workroom_ban_year_threshold'),
+			])
+			. $this->controller->renderViewForLegacyCode('Workroom/searchForm.html.twig', [
+				'query' => $this->searchQuery,
+				'viewTypes' => $this->viewTypes,
+				'statuses' => $this->statuses,
+				'subaction' => $this->subaction,
+				'statusClasses' => $this->statusClasses,
+			])
+			. '<div class="standalone">'
+				. ($this->userCanAddEntry() ? sprintf('<a href="%s" class="btn btn-primary"><span class="fa fa-plus"></span> Добавяне на нов запис</a>', $this->controller->generateUrlForLegacyCode('workroom_entry_new')) : '')
+			. '</div>'
 			;
 
 		if ($this->viewList == 'work') {
@@ -426,64 +433,12 @@ HTML;
 		return $o;
 	}
 
-	private function makeSearchForm() {
-		$id = $this->FF_LQUERY;
-		$action = $this->controller->generateUrlForLegacyCode('workroom');
-		$query = htmlspecialchars($this->searchQuery);
-		return <<<EOS
-
-<form action="$action" method="get" class="form-inline standalone" role="form">
-	{$this->makeViewWorksLinks()}
-	<div class="form-group">
-		<label for="$id" class="sr-only">Търсене на: </label>
-		<div class="input-group">
-			<input type="text" class="form-control" title="Търсене из подготвяните произведения" maxlength="100" size="50" id="$id" name="$id" value="$query">
-			<span class="input-group-btn">
-				<button class="btn btn-default" type="submit"><span class="fa fa-search"></span><span class="sr-only">Търсене</span></button>
-			</span>
-		</div>
-	</div>
-</form>
-EOS;
-	}
-
 	private function makeWorkList(Pagerfanta $pager = null) {
-		if ($pager == null) {
-			$pager = $this->createPager();
-		}
-		if ($pager->count() == 0) {
-			return '<p class="standalone emptylist"><strong>Няма подготвящи се произведения.</strong></p>';
-		}
-		$table = '';
-		foreach ($pager->getCurrentPageResults() as $entry) {
-			$table .= $this->makeWorkListItem($entry);
-		}
-		$adminStatus = $this->userIsAdmin() ? '<th title="Администраторски статус"></th>' : '';
-		$list = <<<EOS
-<table class="table table-striped table-condensed table-bordered">
-<thead>
-	<tr>
-		<th>Дата</th>
-		$adminStatus
-		<th title="Тип на записа"></th>
-		<th title="Информация"></th>
-		<th title="Коментари към записа"></th>
-		<th title="Файл"></th>
-		<th style="width: 25%">Заглавие</th>
-		<th>Автор</th>
-		<th>Етап на работата</th>
-		<th>Потребител</th>
-	</tr>
-</thead>
-<tbody>
-$table
-</tbody>
-</table>
-EOS;
-		$list .= $this->controller->renderViewForLegacyCode('pager2.html.twig', [
-			'pager' => $pager,
+		return $this->controller->renderViewForLegacyCode('Workroom/listing.html.twig', [
+			'pager' => ($pager ?: $this->createPager()),
+			'userIsAdmin' => $this->userIsAdmin(),
+			'statusClasses' => $this->statusClasses,
 		]);
-		return $list;
 	}
 
 	private function createPager($titleFilter = null) {
@@ -535,187 +490,12 @@ EOS;
 		return $query;
 	}
 
-	private function makeWorkListItem(WorkEntry $entry) {
-		$author = strtr($entry->getAuthor(), [', '=>',']);
-		$author = $this->makeAuthorLink($author);
-		$userlink = $this->makeUserLinkWithEmail($entry->getUser()->getUsername(), $entry->getUser()->getEmail(), $entry->getUser()->getAllowemail());
-		$info = $this->makeWorkEntryInfo($entry);
-		$title = "<i>{$entry->getTitle()}</i>";
-		$file = '';
-		if ($entry->canShowFilesTo($this->user)) {
-			if ( ! empty($entry->getTmpfiles()) ) {
-				$file = $this->makeFileLink($entry->getTmpfiles());
-			} else if ( ! empty($entry->getUplfile()) ) {
-				$file = $this->makeFileLink($entry->getUplfile());
-			}
-		} else {
-			$file = '<span class="fa fa-ban" title="Дата на достъп: '.$entry->getAvailableAt('d.m.Y').'"></span>';
-		}
-		$entryLink = $this->controller->generateUrlForLegacyCode('workroom_entry_edit', ['id' => $entry->getId()]);
-		$commentsLink = $entry->getNbComments() ? sprintf('<a href="%s#fos_comment_thread" title="Коментари"><span class="fa fa-comments-o"></span>%s</a>', $entryLink, $entry->getNbComments()) : '';
-		$title = sprintf('<a href="%s" title="Към страницата за преглед">%s</a>', $entryLink, $title);
-		$this->rowclass = $this->nextRowClass($this->rowclass);
-		$st = $entry->getProgress() > 0
-			? $this->makeProgressBar($entry->getProgress())
-			: $this->makeStatus($entry->getStatus());
-		$extraclass = $entry->belongsTo($this->user) ? ' hilite' : '';
-		if ($entry->isFrozen()) {
-			$sisFrozen = '<span title="Подготовката е замразена">(замразена)</span>';
-			$extraclass .= ' is_frozen';
-		} else {
-			$sisFrozen = '';
-		}
-		if ($entry->isMultiUser()) {
-			$musers = '';
-			foreach ($entry->getContribs() as $contrib) {
-				$uinfo = $this->makeExtraInfo("{$contrib->getComment()} ({$contrib->getProgress()}%)");
-				$ufile = !empty($contrib->getUplfile()) && $entry->canShowFilesTo($this->user)
-					? $this->makeFileLink($contrib->getUplfile(), $contrib->getUser()->getUsername())
-					: '';
-				if ($contrib->belongsTo($entry->getUser())) {
-					$userlink = "$userlink $uinfo $ufile";
-					continue;
-				}
-				$ulink = $this->makeUserLinkWithEmail($contrib->getUser()->getUsername(),
-					$contrib->getUser()->getEmail(), $contrib->getUser()->getAllowemail());
-				if ($contrib->isFrozen()) {
-					$ulink = "<span class='is_frozen'>$ulink</span>";
-				}
-				$musers .= "\n\t<li>$ulink $uinfo $ufile</li>";
-				$extraclass .= $this->user->getId() == $contrib->getUser()->getId() ? ' hilite' : '';
-			}
-			if ( !empty($musers) ) {
-				$userlink = "<ul class='simplelist'>\n\t<li>$userlink</li>$musers</ul>";
-			} else if ($entry->getStatus() == self::MAX_SCAN_STATUS) {
-				$userlink .= ' (<strong>очакват се коректори</strong>)';
-			}
-		}
-		$umarker = $this->getUserTypeMarker($entry->getType());
-
-		$adminFields = $this->userIsAdmin() ? $this->makeAdminFieldsForTable($entry) : '';
-		$humanDate = $entry->getDate()->format('d.m.Y');
-		return <<<EOS
-
-	<tr class="$this->rowclass$extraclass" id="e{$entry->getId()}">
-		<td class="date" title="{$entry->getDate()->format('c')}">$humanDate</td>
-		$adminFields
-		<td>$umarker</td>
-		<td>$info</td>
-		<td>$commentsLink</td>
-		<td>$file</td>
-		<td>$title</td>
-		<td>$author</td>
-		<td style="min-width: 10em">$st $sisFrozen</td>
-		<td>$userlink</td>
-	</tr>
-EOS;
-	}
-
-	private function makeAdminFieldsForTable(WorkEntry $entry) {
-		if (empty($entry->getAdminComment())) {
-			return '<td></td>';
-		}
-		$comment = htmlspecialchars(nl2br($entry->getAdminComment()));
-		$class = htmlspecialchars(str_replace(' ', '-', $entry->getAdminStatus()));
-		return <<<HTML
-<td>
-<span class="popover-trigger workroom-$class" data-content="$comment">
-	<span>{$entry->getAdminStatus()}</span>
-</span>
-</td>
-HTML;
-	}
-
-	private function getUserTypeMarker($type) {
-		return "<span class=\"{$this->tabImgs[$type]}\"><span class=\"sr-only\">{$this->tabImgAlts[$type]}</span></span>";
-	}
-
-	private function makeStatus($code) {
-		return "<span class='{$this->statusClasses[$code]}'></span> {$this->statuses[$code]}";
-	}
-
-	private function makeWorkEntryInfo(WorkEntry $entry) {
-		$lines = [];
-		$lines[] = "<b>№ в Библиоман:</b> {$entry->getBibliomanId()}";
-		if ($entry->getPublisher()) {
-			$lines[] = '<b>Издател:</b> ' . $entry->getPublisher();
-		}
-		if ($entry->getPubYear()) {
-			$lines[] = '<b>Година:</b> ' . $entry->getPubYear();
-		}
-		if (!$entry->isAvailable()) {
-			$lines[] = '<b>Дата на достъп:</b> ' . $entry->getAvailableAt('d.m.Y');
-		}
-		$lines[] = $entry->getComment();
-		return $this->makeExtraInfo(implode("\n", $lines));
-	}
-
-	private function makeExtraInfo($info) {
-		$info = strtr(trim($info), [
-			"\n"   => '<br>',
-			"\r"   => '',
-		]);
-		if (empty($info)) {
-			return $info;
-		}
-		$info = Stringy::myhtmlspecialchars($info);
-
-		return '<span class="popover-trigger" data-content="'.$info.'"><span class="fa fa-info-circle"></span><span class="sr-only">Инфо</span></span>';
-	}
-
-	private function makeProgressBar($progressInPerc) {
-		return <<<HTML
-<div class="progress">
-	<div class="progress-bar" role="progressbar" aria-valuenow="$progressInPerc" aria-valuemin="0" aria-valuemax="100" style="width: $progressInPerc%;">
-		<span>$progressInPerc%</span>
-	</div>
-</div>
-HTML;
-	}
-
-	private function makeNewEntryLink() {
-		if ( !$this->userCanAddEntry() ) {
-			return '';
-		}
-
-		return sprintf('<a href="%s" class="btn btn-primary"><span class="fa fa-plus"></span> Добавяне на нов запис</a>',
-			$this->controller->generateUrlForLegacyCode('workroom_entry_new'));
-
-	}
-
-	private function makeViewWorksLinks() {
-		$links = [];
-		foreach ($this->viewTypes as $type => $title) {
-			$class = $this->subaction == $type ? 'selected' : '';
-			$links[] = sprintf('<li><a href="%s" class="%s" title="Преглед на произведенията по критерий „%s“">%s %s</a></li>',
-				$this->controller->generateUrlForLegacyCode('workroom', [
-					$this->FF_SUBACTION => $type
-				]),
-				$class, $title, "<span class='{$this->statusClasses[$type]}'></span>", $title);
-		}
-		$links[] = '<li role="presentation" class="divider"></li>';
-		foreach ($this->statuses as $code => $statusTitle) {
-			$type = "st-$code";
-			$class = $this->subaction == $type ? 'selected' : '';
-			$links[] = sprintf('<li><a href="%s" class="%s" title="Преглед на произведенията по критерий „%s“">%s %s</a></li>',
-				$this->controller->generateUrlForLegacyCode('workroom', [
-					$this->FF_SUBACTION => $type
-				]),
-				$class, $statusTitle, "<span class='{$this->statusClasses[$code]}'></span>", $statusTitle);
-		}
-
-		return '<div class="btn-group">
-			<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Преглед <span class="caret"></span></button>
-			<ul class="dropdown-menu" role="menu">'. implode("\n", $links) .'</ul>
-			</div>';
-	}
-
 	private function makeForm() {
 		$entry = $this->entry ?: new WorkEntry();
 		if (!$this->entry) {
 			$this->title = 'Нов запис' .' — '. $this->title;
 		}
-		$helpTop = empty($this->entryId) ? $this->makeAddEntryHelp() : '';
+		$helpTop = empty($this->entryId) ? $this->controller->renderViewForLegacyCode('Workroom/newEntryIntro.html.twig') : '';
 		$tabs = '';
 		foreach ($this->tabs as $type => $text) {
 			$text = "<span class='{$this->tabImgs[$type]}'></span> $text";
@@ -765,9 +545,14 @@ HTML;
 			$button = $delete = '';
 		}
 
-		$alertUnavailable = $entry->canShowFilesTo($this->user) ? '<div class="alert alert-info">Качените файлове ще бъдат достъпни за обикновените потребители след '.$entry->getAvailableAt('d.m.Y').'.</div>' : '<div class="alert alert-danger">Качените файлове ще бъдат налични след '.$entry->getAvailableAt('d.m.Y').'.</div>';
+		$alertUnavailable = '';
+		if ($entry->getAvailableAt()) {
+			$alertUnavailable = $entry->canShowFilesTo($this->user)
+				? '<div class="alert alert-info">Качените файлове ще бъдат достъпни за обикновените потребители след '.$entry->getAvailableAt('d.m.Y').'.</div>'
+				: '<div class="alert alert-danger">Качените файлове ще бъдат налични след '.$entry->getAvailableAt('d.m.Y').'.</div>';
+		}
 		$alertIfDeleted = $entry->isDeleted() ? '<div class="alert alert-danger">Този запис е изтрит.</div>' : '';
-		$helpBot = $this->isSingleUser() ? $this->makeSingleUserHelp() : '';
+		$helpBot = $this->isSingleUser() ? $this->controller->renderViewForLegacyCode('Workroom/singleUserEditIntro.html.twig') : '';
 		$scanuser = $this->out->hiddenField('user', $this->scanuser);
 		$workType = $this->out->hiddenField('workType', $this->workType);
 		$bypass = $this->out->hiddenField('bypass', $this->bypassExisting);
@@ -856,52 +641,13 @@ EOS;
 	}
 
 	private function createCommentsJavascript($entry) {
-		if (empty($entry)) {
+		if (empty($entry) || $this->user->isAnonymous()) {
 			return '';
 		}
-		$user = $this->controller->em()->getUserRepository()->find($this->scanuser);
-		$threadUrl = $this->controller->generateUrlForLegacyCode('fos_comment_post_threads');
-		$commentJs = $this->container->getParameter('assets_base_urls') . '/js/comments.js';
-		return <<<JS
-var fos_comment_thread_id = 'WorkEntry:$entry';
-
-// api base url to use for initial requests
-var fos_comment_thread_api_base_url = '$threadUrl';
-
-// Snippet for asynchronously loading the comments
-(function() {
-    var fos_comment_script = document.createElement('script');
-    fos_comment_script.async = true;
-    fos_comment_script.src = '$commentJs';
-    fos_comment_script.type = 'text/javascript';
-
-    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(fos_comment_script);
-})();
-
-$(document)
-	.on('fos_comment_before_load_thread', '#fos_comment_thread', function (event, data) {
-		setTimeout(function(){
-			$("#fos_comment_comment_cc").val("{$user->getUsername()}");
-		}, 2000);
-	})
-	.on('fos_comment_show_form', '#fos_comment_thread', function (data) {
-		var button = $(data.target);
-		button.next().find('input[name="fos_comment_comment[cc]"]').val(button.data("name"));
-	})
-	.on('fos_comment_submitting_form', '#fos_comment_thread', function (event, data) {
-		var form = $(event.target);
-		if (form.is(".loading")) {
-			event.preventDefault();
-			return;
-		}
-		form.addClass("loading").find(":submit").attr("disabled", true);
-	})
-	.on('fos_comment_submitted_form', '#fos_comment_thread', function (event, data) {
-		var form = $(event.target);
-		form.removeClass("loading").find(":submit").removeAttr("disabled");
-	})
-;
-JS;
+		return $this->controller->renderViewForLegacyCode('Workroom/comments.js.twig', [
+			'entry' => $entry,
+			'user' => $this->controller->em()->getUserRepository()->find($this->scanuser),
+		]);
 	}
 
 	private function makeSubmitButton() {
@@ -1016,7 +762,7 @@ FIELDS;
 			? self::MAX_SCAN_STATUS
 			: $this->status;
 		if ( $this->thisUserCanDeleteEntry() ) {
-			if ( empty($this->multidata) || $this->userIsSupervisor() ) {
+			if ( empty($this->contribsByUser) || $this->userIsSupervisor() ) {
 				$status = $this->userIsSupervisor()
 					? $this->getStatusSelectField($this->status)
 					: $this->getStatusSelectField($cstatus, self::MAX_SCAN_STATUS);
@@ -1081,7 +827,7 @@ EOS;
 	}
 
 	private function makeMultiEditInput() {
-		$editorList = $this->makeEditorList();
+		$editorList = $this->controller->renderViewForLegacyCode('Workroom/contributors.html.twig', ['entry' => $this->entry]);
 		$myContrib = $this->isMyContribAllowed() ? $this->makeMultiEditMyInput() : '';
 
 		return <<<EOS
@@ -1106,12 +852,12 @@ EOS;
 
 	private function makeMultiEditMyInput() {
 		$msg = '';
-		if ( empty($this->multidata[$this->user->getId()]) ) {
+		if ( empty($this->contribsByUser[$this->user->getId()]) ) {
 			$comment = $progress = $uplfile = $filesize = '';
 			$isFrozen = false;
 			$msg = '<p>Вие също може да се включите в подготовката на текста.</p>';
 		} else {
-			$contrib = $this->multidata[$this->user->getId()];
+			$contrib = $this->contribsByUser[$this->user->getId()];
 			$comment = $contrib->getComment();
 			$progress = $contrib->getProgress();
 			$uplfile = $contrib->getUplfile();
@@ -1191,125 +937,11 @@ EOS;
 EOS;
 	}
 
-	private function makeEditorList() {
-		if ( empty($this->multidata) ) {
-			return '<p>Все още никой не се е включил в корекцията на текста.</p>';
-		}
-		$l = $class = '';
-		foreach ($this->multidata as $contrib) {
-			$class = $this->nextRowClass($class);
-			$ulink = $this->makeUserLinkWithEmail($contrib->getUser()->getUsername(), $contrib->getUser()->getEmail(), $contrib->getUser()->getAllowemail());
-			$comment = strtr($contrib->getComment(), ["\n" => "<br>\n"]);
-			if (!empty($contrib->getUplfile()) && $this->entry->canShowFilesTo($this->user)) {
-				$comment .= ' ' . $this->makeFileLink($contrib->getUplfile(), $contrib->getUser()->getUsername(), $contrib->getFilesize());
-			}
-			$progressbar = $this->makeProgressBar($contrib->getProgress());
-			if ($contrib->isFrozen()) {
-				$class .= ' isFrozen';
-				$progressbar .= ' (замразена)';
-			}
-			$deleteForm = $this->controller->renderViewForLegacyCode('Workroom/contrib_delete_form.html.twig', ['contrib' => ['id' => $contrib->getId()]]);
-			$date = $contrib->getDate()->format('d.m.Y');
-			$l .= <<<EOS
-
-		<tr class="$class deletable">
-			<td>$date</td>
-			<td>$ulink $deleteForm</td>
-			<td>$comment</td>
-			<td>$progressbar</td>
-		</tr>
-EOS;
-		}
-
-		return <<<EOS
-
-	<table class="content">
-	<caption>Следните потребители обработват текста:</caption>
-	<thead>
-	<tr>
-		<th>Дата</th>
-		<th>Потребител</th>
-		<th>Коментар</th>
-		<th>Напредък</th>
-	</tr>
-	</thead>
-	<tbody>$l
-	</tbody>
-	</table>
-EOS;
-	}
-
-	private function makePageHelp() {
-		return $this->controller->renderViewForLegacyCode('Workroom/intro.html.twig', [
-			'banYearThreshold' => $this->container->getParameter('workroom_ban_year_threshold'),
-		]);
-	}
-
-	private function makeAddEntryHelp() {
-		$mainlink = $this->controller->generateUrlForLegacyCode('workroom');
-
-		return <<<EOS
-
-<p>Чрез долния формуляр може да добавите ново произведение към <a href="$mainlink">списъка с подготвяните</a>.</p>
-<p>Имате възможност за избор между „{$this->tabs[0]}“ (сами ще обработите целия текст) или „{$this->tabs[1]}“ (вие ще сканирате текста, а други потребители ще имат възможността да се включат в коригирането му).</p>
-<p>Въведете заглавието и автора и накрая посочете на какъв етап се намира подготовката. Ако още не сте започнали сканирането, изберете „{$this->statuses[WorkEntry::STATUS_0]}“.</p>
-<p>През следващите дни винаги може да промените етапа, на който се намира подготовката на произведението. За тази цел, в основния списък, заглавието ще представлява връзка към страницата за редактиране.</p>
-EOS;
-	}
-
-	private function makeSingleUserHelp() {
-		return <<<EOS
-
-<p>На тази страница може да променяте данните за произведението.
-Най-често ще се налага да обновявате етапа, на който се намира подготовката. Възможно е да посочите напредъка на подготовката и чрез процент, в случай че операциите сканиране, разпознаване и коригиране се извършват едновременно.</p>
-<p>Ако подготовката на произведението е замразена, това може да се посочи, като се отметне полето „Подготовката е спряна за известно време“.</p>
-EOS;
-	}
-
 	private function makeContribList() {
-		$sql = 'SELECT ut.user_id, u.username, COUNT(ut.user_id) count, SUM(ut.size) size
-			FROM '. DBT_USER_TEXT .' ut
-			LEFT JOIN '. DBT_USER .' u ON ut.user_id = u.id
-			GROUP BY ut.user_id
-			ORDER BY size DESC';
-		$results = $this->controller->em()->getConnection()->executeQuery($sql)->fetchAll();
-
-		if ( empty($results) ) {
-			return '';
-		}
-		$list = '';
-		$rownr = 0;
-		$rowclass = '';
-		foreach ($results as $dbrow) {
-			$rowclass = $this->nextRowClass($rowclass);
-			$ulink = $dbrow['user_id'] ? $this->makeUserLink($dbrow['username']) : $dbrow['username'];
-			$s = Number::formatNumber($dbrow['size'], 0);
-			$rownr += 1;
-			$list .= <<<HTML
-	<tr class="$rowclass">
-		<td>$rownr</td>
-		<td>$ulink</td>
-		<td class="text-right">$s</td>
-		<td class="text-right">$dbrow[count]</td>
-	</tr>
-HTML;
-		}
-		return <<<EOS
-
-	<table class="table table-striped table-condensed table-bordered" style="margin: 0 auto; max-width: 30em">
-	<caption>Следните потребители са сканирали или коригирали текстове за библиотеката:</caption>
-	<thead>
-	<tr>
-		<th>№</th>
-		<th>Потребител</th>
-		<th class="text-right" title="Размер на обработените произведения в мебибайта">Размер (в <abbr title="Кибибайта">KiB</abbr>)</th>
-		<th class="text-right" title="Брой на обработените произведения">Брой</th>
-	</tr>
-	</thead>
-	<tbody>$list
-	</tbody>
-	</table>
-EOS;
+		$query = $this->controller->em()->createQuery('SELECT ut AS contrib, u, count(u.id) AS nbContribs, sum(ut.size) AS size FROM App:UserTextContrib ut JOIN ut.user u GROUP BY u.id ORDER BY size desc');
+		return $this->controller->renderViewForLegacyCode('Workroom/contributorRanking.html.twig', [
+			'rows' => $query->getResult()
+		]);
 	}
 
 	private function initData($id) {
@@ -1337,9 +969,9 @@ EOS;
 		if ( !$this->thisUserCanDeleteEntry() || $this->request->value('workType', null, 3) === null ) {
 			$this->workType = $entry->getType();
 		}
-		$this->multidata = [];
+		$this->contribsByUser = [];
 		foreach ($entry->getContribs() as $contrib) {
-			$this->multidata[$contrib->getUser()->getId()] = $contrib;
+			$this->contribsByUser[$contrib->getUser()->getId()] = $contrib;
 		}
 
 		$this->entry = $entry;
@@ -1424,29 +1056,12 @@ EOS;
 		$notifier->sendMessage($message);
 	}
 
-	private function makeTmpFilePath($file = '', $forDb = false) {
+	private function makeTmpFilePath($file) {
 		if (preg_match('|https?://|', $file)) {
 			return $file;
 		}
 		$root = $this->container->getParameter('workroom_root');
-		if ($forDb && empty($root)) {
-			return $file;
-		}
 		return "$root/{$this->tmpDir}/{$file}";
-	}
-
-	private function makeFileLink($file, $username = '', $filesize = null) {
-		$title = empty($username)
-			? $file
-			: "Качен файл от $username — $file";
-		if ($filesize) {
-			$title .= " ($filesize MiB)";
-		}
-
-		return $this->out->link_raw(
-			$this->makeTmpFilePath($file),
-			'<span class="fa fa-save"></span><span class="sr-only">Файл</span>',
-			$title);
 	}
 
 	private static function rawurlencode($file) {
@@ -1474,9 +1089,5 @@ EOS;
 	/** @return \Doctrine\ORM\EntityRepository */
 	private function contribRepo() {
 		return $this->controller->em()->getWorkContribRepository();
-	}
-
-	private function nextRowClass($curRowClass = '') {
-		return $curRowClass == 'even' ? 'odd' : 'even';
 	}
 }
