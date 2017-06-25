@@ -398,7 +398,7 @@ class SfbConverter {
 			'\_'    => '_',
 		);
 
-		if ( is_readable($file) ) {
+		if (strpos($file, "\n") === false && is_readable($file)) {
 			$this->_reader = new FileLineReader($file);
 		} else {
 			$this->_reader = new StringLineReader($file);
