@@ -1,23 +1,23 @@
 [
     {
         "name": "chitanka/sfb-converter",
-        "version": "dev-master",
-        "version_normalized": "9999999-dev",
+        "version": "1.0.0",
+        "version_normalized": "1.0.0.0",
         "source": {
             "type": "git",
             "url": "https://github.com/chitanka/sfb-converter.git",
-            "reference": "61dd35bff03d0e6f084c901e33b9d945780539f7"
+            "reference": "05d46fd302e671ac93c76c16e1bb625eca28b676"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/chitanka/sfb-converter/zipball/61dd35bff03d0e6f084c901e33b9d945780539f7",
-            "reference": "61dd35bff03d0e6f084c901e33b9d945780539f7",
+            "url": "https://api.github.com/repos/chitanka/sfb-converter/zipball/05d46fd302e671ac93c76c16e1bb625eca28b676",
+            "reference": "05d46fd302e671ac93c76c16e1bb625eca28b676",
             "shasum": ""
         },
         "require": {
             "php": ">=5.4.0"
         },
-        "time": "2017-05-28T12:23:21+00:00",
+        "time": "2018-01-17T20:44:45+00:00",
         "type": "library",
         "installation-source": "source",
         "autoload": {

@@ -257,7 +257,7 @@ class SfbToFb2Converter extends SfbConverter {
 		return $this->out->xmlElement('src-title-info',
 			$this->getGenre()                                           . $eol
 			.$this->getSrcAuthors()                                     . $eol
-			.$this->out->xmlElement('book-title', $this->srcTitle)      . $eol
+			.$this->out->xmlElement('book-title', $this->doInlineElementsEscape($this->srcTitle)) . $eol
 			.$this->out->xmlElementOrNone('date', $this->textDate)      . $eol
 			.$this->out->xmlElementOrNone('lang', $this->srcLang)       . $eol
 			.$this->getSequencesFor($this->srcSequences)                . $eol
@@ -360,7 +360,7 @@ class SfbToFb2Converter extends SfbConverter {
 	public function getHistory() {
 		$text = '';
 		foreach ( (array) $this->history as $line ) {
-			$text .= $this->out->xmlElement($this->paragraphElement, htmlspecialchars($line));
+			$text .= $this->out->xmlElement($this->paragraphElement, $this->doInlineElementsEscape($line));
 		}
 		return $this->out->xmlElementOrNone('history', $text);
 	}

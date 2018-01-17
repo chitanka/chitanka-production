@@ -2439,7 +2439,7 @@ class SfbConverter {
 
 	/** Escape some characters */
 	protected function doInlineElementsEscape($s) {
-		return htmlspecialchars($s, ENT_COMPAT, 'UTF-8');
+		return htmlspecialchars($s);
 	}
 
 

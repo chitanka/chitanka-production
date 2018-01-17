@@ -1,7 +1,7 @@
 {
 	"name": "chitanka/sfb-converter",
-	"type": "library",
 	"description": "SFB converter used by chitanka",
+	"type": "library",
 	"keywords": ["sfb"],
 	"homepage": "https://github.com/chitanka/sfb-converter",
 	"license": "MIT",
