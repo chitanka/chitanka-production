@@ -10,98 +10,26 @@ class ComposerStaticInita416c19f60d891dc908b0d430cdf2e26
         '92c8763cd6170fce6fcfe7e26b4e8c10' => __DIR__ . '/..' . '/symfony/phpunit-bridge/bootstrap.php',
         '2c102faa651ef8ea5874edb585946bce' => __DIR__ . '/..' . '/swiftmailer/swiftmailer/lib/swift_required.php',
         '5255c38a0faeba867671b61dfda6d864' => __DIR__ . '/..' . '/paragonie/random_compat/lib/random.php',
-        '023d27dca8066ef29e6739335ea73bad' => __DIR__ . '/..' . '/symfony/polyfill-php70/bootstrap.php',
-        'bd9634f2d41831496de0d3dfe4c94881' => __DIR__ . '/..' . '/symfony/polyfill-php56/bootstrap.php',
-        '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
-        '6a47392539ca2329373e0d33e1dba053' => __DIR__ . '/..' . '/symfony/polyfill-intl-icu/bootstrap.php',
         'ce89ac35a6c330c55f4710717db9ff78' => __DIR__ . '/..' . '/kriswallsmith/assetic/src/functions.php',
+        '6a47392539ca2329373e0d33e1dba053' => __DIR__ . '/..' . '/symfony/polyfill-intl-icu/bootstrap.php',
+        '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
+        'bd9634f2d41831496de0d3dfe4c94881' => __DIR__ . '/..' . '/symfony/polyfill-php56/bootstrap.php',
+        '023d27dca8066ef29e6739335ea73bad' => __DIR__ . '/..' . '/symfony/polyfill-php70/bootstrap.php',
         '8ac9dba77d5c65db2811440ee8265f5d' => __DIR__ . '/..' . '/sonata-project/block-bundle/Resources/stubs/symfony2.php',
     );
 
-    public static $prefixLengthsPsr4 = array (
-        'Z' => 
-        array (
-            'Zend\\Validator\\' => 15,
-            'Zend\\Uri\\' => 9,
-            'Zend\\Stdlib\\' => 12,
-            'Zend\\ServiceManager\\' => 20,
-            'Zend\\Loader\\' => 12,
-            'Zend\\Http\\' => 10,
-            'Zend\\Feed\\' => 10,
-            'Zend\\Escaper\\' => 13,
-        ),
-        'W' => 
-        array (
-            'WhiteOctober\\PagerfantaBundle\\' => 30,
-        ),
-        'S' => 
-        array (
-            'Symfony\\Polyfill\\Util\\' => 22,
-            'Symfony\\Polyfill\\Php70\\' => 23,
-            'Symfony\\Polyfill\\Php56\\' => 23,
-            'Symfony\\Polyfill\\Mbstring\\' => 26,
-            'Symfony\\Component\\Security\\Acl\\' => 31,
-            'Symfony\\Component\\' => 18,
-            'Symfony\\Bundle\\SwiftmailerBundle\\' => 33,
-            'Symfony\\Bundle\\MonologBundle\\' => 29,
-            'Symfony\\Bundle\\AsseticBundle\\' => 29,
-            'Symfony\\Bundle\\' => 15,
-            'Symfony\\Bridge\\Twig\\' => 20,
-            'Symfony\\Bridge\\ProxyManager\\' => 28,
-            'Symfony\\Bridge\\PhpUnit\\' => 23,
-            'Symfony\\Bridge\\Monolog\\' => 23,
-            'Symfony\\Bridge\\Doctrine\\' => 24,
-            'Sonata\\IntlBundle\\' => 18,
-            'Sonata\\EasyExtendsBundle\\' => 25,
-            'Sonata\\DoctrineORMAdminBundle\\' => 30,
-            'Sonata\\CoreBundle\\' => 18,
-            'Sonata\\Cache\\Tests\\' => 19,
-            'Sonata\\Cache\\' => 13,
-            'Sonata\\BlockBundle\\' => 19,
-            'Sonata\\AdminBundle\\' => 19,
-            'Sfblib\\' => 7,
-            'Sensio\\Bundle\\GeneratorBundle\\' => 30,
-            'Sensio\\Bundle\\FrameworkExtraBundle\\' => 35,
-            'Sensio\\Bundle\\DistributionBundle\\' => 33,
-        ),
-        'N' => 
-        array (
-            'Negotiation\\' => 12,
-        ),
-        'M' => 
-        array (
-            'Monolog\\' => 8,
-        ),
-        'K' => 
-        array (
-            'Knp\\Menu\\' => 9,
-            'Knp\\Bundle\\MenuBundle\\' => 22,
-        ),
-        'I' => 
-        array (
-            'Interop\\Container\\' => 18,
-            'Incenteev\\ParameterHandler\\' => 27,
-        ),
-        'E' => 
-        array (
-            'Eko\\FeedBundle\\' => 15,
-        ),
-        'D' => 
-        array (
-            'Doctrine\\Instantiator\\' => 22,
-            'Doctrine\\Common\\Cache\\' => 22,
-            'Doctrine\\Common\\' => 16,
-            'Doctrine\\Bundle\\DoctrineCacheBundle\\' => 36,
-            'Doctrine\\Bundle\\DoctrineBundle\\' => 31,
-        ),
-        'C' => 
-        array (
-            'Cocur\\Slugify\\' => 14,
-        ),
-        'A' => 
-        array (
-            'App\\' => 4,
-        ),
+    public static $firstCharsPsr4 = array (
+        'Z' => true,
+        'W' => true,
+        'S' => true,
+        'N' => true,
+        'M' => true,
+        'K' => true,
+        'I' => true,
+        'E' => true,
+        'D' => true,
+        'C' => true,
+        'A' => true,
     );
 
     public static $prefixDirsPsr4 = array (
@@ -474,7 +402,7 @@ class ComposerStaticInita416c19f60d891dc908b0d430cdf2e26
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInita416c19f60d891dc908b0d430cdf2e26::$prefixLengthsPsr4;
+            $loader->firstCharsPsr4 = ComposerStaticInita416c19f60d891dc908b0d430cdf2e26::$firstCharsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInita416c19f60d891dc908b0d430cdf2e26::$prefixDirsPsr4;
             $loader->prefixesPsr0 = ComposerStaticInita416c19f60d891dc908b0d430cdf2e26::$prefixesPsr0;
             $loader->classMap = ComposerStaticInita416c19f60d891dc908b0d430cdf2e26::$classMap;
