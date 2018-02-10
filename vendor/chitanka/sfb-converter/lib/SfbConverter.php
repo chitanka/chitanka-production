@@ -534,6 +534,7 @@ class SfbConverter {
 		while ( $this->nextLine() !== false ) {
 			$this->doText();
 		}
+		$this->_reader->free();
 		return $this;
 	}
 
@@ -2608,6 +2609,7 @@ interface LineReader {
 	public function getNextLine();
 	public function setStartPosition($pos);
 	public function getFirstLine();
+	public function free();
 }
 
 
@@ -2624,9 +2626,7 @@ class FileLineReader implements LineReader {
 	}
 
 	public function __destruct() {
-		if ( $this->_handle ) {
-			fclose( $this->_handle );
-		}
+		$this->free();
 	}
 
 	public function getNextLine() {
@@ -2647,6 +2647,12 @@ class FileLineReader implements LineReader {
 
 	public function setStartPosition($pos) {
 		fseek($this->_handle, $pos);
+	}
+
+	public function free() {
+		if ($this->_handle) {
+			fclose($this->_handle);
+		}
 	}
 }
 
@@ -2675,5 +2681,9 @@ class StringLineReader implements LineReader {
 		while ($pos > 0) {
 			$pos -= strlen( $this->getNextLine() ) + $dl;
 		}
+	}
+
+	public function free() {
+		unset($this->_lines);
 	}
 }
