@@ -2,7 +2,6 @@
 
 use App\Feed\ForumFeed;
 use App\Feed\LiternewsFeed;
-use App\Service\ReviewService;
 
 class MainController extends Controller {
 
@@ -26,12 +25,6 @@ class MainController extends Controller {
 		if (in_array('texts', $sections)) {
 			$vars['texts'] = $this->em()->getTextRevisionRepository()->getLatest(self::LATEST_TEXTS_LIMIT, 1, false);
 		}
-		if (in_array('featured_books', $sections)) {
-			$vars['featured_books'] = $this->em()->getFeaturedBookRepository()->getRandomEntities(3);
-		}
-		if (in_array('foreign_books', $sections)) {
-			$vars['foreign_books'] = $this->em()->getForeignBookRepository()->getRandomEntities(3);
-		}
 		if (in_array('liter_posts', $sections)) {
 			$vars['liter_posts'] = LiternewsFeed::fetchLatest(self::LATEST_LITERNEWS_LIMIT);
 		}
@@ -53,12 +46,6 @@ class MainController extends Controller {
 
 	public function redirectAction($route) {
 		return $this->redirectToRoute($route, []);
-	}
-
-	public function siteboxAction() {
-		return $this->render('App:Main:sitebox.html.twig', [
-			'site' => $this->em()->getSiteRepository()->getRandom()
-		]);
 	}
 
 }
