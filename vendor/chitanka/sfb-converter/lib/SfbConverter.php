@@ -2530,9 +2530,12 @@ class SfbConverter {
 		return $this->lcmd != $blockEndMarker && ! is_null($this->lcmd);
 	}
 
+	public static function lineContainsBlockImage($line) {
+		return preg_match('/^\{img:[^}]+\}$/', ltrim($line, self::CMD_DELIM));
+	}
 
 	protected function paragraphContainsBlockImage() {
-		return preg_match('/^\{img:[^}]+\}$/', $this->ltext);
+		return self::lineContainsBlockImage($this->ltext);
 	}
 
 	protected function overwriteParagraphElement($newParagraphElement = '') {
