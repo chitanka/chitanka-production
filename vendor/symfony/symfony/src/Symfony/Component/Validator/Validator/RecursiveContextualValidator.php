@@ -354,7 +354,7 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
                 $classMetadata,
                 $propertyPath,
                 $groups,
-                null,
+                [],// FIXME borislav
                 $traversalStrategy,
                 $context
             );
