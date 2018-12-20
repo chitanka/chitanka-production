@@ -28,10 +28,9 @@ class WorkPage extends Page {
 
 	private $tabs = ['Самостоятелна подготовка', 'Работа в екип'];
 	private $tabImgs = ['fa fa-user singleuser', 'fa fa-users multiuser'];
-	private $tabImgAlts = ['сам', 'екип'];
 	private $statuses = [
-		WorkEntry::STATUS_0 => 'Планира се',
-		WorkEntry::STATUS_1 => 'Сканира се',
+//		WorkEntry::STATUS_0 => 'Планира се',
+//		WorkEntry::STATUS_1 => 'Сканира се',
 		WorkEntry::STATUS_2 => 'За корекция',
 		WorkEntry::STATUS_3 => 'Коригира се',
 		WorkEntry::STATUS_4 => 'Иска се SFB',
@@ -619,7 +618,11 @@ $helpTop
 					<input class="form-control" name="bibliomanId" id="bibliomanId" value="{$entry->getBibliomanId()}">
 				</div>
 				<div class="col-sm-8">
-					<a href="//biblioman.chitanka.info/books/{$entry->getBibliomanId()}" class="bibliomanUrl"><span class="fa fa-link"></span></a>
+EOS
+			.($entry->getBibliomanId() ?
+			"<a href=\"https://biblioman.chitanka.info/books/{$entry->getBibliomanId()}\" class=\"bibliomanUrl\" target=\"_blank\"><img src=\"https://biblioman.chitanka.info/books/{$entry->getBibliomanId()}.cover?size=150\" style=\"width:150px\"></a>"
+			: '').
+			<<<EOS
 				</div>
 			</div>
 			<div class="form-group">
