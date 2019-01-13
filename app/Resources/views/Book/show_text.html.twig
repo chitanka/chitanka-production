@@ -24,6 +24,9 @@
 		{% if template != "" %}
 			<li><a href="#book-content" data-toggle="tab"><span class="fa fa-book"></span> Съдържание</a></li>
 		{% endif %}
+		{% if book.type != 'single' and 'sfb' in book.formats %}
+			<li><a href="{{ path('book_show', {id: book.id, _format: 'htmlx'}) }}" data-target="#book-full-content" data-toggle="tab"><span class="fa fa-file-text-o"></span> Пълно текстово съдържание</a></li>
+		{% endif %}
 		{% if info %}
 			<li><a href="#book-extra-info" data-toggle="tab"><span class="fa fa-tag"></span> Информация</a></li>
 		{% endif %}
@@ -31,7 +34,7 @@
 	</ul>
 	<div class="tab-content">
 		{% if template != "" %}
-			<div class="book-content superlist tab-pane" id="book-content">
+			<div id="book-content" class="book-content book-type-{{ book.type }} superlist tab-pane">
 				{% import 'App::text.html.twig' as texttools %}
 				{# TODO refactor and improve this template expansion #}
 				{% set options = {'title': 'TEXT_TITLE', 'download_links': true} %}
@@ -48,6 +51,10 @@
 				{{ info|raw }}
 			</div>
 		{% endif %}
+
+		<section class="tab-pane text-content text-content-main" id="book-full-content">
+			<br>
+		</section>
 
 		<div class="tab-pane expanded-links" id="book-links">
 			{{ booktools.qrcode(book) }}
