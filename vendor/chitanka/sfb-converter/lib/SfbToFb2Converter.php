@@ -1082,10 +1082,10 @@ class SfbToFb2Converter extends SfbConverter {
 		return $href;
 	}
 
-	protected function doInternalLinkElement($target, $text) {
+	protected function doInternalLinkElement($target, $text, $attributes = []) {
 		return $this->out->xmlElement('a', $text, array(
 			'xlink:href'  => $this->internalLinkTarget . "#$target",
-		), false);
+		) + $attributes, false);
 	}
 
 }

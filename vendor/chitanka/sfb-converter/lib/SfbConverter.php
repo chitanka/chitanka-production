@@ -369,6 +369,9 @@ class SfbConverter {
 			'%{#([^}]+)}%' => function($matches) {
 				return $this->doInternalLink($matches[1]);
 			},
+			'/{a:([^}]+)}/' => function($matches) {
+				return $this->doInlineAnchor($matches[1]);
+			},
 		];
 
 		$this->replPairs = array(
@@ -2501,12 +2504,19 @@ class SfbConverter {
 		return $this->doInternalLinkElement($target, $text);
 	}
 
-	protected function doInternalLinkElement($target, $text) {
+	protected function doInternalLinkElement($target, $text, $attributes = []) {
 		return $this->out->xmlElement('a', $text, array(
 			'href'  => $this->internalLinkTarget . "#$target",
-		), false);
+		) + $attributes, false);
 	}
 
+	protected function doInlineAnchor($text) {
+		$target = "a-$text";
+		return $this->doInternalLinkElement($target, $text, [
+			'id' => $target,
+			'class' => 'inline-anchor',
+		]);
+	}
 
 	public function setInternalLinkTarget($target) {
 		$this->internalLinkTarget = $target;

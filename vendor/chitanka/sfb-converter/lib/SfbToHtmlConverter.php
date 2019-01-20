@@ -184,7 +184,7 @@ class SfbToHtmlConverter extends SfbConverter {
 	}
 
 	protected function getParagraphAnchor() {
-		$id = 'cp-'.$this->lcmd;
+		$id = 'a-'.$this->lcmd;
 		return $this->out->xmlElement('a', $this->lcmd, [
 			'href'  => '#' . $id,
 			'id'    => $id,
