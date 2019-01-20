@@ -175,6 +175,23 @@ class SfbToHtmlConverter extends SfbConverter {
 	}
 
 
+	protected function prepareParagraphAnchor() {
+		$this->paragraphPrefix = $this->getParagraphAnchor();
+	}
+
+	protected function clearParagraphAnchor() {
+		$this->paragraphPrefix = '';
+	}
+
+	protected function getParagraphAnchor() {
+		$id = 'cp-'.$this->lcmd;
+		return $this->out->xmlElement('a', $this->lcmd, [
+			'href'  => '#' . $id,
+			'id'    => $id,
+			'class' => 'paragraph-num'
+		]);
+	}
+
 	protected function doPoemCenterStart() {
 		$this->saveStartTag($this->poemCenterElement, array('class' => 'poem-middle'));
 	}

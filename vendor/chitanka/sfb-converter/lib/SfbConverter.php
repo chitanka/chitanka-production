@@ -747,7 +747,12 @@ class SfbConverter {
 			case self::STYLE_S:         $this->doStyle();            break;
 			case self::RAW_S:           $this->doRaw();              break;
 			case self::EMPTYLINE:       $this->doEmptyLine();        break;
-			default:                    $this->doUnknownContent();
+			default:
+				if ($this->isAtParagraphAnchor()) {
+					$this->doParagraphAnchor();
+				} else {
+					$this->doUnknownContent();
+				}
 		}
 		$this->postDoText();
 	}
@@ -1646,6 +1651,24 @@ class SfbConverter {
 		$this->saveEndTag($this->paragraphElement);
 	}
 
+	protected function isAtParagraphAnchor() {
+		// everything except a starting or an ending tag
+		return !empty($this->lcmd) && preg_match('/[^>$]$/', $this->lcmd);
+	}
+
+	protected function doParagraphAnchor() {
+		$this->prepareParagraphAnchor();
+		$this->doParagraph();
+		$this->clearParagraphAnchor();
+	}
+
+	protected function prepareParagraphAnchor() {
+		$this->paragraphSuffix = " [$this->lcmd]";
+	}
+
+	protected function clearParagraphAnchor() {
+		$this->paragraphSuffix = '';
+	}
 
 	/*************************************************************************/
 
