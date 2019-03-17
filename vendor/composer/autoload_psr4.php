@@ -55,5 +55,6 @@ return array(
     'Doctrine\\Bundle\\DoctrineCacheBundle\\' => array($vendorDir . '/doctrine/doctrine-cache-bundle'),
     'Doctrine\\Bundle\\DoctrineBundle\\' => array($vendorDir . '/doctrine/doctrine-bundle'),
     'Cocur\\Slugify\\' => array($vendorDir . '/cocur/slugify/src'),
+    'Chitanka\\' => array($vendorDir . '/chitanka/rocket-chat-client/src'),
     'App\\' => array($baseDir . '/app'),
 );

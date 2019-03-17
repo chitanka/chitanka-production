@@ -1,0 +1,12 @@
+{
+    "name": "chitanka/rocket-chat-client",
+    "description": "Simple PHP client for Rocket.Chat",
+    "keywords": ["rocket.chat"],
+    "homepage": "https://github.com/chitanka/rocket-chat-client",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": { "Chitanka\\": "src" }
+    }
+}
+

@@ -18,18 +18,91 @@ class ComposerStaticInita416c19f60d891dc908b0d430cdf2e26
         '8ac9dba77d5c65db2811440ee8265f5d' => __DIR__ . '/..' . '/sonata-project/block-bundle/Resources/stubs/symfony2.php',
     );
 
-    public static $firstCharsPsr4 = array (
-        'Z' => true,
-        'W' => true,
-        'S' => true,
-        'N' => true,
-        'M' => true,
-        'K' => true,
-        'I' => true,
-        'E' => true,
-        'D' => true,
-        'C' => true,
-        'A' => true,
+    public static $prefixLengthsPsr4 = array (
+        'Z' => 
+        array (
+            'Zend\\Validator\\' => 15,
+            'Zend\\Uri\\' => 9,
+            'Zend\\Stdlib\\' => 12,
+            'Zend\\ServiceManager\\' => 20,
+            'Zend\\Loader\\' => 12,
+            'Zend\\Http\\' => 10,
+            'Zend\\Feed\\' => 10,
+            'Zend\\Escaper\\' => 13,
+        ),
+        'W' => 
+        array (
+            'WhiteOctober\\PagerfantaBundle\\' => 30,
+        ),
+        'S' => 
+        array (
+            'Symfony\\Polyfill\\Util\\' => 22,
+            'Symfony\\Polyfill\\Php70\\' => 23,
+            'Symfony\\Polyfill\\Php56\\' => 23,
+            'Symfony\\Polyfill\\Mbstring\\' => 26,
+            'Symfony\\Component\\Security\\Acl\\' => 31,
+            'Symfony\\Component\\' => 18,
+            'Symfony\\Bundle\\SwiftmailerBundle\\' => 33,
+            'Symfony\\Bundle\\MonologBundle\\' => 29,
+            'Symfony\\Bundle\\AsseticBundle\\' => 29,
+            'Symfony\\Bundle\\' => 15,
+            'Symfony\\Bridge\\Twig\\' => 20,
+            'Symfony\\Bridge\\ProxyManager\\' => 28,
+            'Symfony\\Bridge\\PhpUnit\\' => 23,
+            'Symfony\\Bridge\\Monolog\\' => 23,
+            'Symfony\\Bridge\\Doctrine\\' => 24,
+            'Sonata\\IntlBundle\\' => 18,
+            'Sonata\\EasyExtendsBundle\\' => 25,
+            'Sonata\\DoctrineORMAdminBundle\\' => 30,
+            'Sonata\\CoreBundle\\' => 18,
+            'Sonata\\Cache\\Tests\\' => 19,
+            'Sonata\\Cache\\' => 13,
+            'Sonata\\BlockBundle\\' => 19,
+            'Sonata\\AdminBundle\\' => 19,
+            'Sfblib\\' => 7,
+            'Sensio\\Bundle\\GeneratorBundle\\' => 30,
+            'Sensio\\Bundle\\FrameworkExtraBundle\\' => 35,
+            'Sensio\\Bundle\\DistributionBundle\\' => 33,
+        ),
+        'N' => 
+        array (
+            'Negotiation\\' => 12,
+        ),
+        'M' => 
+        array (
+            'Monolog\\' => 8,
+        ),
+        'K' => 
+        array (
+            'Knp\\Menu\\' => 9,
+            'Knp\\Bundle\\MenuBundle\\' => 22,
+        ),
+        'I' => 
+        array (
+            'Interop\\Container\\' => 18,
+            'Incenteev\\ParameterHandler\\' => 27,
+        ),
+        'E' => 
+        array (
+            'Eko\\FeedBundle\\' => 15,
+        ),
+        'D' => 
+        array (
+            'Doctrine\\Instantiator\\' => 22,
+            'Doctrine\\Common\\Cache\\' => 22,
+            'Doctrine\\Common\\' => 16,
+            'Doctrine\\Bundle\\DoctrineCacheBundle\\' => 36,
+            'Doctrine\\Bundle\\DoctrineBundle\\' => 31,
+        ),
+        'C' => 
+        array (
+            'Cocur\\Slugify\\' => 14,
+            'Chitanka\\' => 9,
+        ),
+        'A' => 
+        array (
+            'App\\' => 4,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -229,6 +302,10 @@ class ComposerStaticInita416c19f60d891dc908b0d430cdf2e26
         array (
             0 => __DIR__ . '/..' . '/cocur/slugify/src',
         ),
+        'Chitanka\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/chitanka/rocket-chat-client/src',
+        ),
         'App\\' => 
         array (
             0 => __DIR__ . '/../..' . '/app',
@@ -402,7 +479,7 @@ class ComposerStaticInita416c19f60d891dc908b0d430cdf2e26
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->firstCharsPsr4 = ComposerStaticInita416c19f60d891dc908b0d430cdf2e26::$firstCharsPsr4;
+            $loader->prefixLengthsPsr4 = ComposerStaticInita416c19f60d891dc908b0d430cdf2e26::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInita416c19f60d891dc908b0d430cdf2e26::$prefixDirsPsr4;
             $loader->prefixesPsr0 = ComposerStaticInita416c19f60d891dc908b0d430cdf2e26::$prefixesPsr0;
             $loader->classMap = ComposerStaticInita416c19f60d891dc908b0d430cdf2e26::$classMap;
