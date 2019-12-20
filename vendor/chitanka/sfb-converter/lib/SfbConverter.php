@@ -2686,7 +2686,7 @@ class FileLineReader implements LineReader {
 	}
 
 	public function free() {
-		if ($this->_handle) {
+		if (is_resource($this->_handle)) {
 			fclose($this->_handle);
 		}
 	}
