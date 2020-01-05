@@ -114,9 +114,10 @@ class Filesystem
      */
     public function exists($files)
     {
+        $maxPathLength = PHP_MAXPATHLEN - 2;
         foreach ($this->toIterator($files) as $file) {
-            if ('\\' === DIRECTORY_SEPARATOR && strlen($file) > 258) {
-                throw new IOException('Could not check if file exist because path length exceeds 258 characters.', 0, null, $file);
+            if (\strlen($file) > $maxPathLength) {
+                throw new IOException(sprintf('Could not check if file exist because path length exceeds %d characters.', $maxPathLength), 0, null, $file);
             }
 
             if (!file_exists($file)) {
