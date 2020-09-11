@@ -2,17 +2,26 @@
 
 class Extractor {
 
-	public function extractImagesForBookTemplate($text) {
+	public function extractImagesForBookTemplate($text, string $includedFileLine) {
 		$nonImageLineCounter = 1;
 		$extractedImages = [];
-		foreach (explode(SfbConverter::EOL, $text) as $line) {
-			if (SfbConverter::lineContainsBlockImage($line)) {
+		$lines = explode(SfbConverter::EOL, rtrim($text, SfbConverter::EOL));
+		$lastLineNr = count($lines) - 1;
+		$lastImage = null;
+		foreach ($lines as $lineNr => $line) {
+			if (!SfbConverter::lineContainsBlockImage($line)) {
+				$nonImageLineCounter++;
+			} elseif ($nonImageLineCounter === 1) {
+				$extractedImages[] = $line;
+			} elseif ($lineNr < $lastLineNr) {
 				$extractedImages[] = ":$nonImageLineCounter" . $line;
 			} else {
-				$nonImageLineCounter++;
+				$lastImage = $line;
 			}
 		}
-		return implode(SfbConverter::EOL, $extractedImages) . SfbConverter::EOL;
+		return implode(SfbConverter::EOL, $extractedImages) . SfbConverter::EOL
+			. $includedFileLine . SfbConverter::EOL
+			. $lastImage;
 	}
 
 	public function extractImagesFromWorkFilesForBookTemplate($workFiles) {
@@ -26,8 +35,7 @@ class Extractor {
 		foreach ($workFiles as $i => $textFile) {
 			$number = $getNumberFromWorkFileName($textFile) ?: $i;
 			$output[] = '>'. SfbConverter::CMD_DELIM . "{title:-$number}";
-			$output[] = trim($this->extractImagesForBookTemplate(file_get_contents($textFile)), SfbConverter::EOL);
-			$output[] = '>>' . SfbConverter::CMD_DELIM . "{file:-$number}";
+			$output[] = trim($this->extractImagesForBookTemplate(file_get_contents($textFile), '>>' . SfbConverter::CMD_DELIM . "{file:-$number}"), SfbConverter::EOL) . SfbConverter::EOL;
 		}
 		return implode(SfbConverter::EOL, $output) . SfbConverter::EOL;
 	}

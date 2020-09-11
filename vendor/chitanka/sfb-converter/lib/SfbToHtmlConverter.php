@@ -305,7 +305,7 @@ class SfbToHtmlConverter extends SfbConverter {
 	}
 
 	protected function doDateLineStart() {
-		$this->saveStartTag($this->paragraphElement, ['id' => 'p-'.$this->linecnt]);
+		$this->saveStartTag($this->paragraphElement, ['id' => $this->paragraphIdPrefix.$this->linecnt]);
 	}
 
 	protected function doDateLineEnd() {

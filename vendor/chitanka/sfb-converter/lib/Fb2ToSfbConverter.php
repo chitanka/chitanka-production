@@ -2,9 +2,6 @@
 
 use SimpleXMLElement;
 
-// TODO
-// remove <text-author>, <subtitle> tags (sfb is already properly generated)
-// <emphasis> in tables
 class Fb2ToSfbConverter {
 
 	const EOL = "\n";
@@ -69,7 +66,7 @@ class Fb2ToSfbConverter {
 			//$author->{'middle-name'},
 			$author->{'last-name'}
 		));
-		// <nickname> - 0..1 (один, обязателен при отсутствии <first-name> и <last-name>, иначе опционально);
+		// <nickname> - 0..1 (один, обязателен при отсутствии <first-name> и <last-name>, иначе опционально); 
 	}
 
 	// TODO

@@ -34,23 +34,23 @@
     },
     {
         "name": "chitanka/sfb-converter",
-        "version": "1.0.0",
-        "version_normalized": "1.0.0.0",
+        "version": "1.0.3",
+        "version_normalized": "1.0.3.0",
         "source": {
             "type": "git",
             "url": "https://github.com/chitanka/sfb-converter.git",
-            "reference": "05d46fd302e671ac93c76c16e1bb625eca28b676"
+            "reference": "e3122633930225ff0949369bc4347291324eb264"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/chitanka/sfb-converter/zipball/05d46fd302e671ac93c76c16e1bb625eca28b676",
-            "reference": "05d46fd302e671ac93c76c16e1bb625eca28b676",
+            "url": "https://api.github.com/repos/chitanka/sfb-converter/zipball/e3122633930225ff0949369bc4347291324eb264",
+            "reference": "e3122633930225ff0949369bc4347291324eb264",
             "shasum": ""
         },
         "require": {
             "php": ">=5.4.0"
         },
-        "time": "2018-01-17T20:44:45+00:00",
+        "time": "2020-09-11T16:12:27+00:00",
         "type": "library",
         "installation-source": "source",
         "autoload": {
@@ -166,7 +166,8 @@
         "license": [
             "MIT"
         ],
-        "description": "Promoting the interoperability of container objects (DIC, SL, etc.)"
+        "description": "Promoting the interoperability of container objects (DIC, SL, etc.)",
+        "abandoned": "psr/container"
     },
     {
         "name": "cypresslab/gitelephant",
@@ -2082,7 +2083,8 @@
             "lesscss",
             "php",
             "stylesheet"
-        ]
+        ],
+        "abandoned": true
     },
     {
         "name": "pagerfanta/pagerfanta",
@@ -2090,12 +2092,12 @@
         "version_normalized": "1.0.5.0",
         "source": {
             "type": "git",
-            "url": "https://github.com/whiteoctober/Pagerfanta.git",
+            "url": "https://github.com/BabDev/Pagerfanta.git",
             "reference": "29aade64addfdfb12c05aabf160f09d1aea6b143"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/whiteoctober/Pagerfanta/zipball/29aade64addfdfb12c05aabf160f09d1aea6b143",
+            "url": "https://api.github.com/repos/BabDev/Pagerfanta/zipball/29aade64addfdfb12c05aabf160f09d1aea6b143",
             "reference": "29aade64addfdfb12c05aabf160f09d1aea6b143",
             "shasum": ""
         },
@@ -2451,7 +2453,8 @@
         "keywords": [
             "configuration",
             "distribution"
-        ]
+        ],
+        "abandoned": true
     },
     {
         "name": "sensio/framework-extra-bundle",
@@ -2569,7 +2572,8 @@
                 "email": "fabien@symfony.com"
             }
         ],
-        "description": "This bundle generates code for you"
+        "description": "This bundle generates code for you",
+        "abandoned": "symfony/maker-bundle"
     },
     {
         "name": "sensiolabs/security-checker",
@@ -2913,7 +2917,8 @@
         "homepage": "https://sonata-project.org/bundles/core",
         "keywords": [
             "sonata"
-        ]
+        ],
+        "abandoned": true
     },
     {
         "name": "sonata-project/doctrine-orm-admin-bundle",
@@ -4199,7 +4204,8 @@
         "keywords": [
             "page",
             "paging"
-        ]
+        ],
+        "abandoned": "babdev/pagerfanta-bundle"
     },
     {
         "name": "willdurand/jsonp-callback-validator",
@@ -4338,7 +4344,8 @@
         "keywords": [
             "escaper",
             "zf2"
-        ]
+        ],
+        "abandoned": "laminas/laminas-escaper"
     },
     {
         "name": "zendframework/zend-feed",
@@ -4401,7 +4408,8 @@
         "keywords": [
             "feed",
             "zf2"
-        ]
+        ],
+        "abandoned": "laminas/laminas-feed"
     },
     {
         "name": "zendframework/zend-http",
@@ -4453,7 +4461,8 @@
         "keywords": [
             "http",
             "zf2"
-        ]
+        ],
+        "abandoned": "laminas/laminas-http"
     },
     {
         "name": "zendframework/zend-loader",
@@ -4499,7 +4508,8 @@
         "keywords": [
             "loader",
             "zf2"
-        ]
+        ],
+        "abandoned": "laminas/laminas-loader"
     },
     {
         "name": "zendframework/zend-servicemanager",
@@ -4553,7 +4563,8 @@
             "service-manager",
             "servicemanager",
             "zf"
-        ]
+        ],
+        "abandoned": "laminas/laminas-servicemanager"
     },
     {
         "name": "zendframework/zend-stdlib",
@@ -4600,7 +4611,8 @@
         "keywords": [
             "stdlib",
             "zf2"
-        ]
+        ],
+        "abandoned": "laminas/laminas-stdlib"
     },
     {
         "name": "zendframework/zend-uri",
@@ -4649,7 +4661,8 @@
         "keywords": [
             "uri",
             "zf2"
-        ]
+        ],
+        "abandoned": "laminas/laminas-uri"
     },
     {
         "name": "zendframework/zend-validator",
@@ -4718,6 +4731,7 @@
         "keywords": [
             "validator",
             "zf2"
-        ]
+        ],
+        "abandoned": "laminas/laminas-validator"
     }
 ]
