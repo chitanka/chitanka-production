@@ -280,6 +280,13 @@ class SfbConverter {
 	private $startpos;
 
 	/**
+	 * This many lines were skipped when $startpos was set.
+	 * This is needed when generating a unique overall identifier, e.g. IDs for paragraphs.
+	 * @var int
+	 */
+	protected $nbOfSkippedLines = 0;
+
+	/**
 	 * Current line number in the reading buffer
 	 * @var int
 	 */
@@ -511,6 +518,10 @@ class SfbConverter {
 	 */
 	public function setStartPosition($startpos) {
 		$this->startpos = $startpos;
+	}
+
+	public function setNbOfSkippedLines(int $nbOfLines) {
+		$this->nbOfSkippedLines = $nbOfLines;
 	}
 
 	/**
@@ -1648,11 +1659,15 @@ class SfbConverter {
 
 
 	protected function doParagraphStart() {
+		$this->saveStartTag($this->paragraphElement, $this->getParagraphAttributes());
+	}
+
+	protected function getParagraphAttributes() {
 		$attributes = [];
 		if ($this->paragraphIdsEnabled) {
 			$attributes['id'] = $this->paragraphIdPrefix.$this->linecnt;
 		}
-		$this->saveStartTag($this->paragraphElement, $attributes);
+		return $attributes;
 	}
 
 	protected function doParagraphEnd() {

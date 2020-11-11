@@ -278,6 +278,11 @@ class SfbToHtmlConverter extends SfbConverter {
 		}
 	}
 
+	protected function getParagraphAttributes() {
+		return parent::getParagraphAttributes() + [
+			'data-id' => $this->nbOfSkippedLines + $this->linecnt,
+		];
+	}
 
 	protected function doAuthorStart() {
 		$this->saveStartTag($this->authorElement, array('class' => 'author'));

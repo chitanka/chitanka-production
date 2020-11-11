@@ -39,16 +39,16 @@
         },
         {
             "name": "chitanka/sfb-converter",
-            "version": "1.0.3",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/chitanka/sfb-converter.git",
-                "reference": "e3122633930225ff0949369bc4347291324eb264"
+                "reference": "444f0afd00aaf079d291a12d0e9538f1950d7efc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/chitanka/sfb-converter/zipball/e3122633930225ff0949369bc4347291324eb264",
-                "reference": "e3122633930225ff0949369bc4347291324eb264",
+                "url": "https://api.github.com/repos/chitanka/sfb-converter/zipball/444f0afd00aaf079d291a12d0e9538f1950d7efc",
+                "reference": "444f0afd00aaf079d291a12d0e9538f1950d7efc",
                 "shasum": ""
             },
             "require": {
@@ -75,7 +75,7 @@
             "keywords": [
                 "sfb"
             ],
-            "time": "2020-09-11T16:12:27+00:00"
+            "time": "2020-11-10T21:14:58+00:00"
         },
         {
             "name": "cocur/slugify",
@@ -3805,6 +3805,7 @@
                 "i18n",
                 "text"
             ],
+            "abandoned": true,
             "time": "2015-08-22T16:38:35+00:00"
         },
         {
@@ -4531,6 +4532,7 @@
                 }
             ],
             "description": "This bundle generates code for you",
+            "abandoned": "symfony/maker-bundle",
             "time": "2016-02-26T04:36:01+00:00"
         },
         {
@@ -4610,5 +4612,6 @@
         "ext-xsl": "*",
         "ext-zip": "*"
     },
-    "platform-dev": []
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
 }
