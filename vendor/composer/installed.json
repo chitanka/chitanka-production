@@ -34,23 +34,23 @@
     },
     {
         "name": "chitanka/sfb-converter",
-        "version": "1.1.0",
-        "version_normalized": "1.1.0.0",
+        "version": "2.0.0",
+        "version_normalized": "2.0.0.0",
         "source": {
             "type": "git",
             "url": "https://github.com/chitanka/sfb-converter.git",
-            "reference": "444f0afd00aaf079d291a12d0e9538f1950d7efc"
+            "reference": "aa795d8fb0650e8cb896f0becce2a4a7498ad844"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/chitanka/sfb-converter/zipball/444f0afd00aaf079d291a12d0e9538f1950d7efc",
-            "reference": "444f0afd00aaf079d291a12d0e9538f1950d7efc",
+            "url": "https://api.github.com/repos/chitanka/sfb-converter/zipball/aa795d8fb0650e8cb896f0becce2a4a7498ad844",
+            "reference": "aa795d8fb0650e8cb896f0becce2a4a7498ad844",
             "shasum": ""
         },
         "require": {
-            "php": ">=5.4.0"
+            "php": ">=7.0.0"
         },
-        "time": "2020-11-10T21:14:58+00:00",
+        "time": "2020-11-13T21:07:18+00:00",
         "type": "library",
         "installation-source": "source",
         "autoload": {

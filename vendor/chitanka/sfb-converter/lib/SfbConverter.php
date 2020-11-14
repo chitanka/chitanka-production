@@ -1863,7 +1863,7 @@ class SfbConverter {
 
 	protected function saveEmptyLineBuffer() {
 		$buffer = $this->flushEmptyLineBuffer();
-		if ( ! empty($buffer) ) {
+		if ( ! empty($buffer) && ! empty($this->_text[$this->_curBlock][$this->_curSubBlock]) ) {
 			$this->save($buffer);
 		}
 	}
