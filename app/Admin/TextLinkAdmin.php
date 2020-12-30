@@ -1,6 +1,6 @@
 <?php namespace App\Admin;
 
-use App\Entity\BookSite;
+use App\Entity\ExternalSite;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
@@ -39,12 +39,14 @@ class TextLinkAdmin extends Admin {
 	protected function configureFormFields(FormMapper $formMapper) {
 		$formMapper->with('General attributes')
 			//->add('text')
-			->add('site')
+			->add('site', null, ['query_builder' => function ($repo) {
+				return $repo->createQueryBuilder('e')->orderBy('e.name');
+			}])
 			->add('code')
 			->add('description')
 			->add('mediaType', 'choice', [
 				'required' => false,
-				'choices' => array_combine(BookSite::MEDIA_TYPES, BookSite::MEDIA_TYPES),
+				'choices' => array_combine(ExternalSite::MEDIA_TYPES, ExternalSite::MEDIA_TYPES),
 			])
 			->end();
 	}
