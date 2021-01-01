@@ -5,15 +5,14 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity
  * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
- * @ORM\Table(name="text_link",
- *	uniqueConstraints={@ORM\UniqueConstraint(name="text_site_uniq", columns={"text_id", "site_id"})}
- * )
+ * @ORM\HasLifecycleCallbacks
+ * @ORM\Table(name="text_link")
  */
 class TextLink extends Entity implements \JsonSerializable {
 	/**
 	 * @ORM\Column(type="integer")
 	 * @ORM\Id
-	 * @ORM\GeneratedValue(strategy="CUSTOM")
+	 * @ORM\GeneratedValue
 	 * @ORM\CustomIdGenerator(class="App\Doctrine\CustomIdGenerator")
 	 */
 	private $id;
@@ -25,8 +24,8 @@ class TextLink extends Entity implements \JsonSerializable {
 	private $text;
 
 	/**
-	 * @var BookSite
-	 * @ORM\ManyToOne(targetEntity="BookSite")
+	 * @var ExternalSite
+	 * @ORM\ManyToOne(targetEntity="ExternalSite")
 	 */
 	private $site;
 
@@ -41,6 +40,12 @@ class TextLink extends Entity implements \JsonSerializable {
 	 * @ORM\Column(type="string", length=255, nullable=true)
 	 */
 	private $description;
+
+	/**
+	 * @var string
+	 * @ORM\Column(type="string", length=30)
+	 */
+	private $mediaType;
 
 	public function getId() { return $this->id; }
 
@@ -58,12 +63,22 @@ class TextLink extends Entity implements \JsonSerializable {
 	public function setDescription($description) { $this->description = $description; }
 	public function getDescription() { return $this->description; }
 
+	public function setMediaType($type) { $this->mediaType = $type; }
+	public function getMediaType() { return $this->mediaType; }
+
 	public function getUrl() {
-		return str_replace('BOOKID', $this->code, $this->site->getUrl());
+		return $this->site->generateFullUrl($this->code);
 	}
 
 	public function __toString() {
 		return $this->getSite() .' ('.$this->code.')';
+	}
+
+	/** @ORM\PrePersist */
+	public function preInsert() {
+		if (empty($this->mediaType)) {
+			$this->setMediaType($this->site->getMediaType());
+		}
 	}
 
 	/**
@@ -76,6 +91,7 @@ class TextLink extends Entity implements \JsonSerializable {
 			'id' => $this->getId(),
 			'code' => $this->getCode(),
 			'description' => $this->getDescription(),
+			'mediaType' => $this->mediaType,
 		];
 	}
 }

@@ -1,18 +1,24 @@
 <?php namespace App\Admin;
 
+use App\Entity\ExternalSite;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Show\ShowMapper;
 
-class BookSiteAdmin extends Admin {
-	protected $baseRoutePattern = 'book-site';
-	protected $baseRouteName = 'admin_book_site';
+class ExternalSiteAdmin extends Admin {
+	protected $baseRoutePattern = 'external-site';
+	protected $baseRouteName = 'admin_external_site';
+
+	protected $datagridValues = [
+		'_sort_by' => 'name',
+	];
 
 	protected function configureShowField(ShowMapper $showMapper) {
 		$showMapper
 			->add('name')
 			->add('url')
+			->add('mediaType')
 		;
 	}
 
@@ -34,9 +40,13 @@ class BookSiteAdmin extends Admin {
 		$formMapper->with('General attributes')
 			->add('name')
 			->add('url')
+			->add('mediaType', 'choice', [
+				'required' => false,
+				'choices' => array_combine(ExternalSite::MEDIA_TYPES, ExternalSite::MEDIA_TYPES),
+			])
 			->end()
 			->setHelps([
-				'url' => $this->trans('help.booksite.url')
+				'url' => $this->trans('help.externalsite.url')
 			]);
 
 	}
@@ -45,6 +55,7 @@ class BookSiteAdmin extends Admin {
 		$datagrid
 			->add('name')
 			->add('url')
+			->add('mediaType')
 		;
 	}
 

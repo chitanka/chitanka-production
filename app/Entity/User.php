@@ -22,6 +22,7 @@ class User implements UserInterface, \JsonSerializable {
 	const GROUP_USER = 'user';
 	const GROUP_TEXT_LABEL = 'text-label';
 	const GROUP_EDIT_WIKI = 'edit-wiki';
+	const GROUP_EDIT_JUXTAPOSED_TEXTS = 'edit-juxtaposed-texts';
 	const GROUP_WORKROOM_MEMBER = 'workroom-member';
 	const GROUP_WORKROOM_SUPERVISOR = 'workroom-supervisor';
 	const GROUP_WORKROOM_ADMIN = 'workroom-admin';
@@ -182,7 +183,7 @@ class User implements UserInterface, \JsonSerializable {
 
 	public function setEmail($email) {
 		if ($email != $this->email) {
-			$this->setIsEmailValid(null);
+			$this->setIsEmailValid(true);
 		}
 		$this->email = $email;
 	}
@@ -653,8 +654,8 @@ class User implements UserInterface, \JsonSerializable {
 
 	public function closeAccount() {
 		$this->setClosedAt();
-		$this->setUsername('__CLOSED__'.$this->getUsername());
-		$this->setEmail('__CLOSED__'.$this->getEmail());
+		$this->setUsername('__CLOSED__'.time().'__'.$this->getUsername());
+		$this->setEmail('__CLOSED__'.time().'__'.$this->getEmail());
 		$this->setNews(false);
 		$this->setIsEmailValid(false);
 		$this->logout();

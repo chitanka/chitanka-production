@@ -488,10 +488,8 @@ dd.download {
 }
 dl.download-multi {
 	padding-top: .5em;
-	dd, dt {
-		padding-top: .5em;
-	}
 	dt {
+		padding-top: .8em;
 		width: 82%;
 		max-width: 82%;
 		text-align: right;
@@ -500,7 +498,7 @@ dl.download-multi {
 	}
 	dd.download {
 		border-top: 1px solid @fieldsetBordColor;
-		padding-left: 20px;
+		padding-top: .5em;
 	}
 }
 dd.orig-name {
@@ -829,6 +827,9 @@ ul.superlist {
 		width: 3em;
 		height: 2.5em;
 	}
+}
+.dl-sm form .btn {
+	padding: 2px 2px 3px 6px;
 }
 .dl-txt { background-image: data-uri('../images/formats/txt.png'); }
 .dl-fb2 { background-image: data-uri('../images/formats/fb2.png'); }
@@ -1785,12 +1786,12 @@ ul.two-columns {
 .delete-form button:hover .fa {
 	display: inline;
 }
+.btn-group .bookmark-form {
+	float: left;
+}
 .bookmark-form button:before {
 	content: "\F006\00A0"; // fa-star-o
 	font-family: FontAwesome;
-}
-.dl-list .bookmark-form button {
-	background-color: transparent;
 }
 .bookmark-form button.active:before,
 .bookmark-form button:focus:before,
@@ -1913,6 +1914,64 @@ td .progress {
 .fa-info-circle {
 	color: @buttonLinksFgColor;
 }
+
+// for juxtaposed texts aka multi-texts
+.aligned-paragraphs p {
+	border-top: 1px dashed #E0E0E0;
+	margin-top: 0.3rem;
+	padding-top: 0.3rem;
+	&.skipped {
+		border-top: none;
+		margin-top: 0;
+		padding-top: 0;
+	}
+}
+.editing-enabled .skipped {
+	background: lightgoldenrodyellow;
+}
+.skipped .chain-link:before {
+	content: '\f127';// chain-broken
+}
+.chain-link {
+	position: absolute;
+	left: -1em;
+}
+
+.media-container {
+	margin: 0.3em auto 0.6em;
+	max-width: 120em;
+	audio {
+		width: 100%;
+	}
+}
+// a helper container to generate an aspect ratio of 16:9
+// see https://www.h3xed.com/web-development/how-to-make-a-responsive-100-width-youtube-iframe-embed
+.video-container {
+	position: relative;
+	width: 100%;
+	height: 0;
+	padding-bottom: 56.25%;
+	iframe {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+}
+a.external::before {
+	font-family: FontAwesome;
+}
+a.audio::before {
+	content: '\f028\00a0';// volume-up
+}
+a.youtube::before {
+	content: '\f16a\00a0';// youtube-play
+}
+a.media-active::before {
+	color: red;
+}
+
 // for visual aid during development
 #env-dev {
 	position: absolute;

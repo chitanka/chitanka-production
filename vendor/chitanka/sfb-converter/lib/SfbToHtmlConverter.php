@@ -257,13 +257,19 @@ class SfbToHtmlConverter extends SfbConverter {
 
 
 	protected function doEmptyLine() {
-		$this->saveEmptyLine($this->out->xmlElement($this->paragraphElement, '&#160;'));
+		$this->saveEmptyLine($this->out->xmlElement($this->paragraphElement, '&#160;', [
+			'class' => 'empty-line',
+			'id' => $this->generateParagraphId(),
+			'data-id' => $this->generateDataId(),
+		]));
 	}
 
 
 	protected function inSeparator() {
 		$this->saveElement($this->separatorElement, $this->ltext, array(
-			'class' => 'separator'
+			'class' => 'separator',
+			'id' => $this->generateParagraphId(),
+			'data-id' => $this->generateDataId(),
 		));
 	}
 
@@ -278,6 +284,11 @@ class SfbToHtmlConverter extends SfbConverter {
 		}
 	}
 
+	protected function getParagraphAttributes() {
+		return parent::getParagraphAttributes() + [
+			'data-id' => $this->generateDataId(),
+		];
+	}
 
 	protected function doAuthorStart() {
 		$this->saveStartTag($this->authorElement, array('class' => 'author'));
@@ -305,7 +316,7 @@ class SfbToHtmlConverter extends SfbConverter {
 	}
 
 	protected function doDateLineStart() {
-		$this->saveStartTag($this->paragraphElement, ['id' => $this->paragraphIdPrefix.$this->linecnt]);
+		$this->saveStartTag($this->paragraphElement, ['id' => $this->generateParagraphId()]);
 	}
 
 	protected function doDateLineEnd() {
@@ -377,6 +388,13 @@ class SfbToHtmlConverter extends SfbConverter {
 		return 'ref_' . self::getNoteNr($nr);
 	}
 
+	protected function generateParagraphId() {
+		return $this->paragraphIdPrefix.$this->linecnt;
+	}
+
+	protected function generateDataId() {
+		return $this->nbOfSkippedLines + $this->linecnt;
+	}
 
 	protected function saveUnknownContent() {
 		$this->saveContent("SFB Error: Unknown content at line $this->linecnt: $this->line\n");

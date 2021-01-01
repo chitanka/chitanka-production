@@ -6,10 +6,13 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 /**
  * @ORM\Entity
  * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
- * @ORM\Table(name="book_site")
+ * @ORM\Table(name="external_site")
  * @UniqueEntity(fields="name")
  */
-class BookSite extends Entity implements \JsonSerializable {
+class ExternalSite extends Entity implements \JsonSerializable {
+
+	const MEDIA_TYPES = ['html', 'audio', 'youtube'];
+
 	/**
 	 * @ORM\Column(type="integer")
 	 * @ORM\Id
@@ -20,7 +23,7 @@ class BookSite extends Entity implements \JsonSerializable {
 
 	/**
 	 * @var string
-	 * @ORM\Column(type="string", length=50, unique=true)
+	 * @ORM\Column(type="string", length=60)
 	 */
 	private $name = '';
 
@@ -30,8 +33,14 @@ class BookSite extends Entity implements \JsonSerializable {
 	 */
 	private $url;
 
+	/**
+	 * @var string
+	 * @ORM\Column(type="string", length=30)
+	 */
+	private $mediaType;
+
 	public function __toString() {
-		return $this->name;
+		return $this->name ?: $this->url;
 	}
 
 	public function getId() { return $this->id; }
@@ -41,6 +50,13 @@ class BookSite extends Entity implements \JsonSerializable {
 
 	public function setUrl($url) { $this->url = $url; }
 	public function getUrl() { return $this->url; }
+
+	public function setMediaType($mediaType) { $this->mediaType = $mediaType; }
+	public function getMediaType() { return $this->mediaType; }
+
+	public function generateFullUrl(string $mediaId): string {
+		return str_replace('MEDIAID', $mediaId, $this->getUrl());
+	}
 
 	/**
 	 * Specify data which should be serialized to JSON
@@ -52,6 +68,7 @@ class BookSite extends Entity implements \JsonSerializable {
 			'id' => $this->getId(),
 			'name' => $this->getName(),
 			'url' => $this->getUrl(),
+			'mediaType' => $this->mediaType,
 		];
 	}
 }

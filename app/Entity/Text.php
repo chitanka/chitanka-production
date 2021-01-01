@@ -309,6 +309,18 @@ class Text extends BaseWork implements  \JsonSerializable {
 	private $revisions;
 
 	/**
+	 * @var ArrayCollection|TextCombination[]
+	 * @ORM\OneToMany(targetEntity="TextCombination", mappedBy="text1", cascade={"persist", "remove"}, orphanRemoval=true)
+	 */
+	private $textCombinations1;
+
+	/**
+	 * @var ArrayCollection|TextCombination[]
+	 * @ORM\OneToMany(targetEntity="TextCombination", mappedBy="text2", cascade={"persist", "remove"}, orphanRemoval=true)
+	 */
+	private $textCombinations2;
+
+	/**
 	 * @var ArrayCollection|TextLink[]
 	 * @ORM\OneToMany(targetEntity="TextLink", mappedBy="text", cascade={"persist", "remove"}, orphanRemoval=true)
 	 * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
@@ -320,6 +332,9 @@ class Text extends BaseWork implements  \JsonSerializable {
 	 * @ORM\Column(type="array", nullable=true)
 	 */
 	private $alikes;
+
+	/** @var array Cache storage */
+	private $c = [];
 
 	public function __construct($id = null) {
 		$this->id = $id;
@@ -400,7 +415,7 @@ class Text extends BaseWork implements  \JsonSerializable {
 
 	public function setSernr($sernr) { $this->sernr = $sernr; }
 	public function getSernr() {
-		if ($this->sernr == (int) $this->sernr) {
+		if ($this->sernr == (int) $this->sernr && $this->sernr > 0) {
 			return (int) $this->sernr;
 		}
 		return $this->sernr ? rtrim($this->sernr, '0.') : null;
@@ -514,6 +529,14 @@ class Text extends BaseWork implements  \JsonSerializable {
 		$this->revisions[] = $revision;
 	}
 
+	/** @return JuxtaposedText[] */
+	public function getJuxtaposedTexts() {
+		return $this->c[__FUNCTION__] ?? $this->c[__FUNCTION__] = array_merge(
+			array_map(function(TextCombination $tc) { return new JuxtaposedText($this, $tc->getText2()); }, $this->textCombinations1->toArray()),
+			array_map(function(TextCombination $tc) { return new JuxtaposedText($this, $tc->getText1()); }, $this->textCombinations2->toArray())
+		);
+	}
+
 	/**
 	 * @param string $comment
 	 * @param User $user
@@ -603,42 +626,12 @@ class Text extends BaseWork implements  \JsonSerializable {
 		return $this->transYear . (empty($this->transYear2) ? '' : '–'.$this->transYear2);
 	}
 
-	public function getAuthorNameEscaped() {
-		$origNames = implode(', ', $this->getAuthorOrigNames());
-		if (preg_match('/[a-z]/', $origNames)) {
-			return Stringy::slugify($origNames);
-		}
-		return Char::cyr2lat($this->getAuthorNamesString());
-	}
-
 	public function isGamebook() {
 		return $this->type->is('gamebook');
 	}
 
 	public function isTranslation() {
 		return $this->lang != $this->origLang;
-	}
-
-	public function getAuthorNames() {
-		return array_map(function(Person $author) {
-			return $author->getName();
-		}, $this->getAuthors());
-	}
-
-	public function getAuthorNamesString() {
-		return implode(', ', $this->getAuthorNames());
-	}
-
-	private function getAuthorOrigNames() {
-		return array_map(function(Person $author) {
-			return $author->getOrigName();
-		}, $this->getAuthors());
-	}
-
-	private function getAuthorSlugs() {
-		return array_map(function(Person $author) {
-			return $author->getSlug();
-		}, $this->getAuthors());
 	}
 
 	private function getTranslatorSlugs() {
@@ -878,16 +871,13 @@ EOS;
 	}
 
 	public function getNameForFile() {
-		$filename = strtr(Setup::setting('download_file'), [
+		return strtr(Setup::setting('download_file'), [
 			'AUTHOR' => $this->getAuthorNameEscaped(),
 			'SERIES' => empty($this->series) ? '' : Stringy::createAcronym(Char::cyr2lat($this->series->getName())),
-			'SERNO' => empty($this->sernr) ? '' : $this->sernr,
+			'SERNO' => $this->getSernr() ?? '',
 			'TITLE' => Char::cyr2lat($this->title),
 			'ID' => $this->getId(),
 		]);
-		$filename = substr(File::cleanFileName($filename), 0, 200);
-
-		return $filename;
 	}
 
 	public static function getMinRating() {
@@ -1137,6 +1127,17 @@ EOS;
 	public function getNextHeaderNr(int $currentNr) {
 		$nextHeader = $this->getNextHeaderByNr($currentNr);
 		return $nextHeader ? $nextHeader->getNr() : null;
+	}
+
+	public function getNumberOfLinesUntilHeader(int $headerNr): int {
+		$nbOfLines = 0;
+		foreach ($this->getHeaders() as $header) {
+			if ($header->getNr() >= $headerNr) {
+				break;
+			}
+			$nbOfLines += $header->getLinecnt();
+		}
+		return $nbOfLines;
 	}
 
 	public function getTotalRating() {

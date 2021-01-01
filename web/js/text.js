@@ -284,3 +284,28 @@ if ( ! location.hash ) {
 // });
 
 prepareGamebook();
+
+jQuery(function($){
+	const createMediaFragment = function(link) {
+		switch (link.getAttribute('data-media')) {
+			case 'audio':
+				return '<audio controls autoplay src="'+link.href+'" class="media-player"></audio>';
+			case 'youtube':
+				// https://www.youtube-nocookie.com/embed/PVOS2k8Qa-A
+				return '<div class="video-container"><iframe width="560" height="315" src="'+link.href+'" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="media-player"></iframe></div>';
+			default:
+				return '<iframe width="100%" height="800" src="'+link.href+'" frameborder="0" allowfullscreen class="media-player"></iframe>';
+		}
+	};
+	$('a.external').on('click', function(){
+		const key = 'fragment';
+		const media = $(this).data(key);
+		if (media) {
+			$(media).toggle();
+			return false;
+		}
+		const $media = $('<div class="media-container"></div>').append(createMediaFragment(this)).insertAfter(this);
+		$(this).data(key, $media[0]).addClass('media-active');
+		return false;
+	});
+});
