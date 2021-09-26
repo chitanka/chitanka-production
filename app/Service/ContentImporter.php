@@ -114,9 +114,15 @@ class ContentImporter {
 		if (isset($work['year']) && strpos($work['year'], '-') !== false) {
 			list($work['year'], $work['year2']) = explode('-', $work['year']);
 		}
+		if (!isset($work['orig_lang'])) {
+			$work['orig_lang'] = $work['lang'];
+		}
 		if (isset($work['translators'])) {
 			$translators = [];
 			foreach (explode(';', $work['translators']) as $slugYear) {
+				if (strpos($slugYear, ',') === false) {
+					$slugYear .= ',?';
+				}
 				list($slug, $transYear) = explode(',', $slugYear);
 				if ($transYear == '?') {
 					$transYear = null;
@@ -271,7 +277,7 @@ class ContentImporter {
 	private static function sortDataFiles($files) {
 		$sorted = [];
 		foreach ($files as $file) {
-			if (preg_match('/\.(\d+)\.data/', $file, $matches) && filesize($file)) {
+			if (preg_match('/\.(\d+\w?)\.data/', $file, $matches) && filesize($file)) {
 				$sorted[$matches[1]] = $file;
 			}
 		}
@@ -283,7 +289,7 @@ class ContentImporter {
 	private static function getBookTemplate($file, $works) {
 		$bookTmpl = file_get_contents($file);
 		$bookWorks = [];
-		if (preg_match_all('/\{(file|text):(\d+)/', $bookTmpl, $m)) {
+		if (preg_match_all('/\{(file|text):(\d+\w?)/', $bookTmpl, $m)) {
 			// already existing in the database works included in this book
 			foreach ($m[2] as $oldWork) {
 				$bookWorks[] = ['id' => $oldWork, 'is_new' => false];
@@ -306,10 +312,10 @@ class ContentImporter {
 	private static function prepareWorkTemplate($work) {
 		$files = [];
 		$template = file_get_contents($work['tmpl']);
-		if (preg_match_all('/\{(text|file):-\d+(-.+)\}/', $template, $matches)) {
+		if (preg_match_all('/\{(text|file):-[\d\w]+(-.+)\}/', $template, $matches)) {
 			foreach ($matches[2] as $match) {
 				$files["$work[id]$match"] = str_replace('.tmpl', "$match.text", $work['tmpl']);
-				$template = preg_replace("/(text|file):-\d+-/", "$1:$work[id]-", $template);
+				$template = preg_replace("/(text|file):-[\d\w]+-/", "$1:$work[id]-", $template);
 			}
 		}
 		$work['text'] = $files;
