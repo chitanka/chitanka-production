@@ -212,8 +212,7 @@ abstract class Controller extends SymfonyController {
 
 	public function configureExtraDownloadFormats() {
 		if (class_exists(BaseWork::class, false)) {
-			BaseWork::$MOBI_ENABLED = $this->container->getParameter('mobi_download_enabled');
-			BaseWork::$PDF_ENABLED = $this->container->getParameter('pdf_download_enabled');
+			BaseWork::$EXTRA_FORMATS = $this->container->getParameter('download_formats_external_converter') ?: [];
 		}
 	}
 
@@ -222,10 +221,10 @@ abstract class Controller extends SymfonyController {
 		return $this->get('request_stack')->getMasterRequest();
 	}
 
-	protected function readOptionOrParam(string $option, string $namespace = 'misc') {
+	protected function readOptionOrParam(string $option, string $namespace = 'misc'): string {
 		$fullOptionName = "$namespace.$option";
 		$user = $this->getUser();
-		$storedOption = $user->option($fullOptionName);
+		$storedOption = $user->option($fullOptionName, '');
 		$param = $this->getRequest()->query->get($option);
 		if ($param !== null && $storedOption !== $param) {
 			$user->setOption($fullOptionName, $param);
