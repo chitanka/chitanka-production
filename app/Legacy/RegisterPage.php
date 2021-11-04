@@ -83,7 +83,7 @@ class RegisterPage extends Page {
 		if ( $isValid !== true ) {
 			return "Знакът „{$isValid}“ не е позволен в потребителското име.";
 		}
-		if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+		if ($this->email && !filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
 			return 'Въведеният адрес за електронна поща е невалиден.';
 		}
 		return '';
@@ -177,7 +177,7 @@ class RegisterPage extends Page {
 				<input type="checkbox" name="news"> Получаване на месечен бюлетин
 			</label>
 		</div>
-		<div class="help-block">Алтернативен начин да следите новото в библиотеката предлага страницата <a href="{$this->controller->generateUrlForLegacyCode('new')}">Новодобавено</a>.</div>
+		<div class="help-block">Алтернативен начин да следите новото в библиотеката предлага страницата <a href="{$this->controller->generateUrlForLegacyCode('new')}" tabindex="-1">Новодобавено</a>.</div>
 	</div>
 	<div class="form-group">
 		{$this->makeCaptchaQuestion()}
