@@ -80,7 +80,6 @@ class ComposerStaticInita416c19f60d891dc908b0d430cdf2e26
         'I' => 
         array (
             'Interop\\Container\\' => 18,
-            'Incenteev\\ParameterHandler\\' => 27,
         ),
         'E' => 
         array (
@@ -270,10 +269,6 @@ class ComposerStaticInita416c19f60d891dc908b0d430cdf2e26
         array (
             0 => __DIR__ . '/..' . '/container-interop/container-interop/src/Interop/Container',
         ),
-        'Incenteev\\ParameterHandler\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/incenteev/composer-parameter-handler',
-        ),
         'Eko\\FeedBundle\\' => 
         array (
             0 => __DIR__ . '/..' . '/eko/feedbundle',
@@ -369,7 +364,7 @@ class ComposerStaticInita416c19f60d891dc908b0d430cdf2e26
         array (
             'Less' => 
             array (
-                0 => __DIR__ . '/..' . '/oyejorge/less.php/lib',
+                0 => __DIR__ . '/..' . '/wikimedia/less.php/lib',
             ),
         ),
         'J' => 
@@ -473,7 +468,7 @@ class ComposerStaticInita416c19f60d891dc908b0d430cdf2e26
         'ParseError' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/ParseError.php',
         'SqlFormatter' => __DIR__ . '/..' . '/jdorn/sql-formatter/lib/SqlFormatter.php',
         'TypeError' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/TypeError.php',
-        'lessc' => __DIR__ . '/..' . '/oyejorge/less.php/lessc.inc.php',
+        'lessc' => __DIR__ . '/..' . '/wikimedia/less.php/lessc.inc.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
