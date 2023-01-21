@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,9 +20,9 @@
 
 namespace GitElephant\Objects;
 
-use \GitElephant\Repository;
-use \GitElephant\Command\LogCommand;
-use \GitElephant\Utilities;
+use GitElephant\Command\LogCommand;
+use GitElephant\Repository;
+use GitElephant\Utilities;
 
 /**
  * Git log abstraction object
@@ -41,7 +42,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @var array
      */
-    private $commits  = array();
+    private $commits = [];
 
     /**
      * the cursor position
@@ -58,7 +59,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return \GitElephant\Objects\Log
      */
-    public static function createFromOutputLines(Repository $repository, $outputLines)
+    public static function createFromOutputLines(Repository $repository, array $outputLines): \GitElephant\Objects\Log
     {
         $log = new self($repository);
         $log->parseOutputLines($outputLines);
@@ -69,23 +70,20 @@ class Log implements \ArrayAccess, \Countable, \Iterator
     /**
      * Class constructor
      *
-     * @param \GitElephant\Repository $repository  repo
-     * @param string                  $ref         treeish reference
-     * @param null                    $path        path
-     * @param int                     $limit       limit
-     * @param null                    $offset      offset
-     * @param boolean                 $firstParent first parent
-     *
-     * @throws \RuntimeException
-     * @throws \Symfony\Component\Process\Exception\RuntimeException
+     * @param Repository  $repository
+     * @param string      $ref
+     * @param string|null $path
+     * @param int         $limit
+     * @param int|null    $offset
+     * @param bool        $firstParent
      */
     public function __construct(
         Repository $repository,
         $ref = 'HEAD',
         $path = null,
-        $limit = 15,
-        $offset = null,
-        $firstParent = false
+        int $limit = 15,
+        int $offset = null,
+        bool $firstParent = false
     ) {
         $this->repository = $repository;
         $this->createFromCommand($ref, $path, $limit, $offset, $firstParent);
@@ -97,7 +95,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      * @param string  $ref         treeish reference
      * @param string  $path        path
      * @param int     $limit       limit
-     * @param string  $offset      offset
+     * @param int  $offset      offset
      * @param boolean $firstParent first parent
      *
      * @throws \RuntimeException
@@ -106,17 +104,29 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @see ShowCommand::commitInfo
      */
-    private function createFromCommand($ref, $path, $limit, $offset, $firstParent)
-    {
-        $command = LogCommand::getInstance($this->getRepository())->showLog($ref, $path, $limit, $offset, $firstParent);
-        $outputLines = $this->getRepository()->getCaller()->execute($command)->getOutputLines(true);
+    private function createFromCommand(
+        $ref,
+        $path = null,
+        int $limit = null,
+        int $offset = null,
+        bool $firstParent = false
+    ): void {
+        $command = LogCommand::getInstance($this->getRepository())
+            ->showLog($ref, $path, $limit, $offset, $firstParent);
+
+        $outputLines = $this->getRepository()
+            ->getCaller()
+            ->execute($command)
+            ->getOutputLines(true);
+
         $this->parseOutputLines($outputLines);
     }
 
-    private function parseOutputLines($outputLines)
+    private function parseOutputLines(array $outputLines): void
     {
-        $this->commits = array();
+        $this->commits = [];
         $commits = Utilities::pregSplitFlatArray($outputLines, '/^commit (\w+)$/');
+
         foreach ($commits as $commitOutputLines) {
             $this->commits[] = Commit::createFromOutputLines($this->getRepository(), $commitOutputLines);
         }
@@ -127,7 +137,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->commits;
     }
@@ -137,7 +147,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return Commit|null
      */
-    public function first()
+    public function first(): ?\GitElephant\Objects\Commit
     {
         return $this->offsetGet(0);
     }
@@ -147,7 +157,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return Commit|null
      */
-    public function last()
+    public function last(): ?\GitElephant\Objects\Commit
     {
         return $this->offsetGet($this->count() - 1);
     }
@@ -159,7 +169,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return Commit|null
      */
-    public function index($index)
+    public function index(int $index): ?\GitElephant\Objects\Commit
     {
         return $this->offsetGet($index);
     }
@@ -171,7 +181,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return isset($this->commits[$offset]);
     }
@@ -183,7 +193,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return Commit|null
      */
-    public function offsetGet($offset)
+    public function offsetGet($offset): ?\GitElephant\Objects\Commit
     {
         return isset($this->commits[$offset]) ? $this->commits[$offset] : null;
     }
@@ -194,9 +204,10 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      * @param int   $offset offset
      * @param mixed $value  value
      *
+     * @return void
      * @throws \RuntimeException
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         throw new \RuntimeException('Can\'t set elements on logs');
     }
@@ -206,9 +217,10 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @param int $offset offset
      *
+     * @return void
      * @throws \RuntimeException
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         throw new \RuntimeException('Can\'t unset elements on logs');
     }
@@ -216,9 +228,9 @@ class Log implements \ArrayAccess, \Countable, \Iterator
     /**
      * Countable interface
      *
-     * @return int|void
+     * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->commits);
     }
@@ -228,7 +240,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return Commit|null
      */
-    public function current()
+    public function current(): ?\GitElephant\Objects\Commit
     {
         return $this->offsetGet($this->position);
     }
@@ -236,7 +248,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      */
-    public function next()
+    public function next(): void
     {
         ++$this->position;
     }
@@ -246,7 +258,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int
      */
-    public function key()
+    public function key(): int
     {
         return $this->position;
     }
@@ -256,7 +268,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
         return $this->offsetExists($this->position);
     }
@@ -264,7 +276,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->position = 0;
     }
@@ -274,7 +286,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @param \GitElephant\Repository $repository the repository variable
      */
-    public function setRepository($repository)
+    public function setRepository(Repository $repository): void
     {
         $this->repository = $repository;
     }
@@ -284,7 +296,7 @@ class Log implements \ArrayAccess, \Countable, \Iterator
      *
      * @return \GitElephant\Repository
      */
-    public function getRepository()
+    public function getRepository(): \GitElephant\Repository
     {
         return $this->repository;
     }

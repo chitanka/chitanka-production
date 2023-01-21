@@ -11,16 +11,14 @@
 
 namespace Symfony\Bridge\PhpUnit\TextUI;
 
-/**
- * {@inheritdoc}
- */
-class Command extends \PHPUnit_TextUI_Command
-{
-    /**
-     * {@inheritdoc}
-     */
-    protected function createRunner()
+if (version_compare(\PHPUnit\Runner\Version::id(), '9.0.0', '<')) {
+    class_alias('Symfony\Bridge\PhpUnit\Legacy\CommandForV7', 'Symfony\Bridge\PhpUnit\TextUI\Command');
+} else {
+    class_alias('Symfony\Bridge\PhpUnit\Legacy\CommandForV9', 'Symfony\Bridge\PhpUnit\TextUI\Command');
+}
+
+if (false) {
+    class Command
     {
-        return new TestRunner($this->arguments['loader']);
     }
 }

@@ -12,16 +12,29 @@
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Symfony\Bridge\PhpUnit\DeprecationErrorHandler;
 
+// Detect if we need to serialize deprecations to a file.
+if ($file = getenv('SYMFONY_DEPRECATIONS_SERIALIZE')) {
+    DeprecationErrorHandler::collectDeprecations($file);
+
+    return;
+}
+
 // Detect if we're loaded by an actual run of phpunit
-if (!defined('PHPUNIT_COMPOSER_INSTALL') && !class_exists('PHPUnit_TextUI_Command', false)) {
+if (!defined('PHPUNIT_COMPOSER_INSTALL') && !class_exists(\PHPUnit\TextUI\Command::class, false)) {
     return;
 }
 
 // Enforce a consistent locale
-setlocale(LC_ALL, 'C');
+setlocale(\LC_ALL, 'C');
 
-if (!class_exists('Doctrine\Common\Annotations\AnnotationRegistry', false) && class_exists('Doctrine\Common\Annotations\AnnotationRegistry')) {
-    AnnotationRegistry::registerLoader('class_exists');
+if (!class_exists(AnnotationRegistry::class, false) && class_exists(AnnotationRegistry::class)) {
+    if (method_exists(AnnotationRegistry::class, 'registerUniqueLoader')) {
+        AnnotationRegistry::registerUniqueLoader('class_exists');
+    } elseif (method_exists(AnnotationRegistry::class, 'registerLoader')) {
+        AnnotationRegistry::registerLoader('class_exists');
+    }
 }
 
-DeprecationErrorHandler::register(getenv('SYMFONY_DEPRECATIONS_HELPER'));
+if ('disabled' !== getenv('SYMFONY_DEPRECATIONS_HELPER')) {
+    DeprecationErrorHandler::register(getenv('SYMFONY_DEPRECATIONS_HELPER'));
+}

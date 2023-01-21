@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,16 +20,16 @@
 
 namespace GitElephant\Objects;
 
-use \GitElephant\Command\BranchCommand;
-use \GitElephant\Exception\InvalidBranchNameException;
-use \GitElephant\Repository;
+use GitElephant\Command\BranchCommand;
+use GitElephant\Exception\InvalidBranchNameException;
+use GitElephant\Repository;
 
 /**
  * An object representing a git branch
  *
  * @author Matteo Giachino <matteog@gmail.com>
  */
-class Branch extends Object implements TreeishInterface
+class Branch extends NodeObject implements TreeishInterface
 {
     /**
      * current checked out branch
@@ -78,9 +79,17 @@ class Branch extends Object implements TreeishInterface
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return \GitElephant\Objects\Branch
      */
-    public static function create(Repository $repository, $name, $startPoint = null)
-    {
-        $repository->getCaller()->execute(BranchCommand::getInstance($repository)->create($name, $startPoint));
+    public static function create(
+        Repository $repository,
+        string $name,
+        string $startPoint = null
+    ): \GitElephant\Objects\Branch {
+        /** @var BranchCommand $branchCommand */
+        $branchCommand = BranchCommand::getInstance($repository);
+
+        $repository
+            ->getCaller()
+            ->execute($branchCommand->create($name, $startPoint));
 
         return new self($repository, $name);
     }
@@ -94,7 +103,7 @@ class Branch extends Object implements TreeishInterface
      * @throws \InvalidArgumentException
      * @return Branch
      */
-    public static function createFromOutputLine(Repository $repository, $outputLine)
+    public static function createFromOutputLine(Repository $repository, string $outputLine): \GitElephant\Objects\Branch
     {
         $matches = static::getMatches($outputLine);
         $branch = new self($repository, $matches[1]);
@@ -112,13 +121,10 @@ class Branch extends Object implements TreeishInterface
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return Branch
      */
-    public static function checkout(Repository $repository, $name, $create = false)
+    public static function checkout(Repository $repository, $name, $create = false): \GitElephant\Objects\Branch
     {
-        if ($create) {
-            $branch = self::create($repository, $name);
-        } else {
-            $branch = new self($repository, $name);
-        }
+        $branch = $create ? self::create($repository, $name) : new self($repository, $name);
+
         $repository->checkout($branch);
 
         return $branch;
@@ -135,11 +141,11 @@ class Branch extends Object implements TreeishInterface
      * @throws \GitElephant\Exception\InvalidBranchNameException
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      */
-    public function __construct(Repository $repository, $name)
+    public function __construct(Repository $repository, string $name)
     {
         $this->repository = $repository;
         $this->name = trim($name);
-        $this->fullRef = 'refs/heads/'.$name;
+        $this->fullRef = 'refs/heads/' . $name;
         $this->createFromCommand();
     }
 
@@ -148,18 +154,20 @@ class Branch extends Object implements TreeishInterface
      *
      * @throws \InvalidArgumentException
      */
-    private function createFromCommand()
+    private function createFromCommand(): void
     {
         $command = BranchCommand::getInstance($this->getRepository())->listBranches();
         $outputLines = $this->repository->getCaller()->execute($command)->getOutputLines(true);
         foreach ($outputLines as $outputLine) {
             $matches = static::getMatches($outputLine);
+
             if ($this->name === $matches[1]) {
                 $this->parseOutputLine($outputLine);
 
                 return;
             }
         }
+
         throw new InvalidBranchNameException(sprintf('The %s branch doesn\'t exists', $this->name));
     }
 
@@ -167,9 +175,10 @@ class Branch extends Object implements TreeishInterface
      * parse an output line from the BranchCommand::singleInfo command
      *
      * @param string $branchString an output line for a branch
+     *
      * @throws \InvalidArgumentException
      */
-    public function parseOutputLine($branchString)
+    public function parseOutputLine(string $branchString): void
     {
         if (preg_match('/^\* (.*)/', $branchString, $matches)) {
             $this->current = true;
@@ -177,6 +186,7 @@ class Branch extends Object implements TreeishInterface
         } else {
             $branchString = trim($branchString);
         }
+
         $matches = static::getMatches($branchString);
         $this->name = $matches[1];
         $this->sha = $matches[2];
@@ -191,11 +201,20 @@ class Branch extends Object implements TreeishInterface
      * @throws \InvalidArgumentException
      * @return array
      */
-    public static function getMatches($branchString)
+    public static function getMatches(string $branchString): array
     {
-        $matches = array();
-        preg_match('/^\*?\ *?(\S+)\ +(\S{40})\ +(.+)$/', trim($branchString), $matches);
-        if (!count($matches)) {
+        $branchString = trim($branchString);
+        $regexList = [
+            '/^\*?\ *?(\S+)\ +(\S{40})\ +(.+)$/',
+            '/^\*?\ *?\(.*(detached).*\)\ +(\S{40})\ +(.+)$/',
+        ];
+
+        $matches = [];
+        while (empty($matches) and $regex = array_pop($regexList)) {
+            preg_match($regex, trim($branchString), $matches);
+        }
+
+        if (empty($matches)) {
             throw new \InvalidArgumentException(sprintf('the branch string is not valid: %s', $branchString));
         }
 
@@ -207,7 +226,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @return string the sha
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getSha();
     }
@@ -217,7 +236,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @param string $name the branch name
      */
-    public function setName($name)
+    public function setName(string $name): void
     {
         $this->name = $name;
     }
@@ -227,7 +246,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -237,7 +256,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @param string $sha the sha of the branch
      */
-    public function setSha($sha)
+    public function setSha(string $sha): void
     {
         $this->sha = $sha;
     }
@@ -247,7 +266,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @return string
      */
-    public function getSha()
+    public function getSha(): string
     {
         return $this->sha;
     }
@@ -257,7 +276,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @param bool $current whether if the branch is the current or not
      */
-    public function setCurrent($current)
+    public function setCurrent(bool $current): void
     {
         $this->current = $current;
     }
@@ -267,7 +286,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @return bool
      */
-    public function getCurrent()
+    public function getCurrent(): bool
     {
         return $this->current;
     }
@@ -277,7 +296,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @param string $comment the branch comment
      */
-    public function setComment($comment)
+    public function setComment(string $comment): void
     {
         $this->comment = $comment;
     }
@@ -287,7 +306,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @return string
      */
-    public function getComment()
+    public function getComment(): string
     {
         return $this->comment;
     }
@@ -297,7 +316,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @param string $fullRef full git reference of the branch
      */
-    public function setFullRef($fullRef)
+    public function setFullRef(string $fullRef): void
     {
         $this->fullRef = $fullRef;
     }
@@ -307,7 +326,7 @@ class Branch extends Object implements TreeishInterface
      *
      * @return string
      */
-    public function getFullRef()
+    public function getFullRef(): string
     {
         return $this->fullRef;
     }

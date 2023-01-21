@@ -15,8 +15,8 @@
 
 namespace GitElephant\Objects;
 
-use \GitElephant\Repository;
-use \GitElephant\Command\LogRangeCommand;
+use GitElephant\Command\LogRangeCommand;
+use GitElephant\Repository;
 
 /**
  * Git range log abstraction object
@@ -37,7 +37,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @var array
      */
-    private $rangeCommits  = array();
+    private $rangeCommits = [];
 
     /**
      * the cursor position
@@ -52,9 +52,9 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      * @param \GitElephant\Repository $repository  repo
      * @param string                  $refStart    starting reference (excluded from the range)
      * @param string                  $refEnd      ending reference
-     * @param null                    $path        path
+     * @param string|null                   $path        path
      * @param int                     $limit       limit
-     * @param null                    $offset      offset
+     * @param int                   $offset      offset
      * @param boolean                 $firstParent first parent
      *
      * @throws \RuntimeException
@@ -65,9 +65,9 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
         $refStart,
         $refEnd,
         $path = null,
-        $limit = 15,
-        $offset = null,
-        $firstParent = false
+        int $limit = 15,
+        int $offset = 0,
+        bool $firstParent = false
     ) {
         $this->repository = $repository;
         $this->createFromCommand($refStart, $refEnd, $path, $limit, $offset, $firstParent);
@@ -80,7 +80,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      * @param string  $refEnd      treeish reference
      * @param string  $path        path
      * @param int     $limit       limit
-     * @param string  $offset      offset
+     * @param int  $offset      offset
      * @param boolean $firstParent first parent
      *
      * @throws \RuntimeException
@@ -89,31 +89,46 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @see ShowCommand::commitInfo
      */
-    private function createFromCommand($refStart, $refEnd, $path, $limit, $offset, $firstParent)
-    {
-        $command = LogRangeCommand::getInstance($this->getRepository())->showLog($refStart, $refEnd, $path, $limit, $offset, $firstParent);
-        $outputLines = $this->getRepository()->getCaller()->execute(
-            $command,
-            true,
-            $this->getRepository()->getPath()
-        )->getOutputLines(true);
+    private function createFromCommand(
+        $refStart,
+        $refEnd,
+        $path = null,
+        int $limit = 15,
+        int $offset = 0,
+        bool $firstParent = false
+    ): void {
+        $command = LogRangeCommand::getInstance($this->getRepository())->showLog(
+            $refStart,
+            $refEnd,
+            $path,
+            $limit,
+            $offset,
+            $firstParent
+        );
+
+        $outputLines = $this->getRepository()
+            ->getCaller()
+            ->execute($command, true, $this->getRepository()->getPath())
+            ->getOutputLines(true);
+
         $this->parseOutputLines($outputLines);
     }
 
-    private function parseOutputLines($outputLines)
+    private function parseOutputLines(array $outputLines): void
     {
         $commitLines = null;
-        $this->rangeCommits = array();
+        $this->rangeCommits = [];
         foreach ($outputLines as $line) {
             if (preg_match('/^commit (\w+)$/', $line) > 0) {
                 if (null !== $commitLines) {
                     $this->rangeCommits[] = Commit::createFromOutputLines($this->getRepository(), $commitLines);
                 }
-                $commitLines = array();
+                $commitLines = [];
             }
             $commitLines[] = $line;
         }
-        if (null !== $commitLines && count($commitLines) > 0) {
+
+        if (is_array($commitLines) && count($commitLines) !== 0) {
             $this->rangeCommits[] = Commit::createFromOutputLines($this->getRepository(), $commitLines);
         }
     }
@@ -123,7 +138,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->rangeCommits;
     }
@@ -133,7 +148,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @return Commit|null
      */
-    public function first()
+    public function first(): ?\GitElephant\Objects\Commit
     {
         return $this->offsetGet(0);
     }
@@ -143,7 +158,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @return Commit|null
      */
-    public function last()
+    public function last(): ?\GitElephant\Objects\Commit
     {
         return $this->offsetGet($this->count() - 1);
     }
@@ -155,7 +170,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @return Commit|null
      */
-    public function index($index)
+    public function index(int $index): ?\GitElephant\Objects\Commit
     {
         return $this->offsetGet($index);
     }
@@ -167,7 +182,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return isset($this->rangeCommits[$offset]);
     }
@@ -179,7 +194,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @return Commit|null
      */
-    public function offsetGet($offset)
+    public function offsetGet($offset): ?\GitElephant\Objects\Commit
     {
         return isset($this->rangeCommits[$offset]) ? $this->rangeCommits[$offset] : null;
     }
@@ -190,9 +205,10 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      * @param int   $offset offset
      * @param mixed $value  value
      *
+     * @return void
      * @throws \RuntimeException
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         throw new \RuntimeException('Can\'t set elements on logs');
     }
@@ -202,9 +218,10 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @param int $offset offset
      *
+     * @return void
      * @throws \RuntimeException
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         throw new \RuntimeException('Can\'t unset elements on logs');
     }
@@ -212,9 +229,9 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
     /**
      * Countable interface
      *
-     * @return int|void
+     * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->rangeCommits);
     }
@@ -224,7 +241,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @return Commit|null
      */
-    public function current()
+    public function current(): ?\GitElephant\Objects\Commit
     {
         return $this->offsetGet($this->position);
     }
@@ -232,7 +249,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      */
-    public function next()
+    public function next(): void
     {
         ++$this->position;
     }
@@ -242,7 +259,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int
      */
-    public function key()
+    public function key(): int
     {
         return $this->position;
     }
@@ -252,7 +269,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
         return $this->offsetExists($this->position);
     }
@@ -260,7 +277,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->position = 0;
     }
@@ -270,7 +287,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @param \GitElephant\Repository $repository the repository variable
      */
-    public function setRepository($repository)
+    public function setRepository(Repository $repository): void
     {
         $this->repository = $repository;
     }
@@ -280,7 +297,7 @@ class LogRange implements \ArrayAccess, \Countable, \Iterator
      *
      * @return \GitElephant\Repository
      */
-    public function getRepository()
+    public function getRepository(): \GitElephant\Repository
     {
         return $this->repository;
     }

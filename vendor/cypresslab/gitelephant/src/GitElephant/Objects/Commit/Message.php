@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -43,8 +44,8 @@ class Message
         if (is_array($message)) {
             $this->message = $message;
         } else {
-            $this->message = array();
-            $this->message = (string) $message;
+            $this->message = [];
+            $this->message = (string)$message;
         }
     }
 
@@ -53,7 +54,7 @@ class Message
      *
      * @return string|null
      */
-    public function getShortMessage()
+    public function getShortMessage(): ?string
     {
         return $this->toString();
     }
@@ -63,7 +64,7 @@ class Message
      *
      * @return string|null
      */
-    public function getFullMessage()
+    public function getFullMessage(): ?string
     {
         return $this->toString(true);
     }
@@ -75,9 +76,9 @@ class Message
      *
      * @return string|null
      */
-    public function toString($full = false)
+    public function toString(bool $full = false): ?string
     {
-        if (count($this->message) == 0) {
+        if (empty($this->message)) {
             return null;
         }
 
@@ -91,10 +92,11 @@ class Message
     /**
      * String representation equals short message
      *
-     * @return string|null
+     * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
-        return $this->toString();
+        $thisString = $this->toString();
+        return $thisString === null ? "" : $thisString;
     }
 }

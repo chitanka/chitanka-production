@@ -1,7 +1,15 @@
 {
     "name": "cypresslab/gitelephant",
-    "description": "An abstraction layer for git written in PHP 5.3",
-    "keywords": ["git"],
+    "description": "An abstraction layer for git written in PHP",
+    "scripts": {
+        "tests": "./vendor/bin/phpunit",
+        "static-tests": "./vendor/bin/phpstan analyse -c phpstan.neon",
+        "check-cs": "./vendor/bin/ecs check",
+        "fix-cs": "./vendor/bin/ecs check --fix"
+    },
+    "keywords": [
+        "git"
+    ],
     "homepage": "http://gitelephant.cypresslab.net/",
     "license": "LGPL-3.0+",
     "authors": [
@@ -11,15 +19,20 @@
         }
     ],
     "require": {
-        "php": ">=5.3.3",
-        "symfony/process": "~2.0|~3.0",
-        "symfony/filesystem": "~2.0|~3.0",
-        "symfony/finder": "~2.0|~3.0",
-        "phpcollection/phpcollection": "~0.4"
+        "php": ">=7.2.0",
+        "symfony/process": ">=3.4",
+        "symfony/filesystem": ">=3.4",
+        "symfony/finder": ">=3.4",
+        "phpcollection/phpcollection": "~0.4|~0.5"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4.8",
-        "mockery/mockery": "~0.9"
+        "php": ">=7.2.0",
+        "phpunit/phpunit": "~8.0|~9.0",
+        "mockery/mockery": "~1.1",
+        "rector/rector": "*",
+        "symplify/easy-coding-standard": "*",
+        "phpstan/phpstan": "*",
+        "phpstan/phpstan-phpunit": "*"
     },
     "minimum-stability": "stable",
     "autoload": {
@@ -27,9 +40,9 @@
             "GitElephant": "src/"
         }
     },
-    "config": {
-        "platform": {
-            "php": "5.3.3"
+    "autoload-dev": {
+        "psr-0": {
+            "GitElephant": "tests/"
         }
     }
 }

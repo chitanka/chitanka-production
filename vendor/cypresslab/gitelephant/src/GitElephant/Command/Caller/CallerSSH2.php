@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -23,25 +24,14 @@ namespace GitElephant\Command\Caller;
  * Caller via ssh2 PECL extension
  *
  * @author Matteo Giachino <matteog@gmail.com>
+ * @author Tim Bernhard <tim@bernhard-webstudio.ch>
  */
-class CallerSSH2 implements CallerInterface
+class CallerSSH2 extends AbstractCaller
 {
     /**
      * @var resource
      */
     private $resource;
-
-    /**
-     * @var string
-     */
-    private $gitPath;
-
-    /**
-     * the output lines of the command
-     *
-     * @var array
-     */
-    private $outputLines = array();
 
     /**
      * @param resource $resource
@@ -53,7 +43,7 @@ class CallerSSH2 implements CallerInterface
     public function __construct($resource, $gitPath = '/usr/bin/git')
     {
         $this->resource = $resource;
-        $this->gitPath = $gitPath;
+        $this->binaryPath = $gitPath;
     }
 
     /**
@@ -65,42 +55,24 @@ class CallerSSH2 implements CallerInterface
      *
      * @return CallerInterface
      */
-    public function execute($cmd, $git = true, $cwd = null)
-    {
+    public function execute(
+        $cmd,
+        $git = true,
+        $cwd = null
+    ): \GitElephant\Command\Caller\CallerInterface {
         if ($git) {
-            $cmd = $this->gitPath . ' ' . $cmd;
+            $cmd = $this->getBinaryPath() . ' ' . $cmd;
         }
         $stream = ssh2_exec($this->resource, $cmd);
-        stream_set_blocking($stream, 1);
+        stream_set_blocking($stream, true);
         $data = stream_get_contents($stream);
         fclose($stream);
+        
+        $this->rawOutput = $data === false ? '' : $data;
         // rtrim values
-        $values = array_map('rtrim', explode(PHP_EOL, $data));
+        $values = array_map('rtrim', explode(PHP_EOL, $this->rawOutput));
         $this->outputLines = $values;
 
         return $this;
-    }
-
-    /**
-     * after calling execute this method should return the output
-     *
-     * @param bool $stripBlankLines strips the blank lines
-     *
-     * @return array
-     */
-    public function getOutputLines($stripBlankLines = false)
-    {
-        if ($stripBlankLines) {
-            $output = array();
-            foreach ($this->outputLines as $line) {
-                if ('' !== $line) {
-                    $output[] = $line;
-                }
-            }
-
-            return $output;
-        }
-
-        return $this->outputLines;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,16 +20,17 @@
 
 namespace GitElephant\Objects;
 
-use \GitElephant\Repository;
-use \GitElephant\Command\TagCommand;
-use \GitElephant\Command\RevListCommand;
+use GitElephant\Command\Caller\CallerInterface;
+use GitElephant\Command\RevListCommand;
+use GitElephant\Command\TagCommand;
+use GitElephant\Repository;
 
 /**
  * An object representing a git tag
  *
  * @author Matteo Giachino <matteog@gmail.com>
  */
-class Tag extends Object
+class Tag extends NodeObject
 {
     /**
      * tag name
@@ -60,11 +62,17 @@ class Tag extends Object
      * @param string                  $message    tag message
      *
      * @throws \RuntimeException
-     * @return \GitElephant\Objects\Branch
+     * @return \GitElephant\Objects\Tag
      */
-    public static function create(Repository $repository, $name, $startPoint = null, $message = null)
-    {
-        $repository->getCaller()->execute(TagCommand::getInstance($repository)->create($name, $startPoint, $message));
+    public static function create(
+        Repository $repository,
+        string $name,
+        $startPoint = null,
+        string $message = null
+    ): ?\GitElephant\Objects\Tag {
+        $repository
+            ->getCaller()
+            ->execute(TagCommand::getInstance($repository)->create($name, $startPoint, $message));
 
         return $repository->getTag($name);
     }
@@ -79,10 +87,13 @@ class Tag extends Object
      * @throws \RuntimeException
      * @throws \InvalidArgumentException
      * @throws \Symfony\Component\Process\Exception\RuntimeException
-     * @return Commit
+     * @return Tag
      */
-    public static function createFromOutputLines(Repository $repository, $outputLines, $name)
-    {
+    public static function createFromOutputLines(
+        Repository $repository,
+        array $outputLines,
+        string $name
+    ): \GitElephant\Objects\Tag {
         $tag = new self($repository, $name);
         $tag->parseOutputLines($outputLines);
 
@@ -99,10 +110,10 @@ class Tag extends Object
      * @throws \InvalidArgumentException
      * @internal param string $line a single tag line from the git binary
      */
-    public function __construct(Repository $repository, $name)
+    public function __construct(Repository $repository, string $name)
     {
         $this->repository = $repository;
-        $this->name    = $name;
+        $this->name = $name;
         $this->fullRef = 'refs/tags/' . $this->name;
         $this->createFromCommand();
     }
@@ -115,7 +126,7 @@ class Tag extends Object
      *
      * @return \GitElephant\Objects\Tag
      */
-    public static function pick(Repository $repository, $name)
+    public static function pick(Repository $repository, string $name): \GitElephant\Objects\Tag
     {
         return new self($repository, $name);
     }
@@ -123,7 +134,7 @@ class Tag extends Object
     /**
      * deletes the tag
      */
-    public function delete()
+    public function delete(): void
     {
         $this->repository
             ->getCaller()
@@ -135,7 +146,7 @@ class Tag extends Object
      *
      * @see ShowCommand::commitInfo
      */
-    private function createFromCommand()
+    private function createFromCommand(): void
     {
         $command = TagCommand::getInstance($this->getRepository())->listTags();
         $outputLines = $this->getCaller()->execute($command, true, $this->getRepository()->getPath())->getOutputLines();
@@ -154,21 +165,20 @@ class Tag extends Object
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return void
      */
-    private function parseOutputLines($outputLines)
+    private function parseOutputLines(array $outputLines)
     {
         $found = false;
         foreach ($outputLines as $tagString) {
-            if ($tagString != '') {
-                if ($this->name === trim($tagString)) {
-                    $lines = $this->getCaller()
-                        ->execute(RevListCommand::getInstance($this->getRepository())->getTagCommit($this))
-                        ->getOutputLines();
-                    $this->setSha($lines[0]);
-                    $found = true;
-                    break;
-                }
+            if ($tagString != '' and $this->name === trim($tagString)) {
+                $lines = $this->getCaller()
+                    ->execute(RevListCommand::getInstance($this->getRepository())->getTagCommit($this))
+                    ->getOutputLines();
+                $this->setSha($lines[0]);
+                $found = true;
+                break;
             }
         }
+
         if (!$found) {
             throw new \InvalidArgumentException(sprintf('the tag %s doesn\'t exists', $this->name));
         }
@@ -179,15 +189,15 @@ class Tag extends Object
      *
      * @return string the sha
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getSha();
     }
 
     /**
-     * @return \GitElephant\Command\Caller\Caller
+     * @return CallerInterface
      */
-    private function getCaller()
+    private function getCaller(): CallerInterface
     {
         return $this->getRepository()->getCaller();
     }
@@ -197,7 +207,7 @@ class Tag extends Object
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -207,7 +217,7 @@ class Tag extends Object
      *
      * @return string
      */
-    public function getFullRef()
+    public function getFullRef(): string
     {
         return $this->fullRef;
     }
@@ -217,7 +227,7 @@ class Tag extends Object
      *
      * @param string $sha sha
      */
-    public function setSha($sha)
+    public function setSha(string $sha): void
     {
         $this->sha = $sha;
     }
@@ -227,7 +237,7 @@ class Tag extends Object
      *
      * @return string
      */
-    public function getSha()
+    public function getSha(): string
     {
         return $this->sha;
     }

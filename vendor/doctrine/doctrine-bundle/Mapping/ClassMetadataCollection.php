@@ -1,73 +1,51 @@
 <?php
 
-/*
- * This file is part of the Doctrine Bundle
- *
- * The code was originally distributed inside the Symfony framework.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- * (c) Doctrine Project, Benjamin Eberlei <kontakt@beberlei.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace Doctrine\Bundle\DoctrineBundle\Mapping;
 
-/**
- * @author Fabien Potencier <fabien@symfony.com>
- */
+use Doctrine\ORM\Mapping\ClassMetadata;
+
 class ClassMetadataCollection
 {
+    /** @var string */
     private $path;
+
+    /** @var string */
     private $namespace;
+
+    /** @var ClassMetadata[] */
     private $metadata;
 
-    /**
-     * Constructor
-     *
-     * @param array $metadata
-     */
+    /** @param ClassMetadata[] $metadata */
     public function __construct(array $metadata)
     {
         $this->metadata = $metadata;
     }
 
-    /**
-     * @return array
-     */
+    /** @return ClassMetadata[] */
     public function getMetadata()
     {
         return $this->metadata;
     }
 
-    /**
-     * @param string $path
-     */
+    /** @param string $path */
     public function setPath($path)
     {
         $this->path = $path;
     }
 
-    /**
-     * @return string
-     */
+    /** @return string */
     public function getPath()
     {
         return $this->path;
     }
 
-    /**
-     * @param string $namespace
-     */
+    /** @param string $namespace */
     public function setNamespace($namespace)
     {
         $this->namespace = $namespace;
     }
 
-    /**
-     * @return string
-     */
+    /** @return string */
     public function getNamespace()
     {
         return $this->namespace;

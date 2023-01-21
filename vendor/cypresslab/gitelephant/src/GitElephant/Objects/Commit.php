@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,13 +20,14 @@
 
 namespace GitElephant\Objects;
 
-use \GitElephant\Command\BranchCommand;
-use \GitElephant\Command\MainCommand;
-use \GitElephant\Command\RevListCommand;
-use \GitElephant\Command\RevParseCommand;
-use \GitElephant\Command\ShowCommand;
-use \GitElephant\Objects\Commit\Message;
-use \GitElephant\Repository;
+use GitElephant\Command\BranchCommand;
+use GitElephant\Command\Caller\CallerInterface;
+use GitElephant\Command\MainCommand;
+use GitElephant\Command\RevListCommand;
+use GitElephant\Command\RevParseCommand;
+use GitElephant\Command\ShowCommand;
+use GitElephant\Objects\Commit\Message;
+use GitElephant\Repository;
 
 /**
  * The Commit object represent a commit
@@ -63,26 +65,26 @@ class Commit implements TreeishInterface, \Countable
      *
      * @var array
      */
-    private $parents;
+    private $parents = [];
 
     /**
      * the Author instance for author
      *
-     * @var \GitElephant\Objects\Author
+     * @var  Author
      */
     private $author;
 
     /**
      * the Author instance for committer
      *
-     * @var \GitElephant\Objects\Author
+     * @var  Author
      */
     private $committer;
 
     /**
      * the Message instance
      *
-     * @var \GitElephant\Objects\Commit\Message
+     * @var Commit\Message
      */
     private $message;
 
@@ -104,13 +106,13 @@ class Commit implements TreeishInterface, \Countable
      * Class constructor
      *
      * @param \GitElephant\Repository $repository the repository
-     * @param string                  $treeish    a treeish reference
+     * @param TreeishInterface|string $treeish    a treeish reference
      */
     private function __construct(Repository $repository, $treeish = 'HEAD')
     {
         $this->repository = $repository;
         $this->ref = $treeish;
-        $this->parents = array();
+        $this->parents = [];
     }
 
     /**
@@ -128,8 +130,12 @@ class Commit implements TreeishInterface, \Countable
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return Commit
      */
-    public static function create(Repository $repository, $message, $stageAll = false, $author = null)
-    {
+    public static function create(
+        Repository $repository,
+        string $message,
+        bool $stageAll = false,
+        $author = null
+    ): Commit {
         $repository->getCaller()->execute(MainCommand::getInstance($repository)->commit($message, $stageAll, $author));
 
         return $repository->getCommit();
@@ -145,7 +151,7 @@ class Commit implements TreeishInterface, \Countable
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return Commit
      */
-    public static function pick(Repository $repository, $treeish = null)
+    public static function pick(Repository $repository, $treeish = null): Commit
     {
         $commit = new self($repository, $treeish);
         $commit->createFromCommand();
@@ -161,7 +167,7 @@ class Commit implements TreeishInterface, \Countable
      *
      * @return Commit
      */
-    public static function createFromOutputLines(Repository $repository, $outputLines)
+    public static function createFromOutputLines(Repository $repository, array $outputLines): Commit
     {
         $commit = new self($repository);
         $commit->parseOutputLines($outputLines);
@@ -174,7 +180,7 @@ class Commit implements TreeishInterface, \Countable
      *
      * @see ShowCommand::commitInfo
      */
-    public function createFromCommand()
+    public function createFromCommand(): void
     {
         $command = ShowCommand::getInstance($this->getRepository())->showCommit($this->ref);
         $outputLines = $this->getCaller()->execute($command, true, $this->getRepository()->getPath())->getOutputLines();
@@ -186,11 +192,11 @@ class Commit implements TreeishInterface, \Countable
      *
      * @see BranchCommand::contains
      */
-    public function getContainedIn()
+    public function getContainedIn(): array
     {
         $command = BranchCommand::getInstance($this->getRepository())->contains($this->getSha());
 
-        return array_map('trim', (array)$this->getCaller()->execute($command)->getOutputLines(true));
+        return array_map('trim', (array) $this->getCaller()->execute($command)->getOutputLines(true));
     }
 
     /**
@@ -200,16 +206,16 @@ class Commit implements TreeishInterface, \Countable
      * @throws \Symfony\Component\Process\Exception\LogicException
      * @throws \Symfony\Component\Process\Exception\InvalidArgumentException
      * @throws \Symfony\Component\Process\Exception\RuntimeException
-     * @return int|void
+     * @return int
      */
-    public function count()
+    public function count(): int
     {
         $command = RevListCommand::getInstance($this->getRepository())->commitPath($this);
 
         return count($this->getCaller()->execute($command)->getOutputLines(true));
     }
 
-    public function getDiff()
+    public function getDiff(): \GitElephant\Objects\Diff\Diff
     {
         return $this->getRepository()->getDiff($this);
     }
@@ -217,22 +223,25 @@ class Commit implements TreeishInterface, \Countable
     /**
      * parse the output of a git command showing a commit
      *
-     * @param array $outputLines output lines
+     * @param Iterable $outputLines output lines
      */
-    private function parseOutputLines($outputLines)
+    private function parseOutputLines($outputLines): void
     {
-        $message = '';
+        $message = [];
         foreach ($outputLines as $line) {
-            $matches = array();
+            $matches = [];
             if (preg_match('/^commit (\w+)$/', $line, $matches) > 0) {
                 $this->sha = $matches[1];
             }
+
             if (preg_match('/^tree (\w+)$/', $line, $matches) > 0) {
                 $this->tree = $matches[1];
             }
+
             if (preg_match('/^parent (\w+)$/', $line, $matches) > 0) {
                 $this->parents[] = $matches[1];
             }
+
             if (preg_match('/^author (.*) <(.*)> (\d+) (.*)$/', $line, $matches) > 0) {
                 $author = new Author();
                 $author->setName($matches[1]);
@@ -242,6 +251,7 @@ class Commit implements TreeishInterface, \Countable
                 $date->modify($date->getOffset() . ' seconds');
                 $this->datetimeAuthor = $date;
             }
+
             if (preg_match('/^committer (.*) <(.*)> (\d+) (.*)$/', $line, $matches) > 0) {
                 $committer = new Author();
                 $committer->setName($matches[1]);
@@ -251,10 +261,12 @@ class Commit implements TreeishInterface, \Countable
                 $date->modify($date->getOffset() . ' seconds');
                 $this->datetimeCommitter = $date;
             }
+
             if (preg_match('/^    (.*)$/', $line, $matches)) {
                 $message[] = $matches[1];
             }
         }
+
         $this->message = new Message($message);
     }
 
@@ -263,9 +275,9 @@ class Commit implements TreeishInterface, \Countable
      *
      * @return bool
      */
-    public function isRoot()
+    public function isRoot(): bool
     {
-        return count($this->parents) == 0;
+        return empty($this->parents);
     }
 
     /**
@@ -273,15 +285,15 @@ class Commit implements TreeishInterface, \Countable
      *
      * @return string the sha
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->sha;
     }
 
     /**
-     * @return \GitElephant\Command\Caller\Caller
+     * @return CallerInterface
      */
-    private function getCaller()
+    private function getCaller(): CallerInterface
     {
         return $this->getRepository()->getCaller();
     }
@@ -291,7 +303,7 @@ class Commit implements TreeishInterface, \Countable
      *
      * @param \GitElephant\Repository $repository repository variable
      */
-    public function setRepository($repository)
+    public function setRepository(Repository $repository): void
     {
         $this->repository = $repository;
     }
@@ -301,7 +313,7 @@ class Commit implements TreeishInterface, \Countable
      *
      * @return \GitElephant\Repository
      */
-    public function getRepository()
+    public function getRepository(): \GitElephant\Repository
     {
         return $this->repository;
     }
@@ -311,7 +323,7 @@ class Commit implements TreeishInterface, \Countable
      *
      * @return Author
      */
-    public function getAuthor()
+    public function getAuthor(): ?Author
     {
         return $this->author;
     }
@@ -321,7 +333,7 @@ class Commit implements TreeishInterface, \Countable
      *
      * @return Author
      */
-    public function getCommitter()
+    public function getCommitter(): ?Author
     {
         return $this->committer;
     }
@@ -329,9 +341,9 @@ class Commit implements TreeishInterface, \Countable
     /**
      * message getter
      *
-     * @return \GitElephant\Objects\Commit\Message
+     * @return Message
      */
-    public function getMessage()
+    public function getMessage(): ?Message
     {
         return $this->message;
     }
@@ -339,9 +351,9 @@ class Commit implements TreeishInterface, \Countable
     /**
      * parent getter
      *
-     * @return mixed
+     * @return array
      */
-    public function getParents()
+    public function getParents(): array
     {
         return $this->parents;
     }
@@ -351,9 +363,9 @@ class Commit implements TreeishInterface, \Countable
      *
      * @param bool $short short version
      *
-     * @return mixed
+     * @return string
      */
-    public function getSha($short = false)
+    public function getSha(bool $short = false): ?string
     {
         return $short ? substr($this->sha, 0, 7) : $this->sha;
     }
@@ -361,9 +373,9 @@ class Commit implements TreeishInterface, \Countable
     /**
      * tree getter
      *
-     * @return mixed
+     * @return string
      */
-    public function getTree()
+    public function getTree(): ?string
     {
         return $this->tree;
     }
@@ -371,9 +383,9 @@ class Commit implements TreeishInterface, \Countable
     /**
      * datetimeAuthor getter
      *
-     * @return mixed
+     * @return \DateTime
      */
-    public function getDatetimeAuthor()
+    public function getDatetimeAuthor(): ?\DateTime
     {
         return $this->datetimeAuthor;
     }
@@ -383,7 +395,7 @@ class Commit implements TreeishInterface, \Countable
      *
      * @return \DateTime
      */
-    public function getDatetimeCommitter()
+    public function getDatetimeCommitter(): ?\DateTime
     {
         return $this->datetimeCommitter;
     }
@@ -391,19 +403,61 @@ class Commit implements TreeishInterface, \Countable
     /**
      * rev-parse command - often used to return a commit tag.
      *
-     * @param array         $options the options to apply to rev-parse
+     * @param array $options the options to apply to rev-parse
      *
      * @throws \RuntimeException
      * @throws \InvalidArgumentException
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return array
      */
-    public function revParse(Array $options = array())
+    public function revParse(array $options = []): array
     {
         $c = RevParseCommand::getInstance()->revParse($this, $options);
         $caller = $this->repository->getCaller();
         $caller->execute($c);
 
         return array_map('trim', $caller->getOutputLines(true));
+    }
+
+    /**
+     * Is the commit tagged?
+     *
+     * return true if some tag of repository point to this commit
+     * return false otherwise
+     *
+     * @return bool
+     */
+    public function tagged(): bool
+    {
+        $result = false;
+
+        /** @var Tag $tag */
+        foreach ($this->repository->getTags() as $tag) {
+            if ($tag->getSha() === $this->getSha()) {
+                $result = true;
+                break;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Return Tags that point to this commit
+     *
+     * @return Tag[]
+     */
+    public function getTags(): array
+    {
+        $currentCommitTags = [];
+
+        /** @var Tag $tag */
+        foreach ($this->repository->getTags() as $tag) {
+            if ($tag->getSha() === $this->getSha()) {
+                $currentCommitTags[] = $tag;
+            }
+        }
+
+        return $currentCommitTags;
     }
 }

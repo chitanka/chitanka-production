@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -71,9 +72,9 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
     /**
      * array of lines
      *
-     * @var array
+     * @var array<DiffChunkLine>
      */
-    private $lines;
+    private $lines = [];
 
     /**
      * Class constructor
@@ -82,7 +83,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @throws \Exception
      */
-    public function __construct($lines)
+    public function __construct(array $lines)
     {
         $this->position = 0;
 
@@ -97,7 +98,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @throws \Exception
      */
-    private function parseLines($lines)
+    private function parseLines(array $lines): void
     {
         $originUnchanged = $this->originStartLine;
         $destUnchanged = $this->destStartLine;
@@ -108,21 +109,15 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
             if (preg_match('/^\+(.*)/', $line)) {
                 $this->lines[] = new DiffChunkLineAdded($new++, preg_replace('/\+(.*)/', ' $1', $line));
                 $destUnchanged++;
-            } else {
-                if (preg_match('/^-(.*)/', $line)) {
-                    $this->lines[] = new DiffChunkLineDeleted($deleted++, preg_replace('/-(.*)/', ' $1', $line));
-                    $originUnchanged++;
-                } else {
-                    if (preg_match('/^ (.*)/', $line) || $line == '') {
-                        $this->lines[] = new DiffChunkLineUnchanged($originUnchanged++, $destUnchanged++, $line);
-                        $deleted++;
-                        $new++;
-                    } else {
-                        if (!preg_match('/\\ No newline at end of file/', $line)) {
-                            throw new \Exception(sprintf('GitElephant was unable to parse the line %s', $line));
-                        }
-                    }
-                }
+            } elseif (preg_match('/^-(.*)/', $line)) {
+                $this->lines[] = new DiffChunkLineDeleted($deleted++, preg_replace('/-(.*)/', ' $1', $line));
+                $originUnchanged++;
+            } elseif (preg_match('/^ (.*)/', $line) || $line == '') {
+                $this->lines[] = new DiffChunkLineUnchanged($originUnchanged++, $destUnchanged++, $line);
+                $deleted++;
+                $new++;
+            } elseif (!preg_match('/\\ No newline at end of file/', $line)) {
+                throw new \Exception(sprintf('GitElephant was unable to parse the line %s', $line));
             }
         }
     }
@@ -132,23 +127,26 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @param string $line a single line
      */
-    private function getLinesNumbers($line)
+    private function getLinesNumbers(string $line): void
     {
-        $matches = array();
+        $matches = [];
         preg_match('/@@ -(.*) \+(.*) @@?(.*)/', $line, $matches);
         if (!strpos($matches[1], ',')) {
             // one line
             $this->originStartLine = $matches[1];
-            $this->originEndLine   = $matches[1];
+            $this->originEndLine = $matches[1];
         } else {
-            list($this->originStartLine, $this->originEndLine) = explode(',', $matches[1]);
+            $this->originStartLine = (int) explode(',', $matches[1])[0];
+            $this->originEndLine = (int) explode(',', $matches[1])[1];
         }
+
         if (!strpos($matches[2], ',')) {
             // one line
             $this->destStartLine = $matches[2];
-            $this->destEndLine   = $matches[2];
+            $this->destEndLine = $matches[2];
         } else {
-            list($this->destStartLine, $this->destEndLine) = explode(',', $matches[2]);
+            $this->destStartLine = (int) explode(',', $matches[2])[0];
+            $this->destEndLine = (int) explode(',', $matches[2])[1];
         }
     }
 
@@ -157,7 +155,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int
      */
-    public function getDestStartLine()
+    public function getDestStartLine(): int
     {
         return $this->destStartLine;
     }
@@ -167,7 +165,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int
      */
-    public function getDestEndLine()
+    public function getDestEndLine(): int
     {
         return $this->destEndLine;
     }
@@ -177,7 +175,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int
      */
-    public function getOriginStartLine()
+    public function getOriginStartLine(): int
     {
         return $this->originStartLine;
     }
@@ -187,20 +185,20 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int
      */
-    public function getOriginEndLine()
+    public function getOriginEndLine(): int
     {
         return $this->originEndLine;
     }
 
     /**
-    * Get hunk header line
-    *
-    * @return string
-    */
-    public function getHeaderLine()
+     * Get hunk header line
+     *
+     * @return string
+     */
+    public function getHeaderLine(): string
     {
         if (null === $this->headerLine) {
-            $line  = '@@';
+            $line = '@@';
             $line .= ' -' . $this->getOriginStartLine() . ',' . $this->getOriginEndLine();
             $line .= ' +' . $this->getDestStartLine() . ',' . $this->getDestEndLine();
             $line .= ' @@';
@@ -216,7 +214,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @return array
      */
-    public function getLines()
+    public function getLines(): array
     {
         return $this->lines;
     }
@@ -228,7 +226,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return isset($this->lines[$offset]);
     }
@@ -238,9 +236,9 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @param int $offset offset
      *
-     * @return null
+     * @return DiffChunkLine|null
      */
-    public function offsetGet($offset)
+    public function offsetGet($offset): ?DiffChunkLine
     {
         return isset($this->lines[$offset]) ? $this->lines[$offset] : null;
     }
@@ -248,10 +246,10 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
     /**
      * ArrayAccess interface
      *
-     * @param int   $offset offset
+     * @param int|null   $offset offset
      * @param mixed $value  value
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         if (is_null($offset)) {
             $this->lines[] = $value;
@@ -265,7 +263,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @param int $offset offset
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         unset($this->lines[$offset]);
     }
@@ -273,9 +271,9 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
     /**
      * Countable interface
      *
-     * @return int|void
+     * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->lines);
     }
@@ -283,9 +281,9 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      *
-     * @return mixed
+     * @return DiffChunkLine|null
      */
-    public function current()
+    public function current(): ?DiffChunkLine
     {
         return $this->lines[$this->position];
     }
@@ -293,7 +291,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      */
-    public function next()
+    public function next(): void
     {
         ++$this->position;
     }
@@ -303,7 +301,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int
      */
-    public function key()
+    public function key(): int
     {
         return $this->position;
     }
@@ -313,7 +311,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
         return isset($this->lines[$this->position]);
     }
@@ -321,7 +319,7 @@ class DiffChunk implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->position = 0;
     }

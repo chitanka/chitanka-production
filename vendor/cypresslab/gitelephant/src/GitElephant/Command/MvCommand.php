@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,8 +20,8 @@
 
 namespace GitElephant\Command;
 
-use \GitElephant\Objects\Object;
-use \GitElephant\Repository;
+use GitElephant\Objects\NodeObject;
+use GitElephant\Repository;
 
 /**
  * Class MvCommand
@@ -29,12 +30,12 @@ use \GitElephant\Repository;
  */
 class MvCommand extends BaseCommand
 {
-    const MV_COMMAND = 'mv';
+    public const MV_COMMAND = 'mv';
 
     /**
      * constructor
      *
-     * @param \GitElephant\Repository $repo The repository object this command 
+     * @param \GitElephant\Repository $repo The repository object this command
      *                                      will interact with
      */
     public function __construct(Repository $repo = null)
@@ -43,16 +44,16 @@ class MvCommand extends BaseCommand
     }
 
     /**
-     * @param string|Object $source source name
-     * @param string        $target dest name
+     * @param string|NodeObject $source source name
+     * @param string            $target dest name
      *
      * @throws \RuntimeException
      * @throws \InvalidArgumentException
      * @return string
      */
-    public function rename($source, $target)
+    public function rename($source, $target): string
     {
-        if ($source instanceof Object) {
+        if ($source instanceof NodeObject) {
             if (!$source->isBlob()) {
                 throw new \InvalidArgumentException("The given object is not a blob, it couldn't be renamed");
             }

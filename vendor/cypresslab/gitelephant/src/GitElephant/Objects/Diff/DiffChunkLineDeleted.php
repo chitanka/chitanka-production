@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -32,7 +33,7 @@ class DiffChunkLineDeleted extends DiffChunkLineChanged
      * @param int    $number  line number
      * @param string $content line content
      */
-    public function __construct($number, $content)
+    public function __construct(int $number, string $content)
     {
         $this->setNumber($number);
         $this->setContent($content);
@@ -44,8 +45,8 @@ class DiffChunkLineDeleted extends DiffChunkLineChanged
      *
      * @return int
      */
-    public function getDestNumber()
+    public function getDestNumber(): ?int
     {
-        return '';
+        return null;
     }
 }

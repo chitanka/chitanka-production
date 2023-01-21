@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,8 +20,8 @@
 
 namespace GitElephant\Objects;
 
-use \GitElephant\Command\RemoteCommand;
-use \GitElephant\Repository;
+use GitElephant\Command\RemoteCommand;
+use GitElephant\Repository;
 
 /**
  * Class Remote
@@ -46,24 +47,27 @@ class Remote
 
     /**
      * fetch url of named remote
+     *
      * @var string
      */
     private $fetchURL = '';
 
     /**
      * push url of named remote
+     *
      * @var string
      */
     private $pushURL = '';
 
     /**
      * HEAD branch of named remote
+     *
      * @var string
      */
     private $remoteHEAD = null;
 
     /**
-     * @var array
+     * @var array<Branch>
      */
     private $branches;
 
@@ -71,23 +75,20 @@ class Remote
      * Class constructor
      *
      * @param \GitElephant\Repository $repository   repository instance
-     * @param string                  $name         remote name
+     * @param string|null                  $name         remote name
      * @param bool                    $queryRemotes Do not fetch new information from remotes
      *
      * @throws \RuntimeException
      * @throws \InvalidArgumentException
      * @throws \UnexpectedValueException
-     * @return \GitElephant\Objects\Remote
      */
-    public function __construct(Repository $repository, $name = null, $queryRemotes = true)
+    public function __construct(Repository $repository, string $name = null, bool $queryRemotes = true)
     {
         $this->repository = $repository;
         if ($name) {
             $this->name = trim($name);
             $this->createFromCommand($queryRemotes);
         }
-
-        return $this;
     }
 
     /**
@@ -99,8 +100,11 @@ class Remote
      *
      * @return \GitElephant\Objects\Remote
      */
-    public static function pick(Repository $repository, $name = null, $queryRemotes = true)
-    {
+    public static function pick(
+        Repository $repository,
+        string $name = null,
+        bool $queryRemotes = true
+    ): \GitElephant\Objects\Remote {
         return new self($repository, $name, $queryRemotes);
     }
 
@@ -113,11 +117,11 @@ class Remote
      * @throws \Symfony\Component\Process\Exception\LogicException
      * @throws \Symfony\Component\Process\Exception\InvalidArgumentException
      * @throws \Symfony\Component\Process\Exception\RuntimeException
-     * @return array
+     * @return array<string>
      */
-    public function getVerboseOutput(RemoteCommand $remoteCmd = null)
+    public function getVerboseOutput(RemoteCommand $remoteCmd = null): array
     {
-        if (!$remoteCmd) {
+        if ($remoteCmd === null) {
             $remoteCmd = RemoteCommand::getInstance($this->repository);
         }
         $command = $remoteCmd->verbose();
@@ -139,11 +143,14 @@ class Remote
      * @throws \Symfony\Component\Process\Exception\LogicException
      * @throws \Symfony\Component\Process\Exception\InvalidArgumentException
      * @throws \Symfony\Component\Process\Exception\RuntimeException
-     * @return array
+     * @return array<string>
      */
-    public function getShowOutput($name = null, RemoteCommand $remoteCmd = null, $queryRemotes = true)
-    {
-        if (!$remoteCmd) {
+    public function getShowOutput(
+        string $name = null,
+        RemoteCommand $remoteCmd = null,
+        bool $queryRemotes = true
+    ): array {
+        if ($remoteCmd === null) {
             $remoteCmd = RemoteCommand::getInstance($this->repository);
         }
         $command = $remoteCmd->show($name, $queryRemotes);
@@ -165,10 +172,10 @@ class Remote
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return \GitElephant\Objects\Remote
      */
-    private function createFromCommand($queryRemotes = true)
+    private function createFromCommand(bool $queryRemotes = true): self
     {
         $outputLines = $this->getVerboseOutput();
-        $list = array();
+        $list = [];
         foreach ($outputLines as $line) {
             $matches = static::getMatches($line);
             if (isset($matches[1])) {
@@ -189,19 +196,21 @@ class Remote
     /**
      * parse details from remote show
      *
-     * @param array|string $remoteDetails Output lines for a remote show
+     * @param array $remoteDetails Output lines for a remote show
      *
      * @throws \UnexpectedValueException
      */
-    public function parseOutputLines(Array $remoteDetails)
+    public function parseOutputLines(array $remoteDetails): void
     {
         array_filter($remoteDetails);
         $name = array_shift($remoteDetails);
-        $name = (is_string($name)) ? trim($name) : '';
+        $name = is_string($name) ? trim($name) : '';
         $name = $this->parseName($name);
-        if (!$name) {
+
+        if ($name === '') {
             throw new \UnexpectedValueException(sprintf('Invalid data provided for remote detail parsing'));
         }
+
         $this->name = $name;
         $fetchURLPattern = '/^Fetch\s+URL:\s*(.*)$/';
         $fetchURL = null;
@@ -215,15 +224,15 @@ class Remote
         $remoteBranchHeaderPattern = '/^Remote\s+branch(?:es)?:$/';
         $localBranchPullHeaderPattern = '/^Local\sbranch(?:es)?\sconfigured\sfor\s\'git\spull\'\:$/';
         $localRefPushHeaderPattern = '/^Local\sref(?:s)?\sconfigured\sfor\s\'git\spush\':$/';
-        $groups = array(
-            'remoteBranches'=>null,
-            'localBranches'=>null,
-            'localRefs'=>null,
-        );
+        $groups = [
+            'remoteBranches' => null,
+            'localBranches' => null,
+            'localRefs' => null,
+        ];
 
         foreach ($remoteDetails as $lineno => $line) {
             $line = trim($line);
-            $matches = array();
+            $matches = [];
             if (is_null($fetchURL) && preg_match($fetchURLPattern, $line, $matches)) {
                 $this->fetchURL = $fetchURL = $matches[1];
             } elseif (is_null($pushURL) && preg_match($pushURLPattern, $line, $matches)) {
@@ -247,32 +256,39 @@ class Remote
      * branch details and return a structured representation of said details
      *
      * @param array $groupLines    Associative array whose values are line numbers
-     * are respective of the "group" detail present in $remoteDetails
+     *                             are respective of the "group" detail present in $remoteDetails
      * @param array $remoteDetails Output of git-remote show [name]
      *
-     * @return array
+     * @return array<array<string>>
      */
-    protected function aggregateBranchDetails($groupLines, $remoteDetails)
+    protected function aggregateBranchDetails($groupLines, $remoteDetails): array
     {
-        $configuredRefs = array();
+        $configuredRefs = [];
         arsort($groupLines);
         foreach ($groupLines as $type => $lineno) {
-            $configuredRefs[$type] = array_splice($remoteDetails, $lineno);
+            $configuredRefs[$type] = $lineno === null ? [] : array_splice($remoteDetails, $lineno);
             array_shift($configuredRefs[$type]);
         }
-        $configuredRefs['remoteBranches'] = (isset($configuredRefs['remoteBranches'])) ?
-            $this->parseRemoteBranches($configuredRefs['remoteBranches']) : array();
-        $configuredRefs['localBranches'] = (isset($configuredRefs['localBranches'])) ?
-            $this->parseLocalPullBranches($configuredRefs['localBranches']) : array();
-        $configuredRefs['localRefs'] = (isset($configuredRefs['localRefs'])) ?
-            $this->parseLocalPushRefs($configuredRefs['localRefs']) : array();
-        $aggBranches = array();
+
+        $configuredRefs['remoteBranches'] = isset($configuredRefs['remoteBranches'])
+            ? $this->parseRemoteBranches($configuredRefs['remoteBranches'])
+            : [];
+
+        $configuredRefs['localBranches'] = isset($configuredRefs['localBranches'])
+            ? $this->parseLocalPullBranches($configuredRefs['localBranches'])
+            : [];
+
+        $configuredRefs['localRefs'] = isset($configuredRefs['localRefs'])
+            ? $this->parseLocalPushRefs($configuredRefs['localRefs'])
+            : [];
+
+        $aggBranches = [];
         foreach ($configuredRefs as $branches) {
             foreach ($branches as $branchName => $data) {
                 if (!isset($aggBranches[$branchName])) {
-                    $aggBranches[$branchName] = array();
+                    $aggBranches[$branchName] = [];
                 }
-                $aggBranches[$branchName] = $aggBranches[$branchName] + $data;
+                $aggBranches[$branchName] += $data;
             }
         }
 
@@ -282,20 +298,20 @@ class Remote
     /**
      * parse the details related to remote branch references
      *
-     * @param array $lines
+     * @param array<string> $lines
      *
-     * @return array
+     * @return array // <string, array<string, string>>
      */
-    public function parseRemoteBranches($lines)
+    public function parseRemoteBranches(array $lines): array
     {
-        $branches = array();
+        $branches = [];
         $delimiter = ' ';
         foreach ($lines as $line) {
             $line = trim($line);
             $line = preg_replace('/\s+/', ' ', $line);
             $parts = explode($delimiter, $line);
             if (count($parts) > 1) {
-                $branches[$parts[0]] = array( 'local_relationship' => $parts[1]);
+                $branches[$parts[0]] = ['local_relationship' => $parts[1]];
             }
         }
 
@@ -306,20 +322,20 @@ class Remote
      * parse the details related to local branches and the remotes that they
      * merge with
      *
-     * @param array $lines
+     * @param array<string> $lines
      *
-     * @return array
+     * @return array // <array<string>>
      */
-    public function parseLocalPullBranches($lines)
+    public function parseLocalPullBranches($lines): array
     {
-        $branches = array();
+        $branches = [];
         $delimiter = ' merges with remote ';
         foreach ($lines as $line) {
             $line = trim($line);
             $line = preg_replace('/\s+/', ' ', $line);
             $parts = explode($delimiter, $line);
             if (count($parts) > 1) {
-                $branches[$parts[0]] = array('merges_with' => $parts[1]);
+                $branches[$parts[0]] = ['merges_with' => $parts[1]];
             }
         }
 
@@ -330,13 +346,13 @@ class Remote
      * parse the details related to local branches and the remotes that they
      * push to
      *
-     * @param array $lines
+     * @param array<string> $lines
      *
-     * @return array
+     * @return array // <array<string>>
      */
-    public function parseLocalPushRefs($lines)
+    public function parseLocalPushRefs($lines): array
     {
-        $branches = array();
+        $branches = [];
         $delimiter = ' pushes to ';
         foreach ($lines as $line) {
             $line = trim($line);
@@ -344,7 +360,7 @@ class Remote
             $parts = explode($delimiter, $line);
             if (count($parts) > 1) {
                 $value = explode(' ', $parts[1], 2);
-                $branches[$parts[0]] = array( 'pushes_to' => $value[0], 'local_state' => $value[1]);
+                $branches[$parts[0]] = ['pushes_to' => $value[0], 'local_state' => $value[1]];
             }
         }
 
@@ -360,7 +376,7 @@ class Remote
      */
     public function parseName($line)
     {
-        $matches = array();
+        $matches = [];
         $pattern = '/^\*\s+remote\s+(.*)$/';
         preg_match($pattern, trim($line), $matches);
         if (!isset($matches[1])) {
@@ -378,11 +394,11 @@ class Remote
      * @throws \InvalidArgumentException
      * @return array
      */
-    public static function getMatches($remoteString)
+    public static function getMatches(string $remoteString): array
     {
-        $matches = array();
+        $matches = [];
         preg_match('/^(\S+)\s*(\S[^\( ]+)\s*\((.+)\)$/', trim($remoteString), $matches);
-        if (!count($matches)) {
+        if (empty($matches)) {
             throw new \InvalidArgumentException(sprintf('the remote string is not valid: %s', $remoteString));
         }
 
@@ -394,7 +410,7 @@ class Remote
      *
      * @return string the named remote
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getName();
     }
@@ -404,7 +420,7 @@ class Remote
      *
      * @param string $name the remote name
      */
-    public function setName($name)
+    public function setName($name): void
     {
         $this->name = $name;
     }
@@ -414,7 +430,7 @@ class Remote
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -424,7 +440,7 @@ class Remote
      *
      * @return string
      */
-    public function getFetchURL()
+    public function getFetchURL(): string
     {
         return $this->fetchURL;
     }
@@ -434,7 +450,7 @@ class Remote
      *
      * @param string $url the fetch url
      */
-    public function setFetchURL($url)
+    public function setFetchURL($url): void
     {
         $this->fetchURL = $url;
     }
@@ -444,7 +460,7 @@ class Remote
      *
      * @return string
      */
-    public function getPushURL()
+    public function getPushURL(): string
     {
         return $this->pushURL;
     }
@@ -454,7 +470,7 @@ class Remote
      *
      * @param string $url the push url
      */
-    public function setPushURL($url)
+    public function setPushURL($url): void
     {
         $this->pushURL = $url;
     }
@@ -464,7 +480,7 @@ class Remote
      *
      * @return string
      */
-    public function getRemoteHEAD()
+    public function getRemoteHEAD(): string
     {
         return $this->remoteHEAD;
     }
@@ -474,7 +490,7 @@ class Remote
      *
      * @param string $branchName
      */
-    public function setRemoteHEAD($branchName)
+    public function setRemoteHEAD($branchName): void
     {
         $this->remoteHEAD = $branchName;
     }
@@ -484,7 +500,7 @@ class Remote
      *
      * @return array
      */
-    public function getBranches()
+    public function getBranches(): array
     {
         return $this->branches;
     }
@@ -494,7 +510,7 @@ class Remote
      *
      * @param array $branches
      */
-    public function setBranches(Array $branches)
+    public function setBranches(array $branches): void
     {
         $this->branches = $branches;
     }

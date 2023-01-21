@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -24,8 +25,13 @@ namespace GitElephant\Exception;
  *
  * @package GitElephant\Exception
  */
-class InvalidRepositoryPathException extends \Exception
+class InvalidRepositoryPathException extends \InvalidArgumentException
 {
+    /**
+     * The exception message template
+     *
+     * @var string
+     */
     protected $messageTpl = 'The path provided (%s) is not a valid git repository path';
 
     /**

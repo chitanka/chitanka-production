@@ -107,7 +107,9 @@ class SfbToHtmlConverter extends SfbConverter {
 		$elm = self::$titleElements[$marker];
 		$text = implode("<$this->breakLineElement />", $titleParts);
 		if ( ! empty($text) ) {
-			$heading = $this->out->xmlElement($elm, $text);
+			$heading = $this->out->xmlElement($elm, $text, [
+				'data-id' => $this->generateDataId($this->linecnt - 1), // the next line is already read and the counter must be decreased
+			]);
 			$this->save($heading);
 		}
 	}
@@ -276,7 +278,7 @@ class SfbToHtmlConverter extends SfbConverter {
 
 	protected function doParagraphReally() {
 		if ( $this->paragraphContainsBlockImage() ) {
-			$this->saveStartTag($this->blockImageElement, array('class' => 'image'));
+			$this->saveStartTag($this->blockImageElement, array('class' => 'image', 'data-id' => $this->generateDataId()));
 			$this->inParagraph();
 			$this->saveEndTag($this->blockImageElement);
 		} else {
@@ -328,6 +330,7 @@ class SfbToHtmlConverter extends SfbConverter {
 		$this->saveStartTag(self::$titleElements[self::TITLE_5], array(
 			'id' => $this->generateInternalId($line),
 			'class' => 'subheader',
+			'data-id' => $this->generateDataId($this->linecnt - 1),
 		));
 	}
 
@@ -392,8 +395,8 @@ class SfbToHtmlConverter extends SfbConverter {
 		return $this->paragraphIdPrefix.$this->linecnt;
 	}
 
-	protected function generateDataId() {
-		return $this->nbOfSkippedLines + $this->linecnt;
+	protected function generateDataId($linecnt = null) {
+		return $this->nbOfSkippedLines + ($linecnt ?? $this->linecnt);
 	}
 
 	protected function saveUnknownContent() {

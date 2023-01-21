@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,7 +20,7 @@
 
 namespace GitElephant\Command;
 
-use \GitElephant\Repository;
+use GitElephant\Repository;
 
 /**
  * SubCommandCommand
@@ -32,16 +33,17 @@ use \GitElephant\Repository;
  */
 class SubCommandCommand extends BaseCommand
 {
-
     /**
      * Subjects to a subcommand name
+     *
+     * @var array<SubCommandCommand|array|string>
      */
-    private $orderedSubjects = array();
+    private $orderedSubjects = [];
 
     /**
      * constructor
      *
-     * @param \GitElephant\Repository $repo The repository object this command 
+     * @param \GitElephant\Repository $repo The repository object this command
      *                                      will interact with
      */
     public function __construct(Repository $repo = null)
@@ -52,25 +54,31 @@ class SubCommandCommand extends BaseCommand
     /**
      * Clear all previous variables
      */
-    public function clearAll()
+    public function clearAll(): void
     {
         parent::clearAll();
-        $this->orderedSubjects = null;
+        $this->orderedSubjects = [];
     }
 
-    protected function addCommandSubject($subject)
+    /**
+     * Add a subject to this subcommand
+     *
+     * @param SubCommandCommand|array|string $subject
+     * @return void
+     */
+    protected function addCommandSubject($subject): void
     {
         $this->orderedSubjects[] = $subject;
     }
 
-    protected function getCommandSubjects()
+    protected function getCommandSubjects(): array
     {
-        return ($this->orderedSubjects) ? $this->orderedSubjects : array();
+        return $this->orderedSubjects;
     }
 
-    protected function extractArguments($args)
+    protected function extractArguments(array $args): string
     {
-        $orderArgs = array();
+        $orderArgs = [];
         foreach ($args as $arg) {
             if (is_array($arg)) {
                 foreach ($arg as $value) {
@@ -92,13 +100,9 @@ class SubCommandCommand extends BaseCommand
      * @return string
      * @throws \RuntimeException
      */
-    public function getCommand()
+    public function getCommand(): string
     {
         $command = $this->getCommandName();
-
-        if (is_null($command)) {
-            throw new \RuntimeException("commandName must be specified to build a subcommand");
-        }
 
         $command .= ' ';
         $args = $this->getCommandArguments();
@@ -107,7 +111,7 @@ class SubCommandCommand extends BaseCommand
             $command .= ' ';
         }
         $subjects = $this->getCommandSubjects();
-        if (count($subjects) > 0) {
+        if (!empty($subjects)) {
             $command .= implode(' ', array_map('escapeshellarg', $subjects));
         }
         $command = preg_replace('/\\s{2,}/', ' ', $command);

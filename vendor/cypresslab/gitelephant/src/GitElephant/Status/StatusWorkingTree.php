@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,7 +20,7 @@
 
 namespace GitElephant\Status;
 
-use \PhpCollection\Sequence;
+use PhpCollection\Sequence;
 
 /**
  * Class StatusWorkingTree
@@ -33,11 +34,17 @@ class StatusWorkingTree extends Status
      *
      * @return Sequence
      */
-    public function all()
+    public function all(): \PhpCollection\Sequence
     {
-        return new Sequence(array_filter($this->files, function (StatusFile $statusFile) {
-            return $statusFile->getWorkingTreeStatus();
-        }));
+        return new Sequence(
+            array_filter(
+                $this->files,
+                function (StatusFile $statusFile) {
+                    $status = $statusFile->getWorkingTreeStatus();
+                    return $status !== null && $status != "";
+                }
+            )
+        );
     }
 
     /**
@@ -47,14 +54,19 @@ class StatusWorkingTree extends Status
      *
      * @return Sequence
      */
-    protected function filterByType($type)
+    protected function filterByType(string $type): \PhpCollection\Sequence
     {
         if (!$this->files) {
             return new Sequence();
         }
 
-        return new Sequence(array_filter($this->files, function (StatusFile $statusFile) use ($type) {
-            return $type === $statusFile->getWorkingTreeStatus();
-        }));
+        return new Sequence(
+            array_filter(
+                $this->files,
+                function (StatusFile $statusFile) use ($type) {
+                    return $type === $statusFile->getWorkingTreeStatus();
+                }
+            )
+        );
     }
 }

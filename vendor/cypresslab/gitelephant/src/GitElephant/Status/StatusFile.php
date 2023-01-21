@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -26,15 +27,15 @@ namespace GitElephant\Status;
  */
 class StatusFile
 {
-    const UNTRACKED = '?';
-    const IGNORED = '!';
-    const UNMODIFIED = '';
-    const MODIFIED = 'M';
-    const ADDED = 'A';
-    const DELETED = 'D';
-    const RENAMED = 'R';
-    const COPIED = 'C';
-    const UPDATED_BUT_UNMERGED = 'U';
+    public const UNTRACKED = '?';
+    public const IGNORED = '!';
+    public const UNMODIFIED = '';
+    public const MODIFIED = 'M';
+    public const ADDED = 'A';
+    public const DELETED = 'D';
+    public const RENAMED = 'R';
+    public const COPIED = 'C';
+    public const UPDATED_BUT_UNMERGED = 'U';
 
     /**
      * @var string
@@ -72,13 +73,12 @@ class StatusFile
      * @param string $name    file name
      * @param string $renamed new file name (if renamed)
      */
-    private function __construct($x, $y, $name, $renamed)
+    private function __construct(string $x, string $y, string $name, string $renamed = null)
     {
         $this->x = ' ' === $x ? null : $x;
         $this->y = ' ' === $y ? null : $y;
         $this->name = $name;
         $this->renamed = $renamed;
-        $this->calculateDescription();
     }
 
     /**
@@ -89,27 +89,41 @@ class StatusFile
      *
      * @return StatusFile
      */
-    public static function create($x, $y, $name, $renamed)
-    {
+    public static function create(
+        string $x,
+        string $y,
+        string $name,
+        string $renamed = null
+    ): \GitElephant\Status\StatusFile {
         return new self($x, $y, $name, $renamed);
     }
 
     /**
      * @return bool
      */
-    public function isRenamed()
+    public function isRenamed(): bool
     {
         return $this->renamed !== null;
     }
 
     /**
-     * Get Name
+     * Get the file name
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
+    }
+
+    /**
+     * Get the renamed
+     *
+     * @return string|null
+     */
+    public function getRenamed(): ?string
+    {
+        return $this->renamed;
     }
 
     /**
@@ -117,7 +131,7 @@ class StatusFile
      *
      * @return string
      */
-    public function getIndexStatus()
+    public function getIndexStatus(): ?string
     {
         return $this->x;
     }
@@ -125,9 +139,9 @@ class StatusFile
     /**
      * Get the status of the working tree
      *
-     * @return string
+     * @return string|null
      */
-    public function getWorkingTreeStatus()
+    public function getWorkingTreeStatus(): ?string
     {
         return $this->y;
     }
@@ -135,12 +149,12 @@ class StatusFile
     /**
      * description of the status
      *
-     * @return string
+     * @return void
      */
-    public function calculateDescription()
+    public function calculateDescription(): void
     {
-        $status = $this->x.$this->y;
-        $matching = array(
+        $status = $this->x . $this->y;
+        $matching = [
             '/ [MD]/' => 'not updated',
             '/M[MD]/' => 'updated in index',
             '/A[MD]/' => 'added to index',
@@ -159,8 +173,8 @@ class StatusFile
             '/UU/' => 'unmerged, both modified',
             '/\?\?/' => 'untracked',
             '/!!/' => 'ignored',
-        );
-        $out = array();
+        ];
+        $out = [];
         foreach ($matching as $pattern => $label) {
             if (preg_match($pattern, $status)) {
                 $out[] = $label;
@@ -175,18 +189,27 @@ class StatusFile
      *
      * @param string $description the description variable
      */
-    public function setDescription($description)
+    public function setDescription(string $description): void
     {
         $this->description = $description;
     }
 
     /**
-     * Get Description
+     * Get Description.
+     * Note that in certain environments, git might
+     * format the output differently, leading to the description
+     * being an empty string. Use setDescription(string) to set it yourself.
      *
+     * @see #calulcateDescription()
+     * @see #setDescription($description)
      * @return string
      */
-    public function getDescription()
+    public function getDescription(): string
     {
+        if ($this->description === null) {
+            $this->calculateDescription();
+        }
+
         return $this->description;
     }
 
@@ -195,17 +218,18 @@ class StatusFile
      *
      * @param string $type the type variable
      */
-    public function setType($type)
+    public function setType(string $type): void
     {
         $this->type = $type;
     }
 
     /**
-     * Get Type
+     * Get the Type of status/change.
+     * Please note that this type might not be set by default.
      *
      * @return string
      */
-    public function getType()
+    public function getType(): ?string
     {
         return $this->type;
     }

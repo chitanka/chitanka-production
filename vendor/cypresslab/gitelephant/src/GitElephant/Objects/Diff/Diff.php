@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,10 +20,11 @@
 
 namespace GitElephant\Objects\Diff;
 
-use \GitElephant\Utilities;
-use \GitElephant\Repository;
-use \GitElephant\Command\DiffTreeCommand;
-use \GitElephant\Command\DiffCommand;
+use GitElephant\Command\Caller\CallerInterface;
+use GitElephant\Command\DiffCommand;
+use GitElephant\Command\DiffTreeCommand;
+use GitElephant\Repository;
+use GitElephant\Utilities;
 
 /**
  * Represent a collection of diffs between two trees
@@ -46,9 +48,9 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
     /**
      * DiffObject instances
      *
-     * @var array
+     * @var array<DiffObject>
      */
-    private $diffObjects;
+    private $diffObjects = [];
 
     /**
      * static generator to generate a Diff object
@@ -63,8 +65,12 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @return Diff
      */
-    public static function create(Repository $repository, $commit1 = null, $commit2 = null, $path = null)
-    {
+    public static function create(
+        Repository $repository,
+        $commit1 = null,
+        $commit2 = null,
+        string $path = null
+    ): \GitElephant\Objects\Diff\Diff {
         $commit = new self($repository);
         $commit->createFromCommand($commit1, $commit2, $path);
 
@@ -76,9 +82,9 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      * bare Diff object
      *
      * @param \GitElephant\Repository $repository  repository instance
-     * @param null                    $diffObjects diff objects
+     * @param array<DiffObject>                  $diffObjects  array of diff objects
      */
-    public function __construct(Repository $repository, $diffObjects = null)
+    public function __construct(Repository $repository, array $diffObjects = [])
     {
         $this->position = 0;
         $this->repository = $repository;
@@ -88,9 +94,9 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
     /**
      * get the commit properties from command
      *
-     * @param null $commit1 commit 1
-     * @param null $commit2 commit 2
-     * @param null $path    path
+     * @param string|null$commit1 commit 1
+     * @param string|null$commit2 commit 2
+     * @param string|null$path    path
      *
      * @throws \RuntimeException
      * @throws \Symfony\Component\Process\Exception\InvalidArgumentException
@@ -99,14 +105,16 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @see ShowCommand::commitInfo
      */
-    public function createFromCommand($commit1 = null, $commit2 = null, $path = null)
+    public function createFromCommand($commit1 = null, $commit2 = null, $path = null): void
     {
         if (null === $commit1) {
             $commit1 = $this->getRepository()->getCommit();
         }
+
         if (is_string($commit1)) {
             $commit1 = $this->getRepository()->getCommit($commit1);
         }
+
         if ($commit2 === null) {
             if ($commit1->isRoot()) {
                 $command = DiffTreeCommand::getInstance($this->repository)->rootDiff($commit1);
@@ -119,6 +127,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
             }
             $command = DiffCommand::getInstance($this->repository)->diff($commit1, $commit2, $path);
         }
+
         $outputLines = $this->getCaller()->execute($command)->getOutputLines();
         $this->parseOutputLines($outputLines);
     }
@@ -130,19 +139,20 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      *
      * @throws \InvalidArgumentException
      */
-    private function parseOutputLines($outputLines)
+    private function parseOutputLines(array $outputLines): void
     {
-        $this->diffObjects = array();
+        $this->diffObjects = [];
         $splitArray = Utilities::pregSplitArray($outputLines, '/^diff --git SRC\/(.*) DST\/(.*)$/');
+
         foreach ($splitArray as $diffObjectLines) {
             $this->diffObjects[] = new DiffObject($diffObjectLines);
         }
     }
 
     /**
-     * @return \GitElephant\Command\Caller\Caller
+     * @return \GitElephant\Command\Caller\CallerInterface
      */
-    private function getCaller()
+    private function getCaller(): CallerInterface
     {
         return $this->getRepository()->getCaller();
     }
@@ -152,7 +162,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      *
      * @param \GitElephant\Repository $repository the repository variable
      */
-    public function setRepository($repository)
+    public function setRepository(Repository $repository): void
     {
         $this->repository = $repository;
     }
@@ -162,7 +172,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      *
      * @return \GitElephant\Repository
      */
-    public function getRepository()
+    public function getRepository(): \GitElephant\Repository
     {
         return $this->repository;
     }
@@ -174,7 +184,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return isset($this->diffObjects[$offset]);
     }
@@ -186,7 +196,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      *
      * @return null|mixed
      */
-    public function offsetGet($offset)
+    public function offsetGet($offset): mixed
     {
         return isset($this->diffObjects[$offset]) ? $this->diffObjects[$offset] : null;
     }
@@ -194,10 +204,10 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
     /**
      * ArrayAccess interface
      *
-     * @param int   $offset offset
+     * @param int|null   $offset offset
      * @param mixed $value  value
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         if (is_null($offset)) {
             $this->diffObjects[] = $value;
@@ -211,7 +221,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      *
      * @param int $offset offset
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         unset($this->diffObjects[$offset]);
     }
@@ -219,9 +229,9 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
     /**
      * Countable interface
      *
-     * @return int|void
+     * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->diffObjects);
     }
@@ -231,7 +241,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      *
      * @return mixed
      */
-    public function current()
+    public function current(): mixed
     {
         return $this->diffObjects[$this->position];
     }
@@ -239,7 +249,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      */
-    public function next()
+    public function next(): void
     {
         ++$this->position;
     }
@@ -249,7 +259,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int
      */
-    public function key()
+    public function key(): int
     {
         return $this->position;
     }
@@ -259,7 +269,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
         return isset($this->diffObjects[$this->position]);
     }
@@ -267,7 +277,7 @@ class Diff implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->position = 0;
     }

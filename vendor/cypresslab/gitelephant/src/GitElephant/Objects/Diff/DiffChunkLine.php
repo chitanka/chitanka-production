@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -26,9 +27,9 @@ namespace GitElephant\Objects\Diff;
  */
 abstract class DiffChunkLine
 {
-    const UNCHANGED = "unchanged";
-    const ADDED     = "added";
-    const DELETED   = "deleted";
+    public const UNCHANGED = "unchanged";
+    public const ADDED = "added";
+    public const DELETED = "deleted";
 
     /**
      * line type
@@ -49,7 +50,7 @@ abstract class DiffChunkLine
      *
      * @return string the line content
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getContent();
     }
@@ -59,7 +60,7 @@ abstract class DiffChunkLine
      *
      * @param string $type line type
      */
-    public function setType($type)
+    public function setType(string $type): void
     {
         $this->type = $type;
     }
@@ -67,9 +68,9 @@ abstract class DiffChunkLine
     /**
      * type getter
      *
-     * @return mixed
+     * @return string
      */
-    public function getType()
+    public function getType(): string
     {
         return $this->type;
     }
@@ -79,7 +80,7 @@ abstract class DiffChunkLine
      *
      * @param string $content line content
      */
-    public function setContent($content)
+    public function setContent(string $content): void
     {
         $this->content = $content;
     }
@@ -87,9 +88,9 @@ abstract class DiffChunkLine
     /**
      * content getter
      *
-     * @return mixed
+     * @return string
      */
-    public function getContent()
+    public function getContent(): string
     {
         return $this->content;
     }

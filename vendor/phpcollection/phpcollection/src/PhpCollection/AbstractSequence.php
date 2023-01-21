@@ -72,6 +72,11 @@ class AbstractSequence extends AbstractCollection implements \IteratorAggregate,
         return -1;
     }
 
+    public function reverse()
+    {
+        return $this->createNew(array_reverse($this->elements));
+    }
+
     public function isDefinedAt($index)
     {
         return isset($this->elements[$index]);
@@ -350,7 +355,7 @@ class AbstractSequence extends AbstractCollection implements \IteratorAggregate,
 
     public function getIterator()
     {
-        return new \ArrayIterator($this->elements);
+        return new \ArrayIterator($this->elements ?: []);
     }
 
     protected function createNew(array $elements)

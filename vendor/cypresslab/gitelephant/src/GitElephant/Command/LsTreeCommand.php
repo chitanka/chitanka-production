@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,10 +20,10 @@
 
 namespace GitElephant\Command;
 
-use \GitElephant\Objects\Branch;
-use \GitElephant\Objects\TreeishInterface;
-use \GitElephant\Objects\Object;
-use \GitElephant\Repository;
+use GitElephant\Objects\Branch;
+use GitElephant\Objects\NodeObject;
+use GitElephant\Objects\TreeishInterface;
+use GitElephant\Repository;
 
 /**
  * ls-tree command generator
@@ -31,12 +32,12 @@ use \GitElephant\Repository;
  */
 class LsTreeCommand extends BaseCommand
 {
-    const LS_TREE_COMMAND = 'ls-tree';
+    public const LS_TREE_COMMAND = 'ls-tree';
 
     /**
      * constructor
      *
-     * @param \GitElephant\Repository $repo The repository object this command 
+     * @param \GitElephant\Repository $repo The repository object this command
      *                                      will interact with
      */
     public function __construct(Repository $repo = null)
@@ -52,7 +53,7 @@ class LsTreeCommand extends BaseCommand
      * @throws \RuntimeException
      * @return string
      */
-    public function fullTree($ref = 'HEAD')
+    public function fullTree($ref = 'HEAD'): string
     {
         $what = $ref;
         if ($ref instanceof TreeishInterface) {
@@ -73,27 +74,30 @@ class LsTreeCommand extends BaseCommand
     /**
      * tree of a given path
      *
-     * @param string        $ref  reference
-     * @param string|Object $path path
+     * @param string|TreeishInterface        $ref  reference
+     * @param string|NodeObject $path path
      *
      * @throws \RuntimeException
      * @return string
      */
-    public function tree($ref = 'HEAD', $path = null)
+    public function tree($ref = 'HEAD', $path = null): string
     {
-        if ($path instanceof Object) {
+        if ($path instanceof NodeObject) {
             $subjectPath = $path->getFullPath() . ($path->isTree() ? '/' : '');
         } else {
             $subjectPath = $path;
         }
+
         $what = $ref;
         if ($ref instanceof TreeishInterface) {
             $what = $ref->getSha();
         }
+        $subject = $what;
+
         $this->clearAll();
+
         $this->addCommandName(self::LS_TREE_COMMAND);
         $this->addCommandArgument('-l');
-        $subject = $what;
         $this->addCommandSubject($subject);
         $this->addPath($subjectPath);
 
@@ -108,13 +112,12 @@ class LsTreeCommand extends BaseCommand
      * @throws \RuntimeException
      * @return string
      */
-    public function listAll($ref = null)
+    public function listAll($ref = null): string
     {
         if (is_null($ref)) {
             $ref = 'HEAD';
         }
         $this->clearAll();
-
         $this->addCommandName(self::LS_TREE_COMMAND);
         $this->addCommandSubject($ref);
 

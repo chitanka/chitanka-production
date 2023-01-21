@@ -78,6 +78,11 @@ class AbstractMap extends AbstractCollection implements \IteratorAggregate, MapI
 
         return None::create();
     }
+    
+    public function all()
+    {
+        return $this->elements;
+    }
 
     public function remove($key)
     {
@@ -163,6 +168,10 @@ class AbstractMap extends AbstractCollection implements \IteratorAggregate, MapI
         return $this->filterInternal($callable, false);
     }
 
+    /**
+     * @param callable $callable
+     * @param boolean $booleanKeep
+     */
     private function filterInternal($callable, $booleanKeep)
     {
         $newElements = array();
@@ -285,7 +294,7 @@ class AbstractMap extends AbstractCollection implements \IteratorAggregate, MapI
 
     public function getIterator()
     {
-        return new \ArrayIterator($this->elements);
+        return new \ArrayIterator($this->elements ?: []);
     }
 
     protected function createNew(array $elements)

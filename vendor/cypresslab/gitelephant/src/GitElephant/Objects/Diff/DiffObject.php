@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,7 +20,7 @@
 
 namespace GitElephant\Objects\Diff;
 
-use \GitElephant\Utilities;
+use GitElephant\Utilities;
 
 /**
  * Represent a diff for a single object in the repository
@@ -28,44 +29,44 @@ use \GitElephant\Utilities;
  */
 class DiffObject implements \ArrayAccess, \Countable, \Iterator
 {
-    const MODE_INDEX        = 'index';
-    const MODE_MODE         = 'mode';
-    const MODE_NEW_FILE     = 'new_file';
-    const MODE_DELETED_FILE = 'deleted_file';
-    const MODE_RENAMED      = 'renamed_file';
+    public const MODE_INDEX = 'index';
+    public const MODE_MODE = 'mode';
+    public const MODE_NEW_FILE = 'new_file';
+    public const MODE_DELETED_FILE = 'deleted_file';
+    public const MODE_RENAMED = 'renamed_file';
 
     /**
      * the cursor position
      *
-     * @var int
+     * @var int|null
      */
     private $position;
 
     /**
      * the original file path for the diff object
      *
-     * @var string
+     * @var string|null
      */
     private $originalPath;
 
     /**
      * the destination path for the diff object
      *
-     * @var string
+     * @var string|null
      */
     private $destinationPath;
 
     /**
      * rename similarity index
      *
-     * @var int
+     * @var int|null
      */
     private $similarityIndex;
 
     /**
      * the diff mode
      *
-     * @var string
+     * @var string|null
      */
     private $mode;
 
@@ -74,7 +75,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @var array
      */
-    private $chunks;
+    private $chunks = [];
 
     /**
      * Class constructor
@@ -83,14 +84,15 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @throws \InvalidArgumentException
      */
-    public function __construct($lines)
+    public function __construct(array $lines)
     {
         $this->position = 0;
-        $this->chunks   = array();
+        $this->chunks = [];
 
         $this->findPath($lines[0]);
 
         $sliceIndex = 4;
+
         if ($this->hasPathChanged()) {
             $this->findSimilarityIndex($lines[1]);
             if (isset($lines[4]) && !empty($lines[4])) {
@@ -103,7 +105,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
             $this->findMode($lines[1]);
         }
 
-        if ($this->mode == self::MODE_INDEX || $this->mode == self::MODE_NEW_FILE) {
+        if ($this->mode === self::MODE_INDEX || $this->mode === self::MODE_NEW_FILE) {
             $lines = array_slice($lines, $sliceIndex);
             if (!empty($lines)) {
                 $this->findChunks($lines);
@@ -114,20 +116,21 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
     /**
      * toString magic method
      *
-     * @return mixed
+     * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
-        return $this->originalPath;
+        return $this->originalPath == null ? "" : $this->originalPath;
     }
 
     /**
      * Find the diff chunks
      *
      * @param array $lines output lines for the diff
+     *
      * @throws \InvalidArgumentException
      */
-    private function findChunks($lines)
+    private function findChunks(array $lines): void
     {
         $arrayChunks = Utilities::pregSplitArray(
             $lines,
@@ -143,11 +146,11 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @param string $line line content
      */
-    private function findPath($line)
+    private function findPath(string $line): void
     {
-        $matches = array();
+        $matches = [];
         if (preg_match('/^diff --git SRC\/(.*) DST\/(.*)$/', $line, $matches)) {
-            $this->originalPath    = $matches[1];
+            $this->originalPath = $matches[1];
             $this->destinationPath = $matches[2];
         }
     }
@@ -157,17 +160,20 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @param string $line line content
      */
-    private function findMode($line)
+    private function findMode(string $line): void
     {
         if (preg_match('/^index (.*)\.\.(.*) (.*)$/', $line)) {
             $this->mode = self::MODE_INDEX;
         }
+
         if (preg_match('/^mode (.*)\.\.(.*) (.*)$/', $line)) {
             $this->mode = self::MODE_MODE;
         }
+
         if (preg_match('/^new file mode (.*)/', $line)) {
             $this->mode = self::MODE_NEW_FILE;
         }
+
         if (preg_match('/^deleted file mode (.*)/', $line)) {
             $this->mode = self::MODE_DELETED_FILE;
         }
@@ -178,9 +184,9 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @param string $line line content
      */
-    private function findSimilarityIndex($line)
+    private function findSimilarityIndex(string $line): void
     {
-        $matches = array();
+        $matches = [];
         if (preg_match('/^similarity index (.*)\%$/', $line, $matches)) {
             $this->similarityIndex = $matches[1];
         }
@@ -191,7 +197,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @return array
      */
-    public function getChunks()
+    public function getChunks(): array
     {
         return $this->chunks;
     }
@@ -201,7 +207,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @return string
      */
-    public function getDestinationPath()
+    public function getDestinationPath(): string
     {
         return $this->destinationPath;
     }
@@ -211,7 +217,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @return string
      */
-    public function getMode()
+    public function getMode(): string
     {
         return $this->mode;
     }
@@ -221,7 +227,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @return string
      */
-    public function getOriginalPath()
+    public function getOriginalPath(): string
     {
         return $this->originalPath;
     }
@@ -231,9 +237,9 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function hasPathChanged()
+    public function hasPathChanged(): bool
     {
-        return ($this->originalPath !== $this->destinationPath);
+        return $this->originalPath !== $this->destinationPath;
     }
 
     /**
@@ -242,7 +248,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      * @return int
      * @throws \RuntimeException if not a rename
      */
-    public function getSimilarityIndex()
+    public function getSimilarityIndex(): int
     {
         if ($this->hasPathChanged()) {
             return $this->similarityIndex;
@@ -258,7 +264,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return isset($this->chunks[$offset]);
     }
@@ -268,9 +274,9 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @param int $offset offset
      *
-     * @return null
+     * @return DiffChunk|null
      */
-    public function offsetGet($offset)
+    public function offsetGet($offset): ?DiffChunk
     {
         return isset($this->chunks[$offset]) ? $this->chunks[$offset] : null;
     }
@@ -278,10 +284,10 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
     /**
      * ArrayAccess interface
      *
-     * @param int   $offset offset
+     * @param int|null   $offset offset
      * @param mixed $value  value
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         if (is_null($offset)) {
             $this->chunks[] = $value;
@@ -295,7 +301,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @param int $offset offset
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         unset($this->chunks[$offset]);
     }
@@ -305,7 +311,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->chunks);
     }
@@ -313,9 +319,9 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      *
-     * @return mixed
+     * @return DiffChunk|null
      */
-    public function current()
+    public function current(): ?DiffChunk
     {
         return $this->chunks[$this->position];
     }
@@ -323,7 +329,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      */
-    public function next()
+    public function next(): void
     {
         ++$this->position;
     }
@@ -333,7 +339,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @return int
      */
-    public function key()
+    public function key(): int
     {
         return $this->position;
     }
@@ -343,7 +349,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
      *
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
         return isset($this->chunks[$this->position]);
     }
@@ -351,7 +357,7 @@ class DiffObject implements \ArrayAccess, \Countable, \Iterator
     /**
      * Iterator interface
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->position = 0;
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -20,23 +21,16 @@
 namespace GitElephant\Command\Caller;
 
 use GitElephant\Exception\InvalidRepositoryPathException;
-use \GitElephant\GitBinary;
-use \Symfony\Component\Process\Process;
+use Symfony\Component\Process\Process;
 
 /**
  * Caller
  *
  * @author Matteo Giachino <matteog@gmail.com>
+ * @author Tim Bernhard <tim@bernhard-webstudio.ch>
  */
-class Caller implements CallerInterface
+class Caller extends AbstractCaller
 {
-    /**
-     * GitBinary instance
-     *
-     * @var \GitElephant\GitBinary
-     */
-    private $binary;
-
     /**
      * the repository path
      *
@@ -45,44 +39,22 @@ class Caller implements CallerInterface
     private $repositoryPath;
 
     /**
-     * the output lines of the command
-     *
-     * @var array
-     */
-    private $outputLines = array();
-
-    /**
-     * raw output
-     *
-     * @var string
-     */
-    private $rawOutput;
-
-    /**
      * Class constructor
      *
-     * @param \GitElephant\GitBinary $binary         the binary
-     * @param string                 $repositoryPath the physical base path for the repository
+     * @param string|null   $gitPath the physical path to the git binary
+     * @param string        $repositoryPath the physical base path for the repository
      */
-    public function __construct(GitBinary $binary, $repositoryPath)
+    public function __construct($gitPath, $repositoryPath)
     {
-        $this->binary         = $binary;
-
+        if (is_null($gitPath)) {
+            // unix only!
+            $gitPath = exec('which git');
+        }
+        $this->setBinaryPath($gitPath);
         if (!is_dir($repositoryPath)) {
             throw new InvalidRepositoryPathException($repositoryPath);
         }
-
         $this->repositoryPath = $repositoryPath;
-    }
-
-    /**
-     * Get the binary path
-     *
-     * @return mixed
-     */
-    public function getBinaryPath()
-    {
-        return $this->binary->getPath();
     }
 
     /**
@@ -90,7 +62,7 @@ class Caller implements CallerInterface
      *
      * @param string $cmd               the command to execute
      * @param bool   $git               if the command is git or a generic command
-     * @param null   $cwd               the directory where the command must be executed
+     * @param string $cwd               the directory where the command must be executed
      * @param array  $acceptedExitCodes exit codes accepted to consider the command execution successful
      *
      * @throws \RuntimeException
@@ -100,13 +72,32 @@ class Caller implements CallerInterface
      * @throws \Symfony\Component\Process\Exception\LogicException
      * @return Caller
      */
-    public function execute($cmd, $git = true, $cwd = null, $acceptedExitCodes = array(0))
-    {
+    public function execute(
+        string $cmd,
+        bool $git = true,
+        string $cwd = null,
+        array $acceptedExitCodes = [0]
+    ): CallerInterface {
         if ($git) {
-            $cmd = $this->binary->getPath() . ' ' . $cmd;
+            $cmd = $this->getBinaryPath() . ' ' . $cmd;
         }
 
-        $process = new Process($cmd, is_null($cwd) ? $this->repositoryPath : $cwd);
+        if (stripos(PHP_OS, 'WIN') !== 0) {
+            // We rely on the C locale in all output we parse.
+            $cmd = 'LC_ALL=C ' . $cmd;
+        }
+
+        if (is_null($cwd) || !is_dir($cwd)) {
+            $cwd = $this->repositoryPath;
+        }
+
+        if (method_exists(Process::class, 'fromShellCommandline')) {
+            $process = Process::fromShellCommandline($cmd, $cwd);
+        } else {
+            // compatibility fix required for symfony/process versions prior to v4.2.
+            $process = new Process($cmd, $cwd);
+        }
+
         $process->setTimeout(15000);
         $process->run();
         if (!in_array($process->getExitCode(), $acceptedExitCodes)) {
@@ -116,6 +107,7 @@ class Caller implements CallerInterface
             $text .= "\n" . $process->getOutput();
             throw new \RuntimeException($text);
         }
+        
         $this->rawOutput = $process->getOutput();
         // rtrim values
         $values = array_map('rtrim', explode(PHP_EOL, $process->getOutput()));
@@ -125,13 +117,13 @@ class Caller implements CallerInterface
     }
 
     /**
-     * returns the raw output of the last executed command
+     * returns the output of the last executed command
      *
      * @return string
      */
-    public function getOutput()
+    public function getOutput(): string
     {
-        return implode(" ", $this->outputLines);
+        return implode("\n", $this->outputLines);
     }
 
     /**
@@ -141,10 +133,10 @@ class Caller implements CallerInterface
      *
      * @return array
      */
-    public function getOutputLines($stripBlankLines = false)
+    public function getOutputLines(bool $stripBlankLines = false): array
     {
         if ($stripBlankLines) {
-            $output = array();
+            $output = [];
             foreach ($this->outputLines as $line) {
                 if ('' !== $line) {
                     $output[] = $line;
@@ -162,7 +154,7 @@ class Caller implements CallerInterface
      *
      * @return string
      */
-    public function getRawOutput()
+    public function getRawOutput(): string
     {
         return $this->rawOutput;
     }

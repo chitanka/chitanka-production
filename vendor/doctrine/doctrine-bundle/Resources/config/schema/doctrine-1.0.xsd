@@ -29,6 +29,7 @@
         <xsd:attribute name="driver-class" type="xsd:string" />
         <xsd:attribute name="wrapper-class" type="xsd:string" />
         <xsd:attribute name="keep-slave" type="xsd:string" />
+        <xsd:attribute name="keep-replica" type="xsd:string" />
         <xsd:attribute name="platform-service" type="xsd:string" />
         <xsd:attribute name="shard-choser" type="xsd:string" />
         <xsd:attribute name="shard-choser-service" type="xsd:string" />
@@ -36,6 +37,8 @@
         <xsd:attribute name="schema-filter" type="xsd:string" />
         <xsd:attribute name="logging" type="xsd:string" default="false" />
         <xsd:attribute name="profiling" type="xsd:string" default="false" />
+        <xsd:attribute name="profiling-collect-backtrace" type="xsd:string" default="false" />
+        <xsd:attribute name="profiling-collect-schema-errors" type="xsd:string" default="true" />
         <xsd:attribute name="server-version" type="xsd:string" />
         <xsd:attribute name="use-savepoints" type="xsd:boolean" />
         <xsd:attributeGroup ref="driver-config" />
@@ -48,6 +51,8 @@
         <xsd:attribute name="port" type="xsd:string" />
         <xsd:attribute name="user" type="xsd:string" />
         <xsd:attribute name="password" type="xsd:string" />
+        <xsd:attribute name="override-url" type="xsd:boolean" />
+        <xsd:attribute name="dbname-suffix" type="xsd:string" />
         <xsd:attribute name="application-name" type="xsd:string" />
         <xsd:attribute name="path" type="xsd:string" />
         <xsd:attribute name="unix-socket" type="xsd:string" />
@@ -59,17 +64,24 @@
         <xsd:attribute name="service" type="xsd:string" />
         <xsd:attribute name="servicename" type="xsd:string" />
         <xsd:attribute name="session-mode" type="xsd:string" />
+        <xsd:attribute name="default_dbname" type="xsd:string" />
         <xsd:attribute name="sslmode" type="xsd:string" />
         <xsd:attribute name="sslrootcert" type="xsd:string" />
+        <xsd:attribute name="sslcert" type="xsd:string" />
+        <xsd:attribute name="sslkey" type="xsd:string" />
+        <xsd:attribute name="sslcrl" type="xsd:string" />
         <xsd:attribute name="pooled" type="xsd:string" />
         <xsd:attribute name="multiple-active-result-sets" type="xsd:string" />
+        <xsd:attribute name="connectstring" type="xsd:string" />
+        <xsd:attribute name="instancename" type="xsd:string" />
     </xsd:attributeGroup>
 
     <xsd:group name="connection-child-config">
         <xsd:choice>
             <xsd:element name="option" type="option" />
             <xsd:element name="mapping-type" type="named_scalar" />
-            <xsd:element name="slave" type="slave" />
+            <xsd:element name="slave" type="replica" />
+            <xsd:element name="replica" type="replica" />
             <xsd:element name="shard" type="shard" />
             <xsd:element name="default-table-option" type="named_scalar" />
         </xsd:choice>
@@ -87,11 +99,11 @@
     </xsd:complexType>
 
     <xsd:complexType name="option">
-        <xsd:simpleContent>
-            <xsd:extension base="xsd:string">
+        <xsd:complexContent>
+            <xsd:extension base="xsd:anyType">
                 <xsd:attribute name="key" type="xsd:string" use="required" />
             </xsd:extension>
-        </xsd:simpleContent>
+        </xsd:complexContent>
     </xsd:complexType>
 
     <xsd:complexType name="connection">
@@ -101,7 +113,7 @@
         <xsd:attributeGroup ref="connection-config" />
     </xsd:complexType>
 
-    <xsd:complexType name="slave">
+    <xsd:complexType name="replica">
         <xsd:attribute name="name" type="xsd:string" use="required" />
         <xsd:attributeGroup ref="driver-config" />
     </xsd:complexType>
@@ -144,20 +156,17 @@
         </xsd:simpleContent>
     </xsd:complexType>
 
-    <xsd:complexType name="cache_driver">
-        <!-- This is not consistent with the Symfony config. These string elements should be attributes.
-        TODO: change it for 2.0
-        -->
-        <xsd:all>
-            <xsd:element name="class" type="xsd:string" minOccurs="0" maxOccurs="1" />
-            <xsd:element name="host" type="xsd:string" minOccurs="0" maxOccurs="1" />
-            <xsd:element name="port" type="xsd:string" minOccurs="0" maxOccurs="1" />
-            <xsd:element name="instance-class" type="xsd:string" minOccurs="0" maxOccurs="1" />
-        </xsd:all>
+    <xsd:simpleType name="cache_driver_type">
+        <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="pool"/>
+            <xsd:enumeration value="service"/>
+        </xsd:restriction>
+    </xsd:simpleType>
 
-        <xsd:attribute name="type" type="xsd:string" />
+    <xsd:complexType name="cache_driver">
+        <xsd:attribute name="type" type="cache_driver_type" default="pool" />
         <xsd:attribute name="id" type="xsd:string" />
-        <xsd:attribute name="namespace" type="xsd:string" />
+        <xsd:attribute name="pool" type="xsd:string" />
     </xsd:complexType>
 
     <xsd:complexType name="entity_listeners">
@@ -203,6 +212,7 @@
             <xsd:element name="filter" type="filter" minOccurs="0" maxOccurs="unbounded" />
             <xsd:element name="entity-listeners" type="entity_listeners" minOccurs="0" maxOccurs="1" />
             <xsd:element name="second-level-cache" type="second-level-cache" minOccurs="0" maxOccurs="1" />
+            <xsd:element name="schema-ignore-class" type="xsd:string" minOccurs="0" maxOccurs="unbounded" />
         </xsd:choice>
     </xsd:group>
 
@@ -215,10 +225,6 @@
         <xsd:attribute name="quote-strategy" type="xsd:string" />
         <xsd:attribute name="entity-listener-resolver" type="xsd:string" />
         <xsd:attribute name="repository-factory" type="xsd:string" />
-        <!-- deprecated attributes, use the child element instead -->
-        <xsd:attribute name="result-cache-driver" type="xsd:string" />
-        <xsd:attribute name="metadata-cache-driver" type="xsd:string" />
-        <xsd:attribute name="query-cache-driver" type="xsd:string" />
     </xsd:attributeGroup>
 
     <xsd:complexType name="filter" mixed="true">

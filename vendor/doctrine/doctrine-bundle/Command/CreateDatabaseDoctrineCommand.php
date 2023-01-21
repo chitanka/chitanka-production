@@ -1,41 +1,34 @@
 <?php
 
-/*
- * This file is part of the Doctrine Bundle
- *
- * The code was originally distributed inside the Symfony framework.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- * (c) Doctrine Project, Benjamin Eberlei <kontakt@beberlei.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace Doctrine\Bundle\DoctrineBundle\Command;
 
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Sharding\PoolingShardConnection;
+use InvalidArgumentException;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
+
+use function array_merge;
+use function in_array;
+use function sprintf;
+use function trigger_deprecation;
 
 /**
- * Database tool allows you to easily drop and create your configured databases.
+ * Database tool allows you to easily create your configured databases.
  *
- * @author Fabien Potencier <fabien@symfony.com>
- * @author Jonathan H. Wage <jonwage@gmail.com>
+ * @final
  */
 class CreateDatabaseDoctrineCommand extends DoctrineCommand
 {
-    /**
-     * {@inheritDoc}
-     */
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('doctrine:database:create')
             ->setDescription('Creates the configured database')
-            ->addOption('connection', null, InputOption::VALUE_OPTIONAL, 'The connection to use for this command')
+            ->addOption('shard', 's', InputOption::VALUE_REQUIRED, 'The shard connection to use for this command')
+            ->addOption('connection', 'c', InputOption::VALUE_OPTIONAL, 'The connection to use for this command')
             ->addOption('if-not-exists', null, InputOption::VALUE_NONE, 'Don\'t trigger an error, when the database already exists')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command creates the default connections database:
@@ -49,37 +42,75 @@ EOT
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $connectionName = $input->getOption('connection');
-        if (empty($connectionName) === true) {
-            $connectionName = $this->getContainer()->get('doctrine')->getDefaultConnectionName();
+        if (empty($connectionName)) {
+            $connectionName = $this->getDoctrine()->getDefaultConnectionName();
         }
+
         $connection = $this->getDoctrineConnection($connectionName);
 
         $ifNotExists = $input->getOption('if-not-exists');
 
         $params = $connection->getParams();
-        if (isset($params['master'])) {
-            $params = $params['master'];
+
+        if (isset($params['primary'])) {
+            $params = $params['primary'];
+        }
+
+        // Cannot inject `shard` option in parent::getDoctrineConnection
+        // cause it will try to connect to a non-existing database
+        if (isset($params['shards'])) {
+            $shards = $params['shards'];
+            // Default select global
+            $params = array_merge($params, $params['global'] ?? []);
+            unset($params['global']['dbname'], $params['global']['path'], $params['global']['url']);
+            if ($input->getOption('shard')) {
+                trigger_deprecation(
+                    'doctrine/doctrine-bundle',
+                    '2.7',
+                    'Passing a "shard" option for "%s" is deprecated. DBAL 3 does not support shards anymore.',
+                    self::class
+                );
+
+                foreach ($shards as $i => $shard) {
+                    if ($shard['id'] === (int) $input->getOption('shard')) {
+                        // Select sharded database
+                        $params = array_merge($params, $shard);
+                        unset($params['shards'][$i]['dbname'], $params['shards'][$i]['path'], $params['shards'][$i]['url'], $params['id']);
+                        break;
+                    }
+                }
+            }
         }
 
         $hasPath = isset($params['path']);
-        $name = $hasPath ? $params['path'] : (isset($params['dbname']) ? $params['dbname'] : false);
-        if (!$name) {
-            throw new \InvalidArgumentException("Connection does not contain a 'path' or 'dbname' parameter and cannot be dropped.");
+        $name    = $hasPath ? $params['path'] : ($params['dbname'] ?? false);
+        if (! $name) {
+            throw new InvalidArgumentException("Connection does not contain a 'path' or 'dbname' parameter and cannot be created.");
         }
+
         // Need to get rid of _every_ occurrence of dbname from connection configuration and we have already extracted all relevant info from url
         unset($params['dbname'], $params['path'], $params['url']);
 
         $tmpConnection = DriverManager::getConnection($params);
+        if ($tmpConnection instanceof PoolingShardConnection) {
+            $tmpConnection->connect($input->getOption('shard'));
+            trigger_deprecation(
+                'doctrine/doctrine-bundle',
+                '2.7',
+                'Using a DBAL connection of type "%s" is deprecated. DBAL 3 does not support shards anymore.',
+                PoolingShardConnection::class
+            );
+        } else {
+            $tmpConnection->connect();
+        }
+
         $shouldNotCreateDatabase = $ifNotExists && in_array($name, $tmpConnection->getSchemaManager()->listDatabases());
 
         // Only quote if we don't have a path
-        if (!$hasPath) {
+        if (! $hasPath) {
             $name = $tmpConnection->getDatabasePlatform()->quoteSingleIdentifier($name);
         }
 
@@ -91,7 +122,7 @@ EOT
                 $tmpConnection->getSchemaManager()->createDatabase($name);
                 $output->writeln(sprintf('<info>Created database <comment>%s</comment> for connection named <comment>%s</comment></info>', $name, $connectionName));
             }
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             $output->writeln(sprintf('<error>Could not create database <comment>%s</comment> for connection named <comment>%s</comment></error>', $name, $connectionName));
             $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
             $error = true;

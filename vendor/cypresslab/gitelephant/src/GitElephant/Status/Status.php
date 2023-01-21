@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,9 +20,9 @@
 
 namespace GitElephant\Status;
 
-use \GitElephant\Command\MainCommand;
-use \GitElephant\Repository;
-use \PhpCollection\Sequence;
+use GitElephant\Command\MainCommand;
+use GitElephant\Repository;
+use PhpCollection\Sequence;
 
 /**
  * Class Status
@@ -36,11 +37,13 @@ class Status
     private $repository;
 
     /**
-     * @var array
+     * @var array<StatusFile>
      */
     protected $files;
 
     /**
+     * Private constructor in order to follow the singleton pattern
+     *
      * @param Repository $repository
      *
      * @throws \RuntimeException
@@ -48,7 +51,7 @@ class Status
      */
     private function __construct(Repository $repository)
     {
-        $this->files = array();
+        $this->files = [];
         $this->repository = $repository;
         $this->createFromCommand();
     }
@@ -66,7 +69,7 @@ class Status
     /**
      * create from git command
      */
-    private function createFromCommand()
+    private function createFromCommand(): void
     {
         $command = MainCommand::getInstance($this->repository)->status(true);
         $lines = $this->repository->getCaller()->execute($command)->getOutputLines(true);
@@ -76,9 +79,9 @@ class Status
     /**
      * all files
      *
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    public function all()
+    public function all(): \PhpCollection\Sequence
     {
         return new Sequence($this->files);
     }
@@ -86,9 +89,9 @@ class Status
     /**
      * untracked files
      *
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    public function untracked()
+    public function untracked(): \PhpCollection\Sequence
     {
         return $this->filterByType(StatusFile::UNTRACKED);
     }
@@ -96,9 +99,9 @@ class Status
     /**
      * modified files
      *
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    public function modified()
+    public function modified(): \PhpCollection\Sequence
     {
         return $this->filterByType(StatusFile::MODIFIED);
     }
@@ -106,9 +109,9 @@ class Status
     /**
      * added files
      *
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    public function added()
+    public function added(): \PhpCollection\Sequence
     {
         return $this->filterByType(StatusFile::ADDED);
     }
@@ -116,9 +119,9 @@ class Status
     /**
      * deleted files
      *
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    public function deleted()
+    public function deleted(): \PhpCollection\Sequence
     {
         return $this->filterByType(StatusFile::DELETED);
     }
@@ -126,9 +129,9 @@ class Status
     /**
      * renamed files
      *
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    public function renamed()
+    public function renamed(): \PhpCollection\Sequence
     {
         return $this->filterByType(StatusFile::RENAMED);
     }
@@ -136,9 +139,9 @@ class Status
     /**
      * copied files
      *
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    public function copied()
+    public function copied(): \PhpCollection\Sequence
     {
         return $this->filterByType(StatusFile::COPIED);
     }
@@ -150,27 +153,28 @@ class Status
      *
      * @param array $lines
      */
-    private function parseOutputLines($lines)
+    private function parseOutputLines(array $lines): void
     {
         foreach ($lines as $line) {
-            preg_match('/([MADRCU\? ])?([MADRCU\? ])?\ "?(\S+)"? ?( -> )?(\S+)?/', $line, $matches);
-            $x = isset($matches[1]) ? $matches[1] : null;
-            $y = isset($matches[2]) ? $matches[2] : null;
-            $file = isset($matches[3]) ? $matches[3] : null;
-            $renamedFile = isset($matches[4]) ? $matches[4] : null;
-            $this->files[] = StatusFile::create($x, $y, $file, $renamedFile);
+            $matches = $this->splitStatusLine($line);
+            if ($matches) {
+                $x = isset($matches[1]) ? $matches[1] : null;
+                $y = isset($matches[2]) ? $matches[2] : null;
+                $file = isset($matches[3]) ? $matches[3] : null;
+                $renamedFile = isset($matches[5]) ? $matches[5] : null;
+                $this->files[] = StatusFile::create($x, $y, $file, $renamedFile);
+            }
         }
     }
 
     /**
      * @param string $line
      *
-     * @return mixed
+     * @return array<string>|null
      */
-    protected function splitStatusLine($line)
+    protected function splitStatusLine(string $line)
     {
-        preg_match('/([MADRCU\?])?([MADRCU\?])?\ "?(\S+)"? ?( -> )?(\S+)?/', $line, $matches);
-
+        preg_match('/^([MADRCU\? ])?([MADRCU\? ])?\ "?([^"]+?)"?( -> "?([^"]+?)"?)?$/', $line, $matches);
         return $matches;
     }
 
@@ -179,16 +183,21 @@ class Status
      *
      * @param string $type
      *
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    protected function filterByType($type)
+    protected function filterByType(string $type): \PhpCollection\Sequence
     {
         if (!$this->files) {
             return new Sequence();
         }
 
-        return new Sequence(array_filter($this->files, function (StatusFile $statusFile) use ($type) {
-            return $type === $statusFile->getWorkingTreeStatus() || $type === $statusFile->getIndexStatus();
-        }));
+        return new Sequence(
+            array_filter(
+                $this->files,
+                function (StatusFile $statusFile) use ($type) {
+                    return $type === $statusFile->getWorkingTreeStatus() || $type === $statusFile->getIndexStatus();
+                }
+            )
+        );
     }
 }

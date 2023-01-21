@@ -1,152 +1,57 @@
 <?php
 
-/*
- * This file is part of the Doctrine Bundle
- *
- * The code was originally distributed inside the Symfony framework.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- * (c) Doctrine Project, Benjamin Eberlei <kontakt@beberlei.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace Doctrine\Bundle\DoctrineBundle;
 
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Bridge\Doctrine\RegistryInterface;
-use Symfony\Bridge\Doctrine\ManagerRegistry;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMException;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Proxy\Proxy;
+use ProxyManager\Proxy\LazyLoadingInterface;
+use Psr\Container\ContainerInterface;
+use Symfony\Bridge\Doctrine\ManagerRegistry;
+use Symfony\Component\VarExporter\LazyObjectInterface;
+use Symfony\Contracts\Service\ResetInterface;
+
+use function array_keys;
+use function assert;
 
 /**
  * References all Doctrine connections and entity managers in a given Container.
- *
- * @author Fabien Potencier <fabien@symfony.com>
  */
-class Registry extends ManagerRegistry implements RegistryInterface
+class Registry extends ManagerRegistry implements ResetInterface
 {
     /**
-     * Construct.
-     *
-     * @param ContainerInterface $container
-     * @param array              $connections
-     * @param array              $entityManagers
-     * @param string             $defaultConnection
-     * @param string             $defaultEntityManager
+     * @param string[] $connections
+     * @param string[] $entityManagers
      */
-    public function __construct(ContainerInterface $container, array $connections, array $entityManagers, $defaultConnection, $defaultEntityManager)
+    public function __construct(ContainerInterface $container, array $connections, array $entityManagers, string $defaultConnection, string $defaultEntityManager)
     {
-        $this->setContainer($container);
+        $this->container = $container;
 
-        parent::__construct('ORM', $connections, $entityManagers, $defaultConnection, $defaultEntityManager, 'Doctrine\ORM\Proxy\Proxy');
-    }
-
-    /**
-     * Gets the default entity manager name.
-     *
-     * @return string The default entity manager name
-     *
-     * @deprecated
-     */
-    public function getDefaultEntityManagerName()
-    {
-        trigger_error('getDefaultEntityManagerName is deprecated since Symfony 2.1. Use getDefaultManagerName instead', E_USER_DEPRECATED);
-
-        return $this->getDefaultManagerName();
-    }
-
-    /**
-     * Gets a named entity manager.
-     *
-     * @param string $name The entity manager name (null for the default one)
-     *
-     * @return EntityManager
-     *
-     * @deprecated
-     */
-    public function getEntityManager($name = null)
-    {
-        trigger_error('getEntityManager is deprecated since Symfony 2.1. Use getManager instead', E_USER_DEPRECATED);
-
-        return $this->getManager($name);
-    }
-
-    /**
-     * Gets an array of all registered entity managers
-     *
-     * @return EntityManager[] an array of all EntityManager instances
-     *
-     * @deprecated
-     */
-    public function getEntityManagers()
-    {
-        trigger_error('getEntityManagers is deprecated since Symfony 2.1. Use getManagers instead', E_USER_DEPRECATED);
-
-        return $this->getManagers();
-    }
-
-    /**
-     * Resets a named entity manager.
-     *
-     * This method is useful when an entity manager has been closed
-     * because of a rollbacked transaction AND when you think that
-     * it makes sense to get a new one to replace the closed one.
-     *
-     * Be warned that you will get a brand new entity manager as
-     * the existing one is not useable anymore. This means that any
-     * other object with a dependency on this entity manager will
-     * hold an obsolete reference. You can inject the registry instead
-     * to avoid this problem.
-     *
-     * @param string $name The entity manager name (null for the default one)
-     *
-     * @return EntityManager
-     *
-     * @deprecated
-     */
-    public function resetEntityManager($name = null)
-    {
-        trigger_error('resetEntityManager is deprecated since Symfony 2.1. Use resetManager instead', E_USER_DEPRECATED);
-
-        $this->resetManager($name);
+        parent::__construct('ORM', $connections, $entityManagers, $defaultConnection, $defaultEntityManager, Proxy::class);
     }
 
     /**
      * Resolves a registered namespace alias to the full namespace.
      *
      * This method looks for the alias in all registered entity managers.
-     *
-     * @param string $alias The alias
-     *
-     * @return string The full namespace
-     *
-     * @deprecated
-     */
-    public function getEntityNamespace($alias)
-    {
-        trigger_error('getEntityNamespace is deprecated since Symfony 2.1. Use getAliasNamespace instead', E_USER_DEPRECATED);
-
-        return $this->getAliasNamespace($alias);
-    }
-
-    /**
-     * Resolves a registered namespace alias to the full namespace.
-     *
-     * This method looks for the alias in all registered entity managers.
-     *
-     * @param string $alias The alias
-     *
-     * @return string The full namespace
      *
      * @see Configuration::getEntityNamespace
+     *
+     * @param string $alias The alias
+     *
+     * @return string The full namespace
      */
     public function getAliasNamespace($alias)
     {
         foreach (array_keys($this->getManagers()) as $name) {
+            $objectManager = $this->getManager($name);
+
+            if (! $objectManager instanceof EntityManagerInterface) {
+                continue;
+            }
+
             try {
-                return $this->getManager($name)->getConfiguration()->getEntityNamespace($alias);
+                return $objectManager->getConfiguration()->getEntityNamespace($alias);
             } catch (ORMException $e) {
             }
         }
@@ -154,33 +59,29 @@ class Registry extends ManagerRegistry implements RegistryInterface
         throw ORMException::unknownEntityNamespace($alias);
     }
 
-    /**
-     * Gets all connection names.
-     *
-     * @return array An array of connection names
-     *
-     * @deprecated
-     */
-    public function getEntityManagerNames()
+    public function reset(): void
     {
-        trigger_error('getEntityManagerNames is deprecated since Symfony 2.1. Use getManagerNames instead', E_USER_DEPRECATED);
-
-        return $this->getManagerNames();
+        foreach ($this->getManagerNames() as $managerName => $serviceId) {
+            $this->resetOrClearManager($managerName, $serviceId);
+        }
     }
 
-    /**
-     * Gets the entity manager associated with a given class.
-     *
-     * @param string $class A Doctrine Entity class name
-     *
-     * @return EntityManager|null
-     *
-     * @deprecated
-     */
-    public function getEntityManagerForClass($class)
+    private function resetOrClearManager(string $managerName, string $serviceId): void
     {
-        trigger_error('getEntityManagerForClass is deprecated since Symfony 2.1. Use getManagerForClass instead', E_USER_DEPRECATED);
+        if (! $this->container->initialized($serviceId)) {
+            return;
+        }
 
-        return $this->getManagerForClass($class);
+        $manager = $this->container->get($serviceId);
+
+        assert($manager instanceof EntityManagerInterface);
+
+        if ((! $manager instanceof LazyLoadingInterface && ! $manager instanceof LazyObjectInterface) || $manager->isOpen()) {
+            $manager->clear();
+
+            return;
+        }
+
+        $this->resetManager($managerName);
     }
 }

@@ -1,55 +1,59 @@
 <?php
 
-/*
- * This file is part of the Doctrine Bundle
- *
- * The code was originally distributed inside the Symfony framework.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- * (c) Doctrine Project, Benjamin Eberlei <kontakt@beberlei.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 namespace Doctrine\Bundle\DoctrineBundle\Command\Proxy;
 
-use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Doctrine\DBAL\Tools\Console\Helper\ConnectionHelper;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\Console\EntityManagerProvider;
 use Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+
+use function assert;
+use function class_exists;
+use function trigger_deprecation;
 
 /**
  * Provides some helper and convenience methods to configure doctrine commands in the context of bundles
  * and multiple connections/entity managers.
  *
- * @author Fabien Potencier <fabien@symfony.com>
+ * @deprecated since DoctrineBundle 2.7 and will be removed in 3.0
  */
 abstract class DoctrineCommandHelper
 {
     /**
      * Convenience method to push the helper sets of a given entity manager into the application.
      *
-     * @param Application $application
-     * @param string      $emName
+     * @param string $emName
      */
     public static function setApplicationEntityManager(Application $application, $emName)
     {
-        /** @var $em \Doctrine\ORM\EntityManager */
         $em = $application->getKernel()->getContainer()->get('doctrine')->getManager($emName);
+        assert($em instanceof EntityManagerInterface);
         $helperSet = $application->getHelperSet();
-        $helperSet->set(new ConnectionHelper($em->getConnection()), 'db');
+        if (class_exists(ConnectionHelper::class)) {
+            $helperSet->set(new ConnectionHelper($em->getConnection()), 'db');
+        }
+
         $helperSet->set(new EntityManagerHelper($em), 'em');
+
+        trigger_deprecation(
+            'doctrine/doctrine-bundle',
+            '2.7',
+            'Providing an EntityManager using "%s" is deprecated. Use an instance of "%s" instead.',
+            EntityManagerHelper::class,
+            EntityManagerProvider::class
+        );
     }
 
     /**
      * Convenience method to push the helper sets of a given connection into the application.
      *
-     * @param Application $application
-     * @param string      $connName
+     * @param string $connName
      */
     public static function setApplicationConnection(Application $application, $connName)
     {
         $connection = $application->getKernel()->getContainer()->get('doctrine')->getConnection($connName);
-        $helperSet = $application->getHelperSet();
+        $helperSet  = $application->getHelperSet();
         $helperSet->set(new ConnectionHelper($connection), 'db');
     }
 }

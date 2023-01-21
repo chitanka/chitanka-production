@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -33,14 +34,48 @@ interface CallerInterface
      *
      * @return CallerInterface
      */
-    public function execute($cmd, $git = true, $cwd = null);
+    public function execute(
+        string $cmd,
+        bool $git = true,
+        string $cwd = null
+    ): CallerInterface;
 
     /**
      * after calling execute this method should return the output
      *
      * @param bool $stripBlankLines strips the blank lines
      *
-     * @return array
+     * @return array<string>
      */
-    public function getOutputLines($stripBlankLines = false);
+    public function getOutputLines(bool $stripBlankLines = false): array;
+
+    /**
+     * Returns the output of the last executed command.
+     * May be adjusted, such as trimmed.
+     *
+     * @return string
+     */
+    public function getOutput(): string;
+
+    /**
+     * Returns the output of the last executed command.
+     * May not be adjusted, not trimmed or anything, really raw.
+     *
+     * @return string
+     */
+    public function getRawOutput(): string;
+
+    /**
+     * Get the binary path
+     *
+     * @return string
+     */
+    public function getBinaryPath(): string;
+
+    /**
+     * Get the binary version
+     *
+     * @return string
+     */
+    public function getBinaryVersion(): string;
 }

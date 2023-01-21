@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -24,7 +25,12 @@ namespace GitElephant\Exception;
  *
  * @package GitElephant\Exception
  */
-class InvalidBranchNameException extends \Exception
+class InvalidBranchNameException extends \InvalidArgumentException
 {
+    /**
+     * The message of the exception
+     *
+     * @var string
+     */
     protected $message = 'The name provided is not a valid branch name';
 }

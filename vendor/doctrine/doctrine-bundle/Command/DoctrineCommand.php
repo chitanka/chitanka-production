@@ -1,29 +1,36 @@
 <?php
 
-/*
- * This file is part of the Doctrine Bundle
- *
- * The code was originally distributed inside the Symfony framework.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- * (c) Doctrine Project, Benjamin Eberlei <kontakt@beberlei.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace Doctrine\Bundle\DoctrineBundle\Command;
 
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Sharding\PoolingShardConnection;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\EntityGenerator;
+use Doctrine\Persistence\ManagerRegistry;
+use LogicException;
+use Symfony\Component\Console\Command\Command;
+
+use function sprintf;
+use function trigger_deprecation;
 
 /**
  * Base class for Doctrine console commands to extend from.
  *
- * @author Fabien Potencier <fabien@symfony.com>
+ * @internal
  */
-abstract class DoctrineCommand extends ContainerAwareCommand
+abstract class DoctrineCommand extends Command
 {
+    /** @var ManagerRegistry */
+    private $doctrine;
+
+    public function __construct(ManagerRegistry $doctrine)
+    {
+        parent::__construct();
+
+        $this->doctrine = $doctrine;
+    }
+
     /**
      * get a doctrine entity generator
      *
@@ -45,13 +52,36 @@ abstract class DoctrineCommand extends ContainerAwareCommand
     /**
      * Get a doctrine entity manager by symfony name.
      *
-     * @param string $name
+     * @param string   $name
+     * @param int|null $shardId
      *
-     * @return \Doctrine\ORM\EntityManager
+     * @return EntityManager
      */
-    protected function getEntityManager($name)
+    protected function getEntityManager($name, $shardId = null)
     {
-        return $this->getContainer()->get('doctrine')->getManager($name);
+        $manager = $this->getDoctrine()->getManager($name);
+
+        if ($shardId) {
+            trigger_deprecation(
+                'doctrine/doctrine-bundle',
+                '2.7',
+                'Passing a "shardId" argument to "%s" is deprecated. DBAL 3 does not support shards anymore.',
+                __METHOD__
+            );
+
+            if (! $manager instanceof EntityManagerInterface) {
+                throw new LogicException(sprintf('Sharding is supported only in EntityManager of instance "%s".', EntityManagerInterface::class));
+            }
+
+            $connection = $manager->getConnection();
+            if (! $connection instanceof PoolingShardConnection) {
+                throw new LogicException(sprintf("Connection of EntityManager '%s' must implement shards configuration.", $name));
+            }
+
+            $connection->connect($shardId);
+        }
+
+        return $manager;
     }
 
     /**
@@ -59,10 +89,16 @@ abstract class DoctrineCommand extends ContainerAwareCommand
      *
      * @param string $name
      *
-     * @return \Doctrine\DBAL\Connection
+     * @return Connection
      */
     protected function getDoctrineConnection($name)
     {
-        return $this->getContainer()->get('doctrine')->getConnection($name);
+        return $this->getDoctrine()->getConnection($name);
+    }
+
+    /** @return ManagerRegistry */
+    protected function getDoctrine()
+    {
+        return $this->doctrine;
     }
 }

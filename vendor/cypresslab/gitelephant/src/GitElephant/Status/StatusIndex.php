@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GitElephant - An abstraction layer for git written in PHP
  * Copyright (C) 2013  Matteo Giachino
@@ -19,7 +20,7 @@
 
 namespace GitElephant\Status;
 
-use \PhpCollection\Sequence;
+use PhpCollection\Sequence;
 
 /**
  * Class StatusIndex
@@ -29,9 +30,9 @@ use \PhpCollection\Sequence;
 class StatusIndex extends Status
 {
     /**
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    public function untracked()
+    public function untracked(): \PhpCollection\Sequence
     {
         return new Sequence();
     }
@@ -39,13 +40,18 @@ class StatusIndex extends Status
     /**
      * all files with modified status in the index
      *
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    public function all()
+    public function all(): \PhpCollection\Sequence
     {
-        return new Sequence(array_filter($this->files, function (StatusFile $statusFile) {
-            return $statusFile->getIndexStatus() && '?' !== $statusFile->getIndexStatus();
-        }));
+        return new Sequence(
+            array_filter(
+                $this->files,
+                function (StatusFile $statusFile) {
+                    return $statusFile->getIndexStatus() && '?' !== $statusFile->getIndexStatus();
+                }
+            )
+        );
     }
 
     /**
@@ -53,16 +59,21 @@ class StatusIndex extends Status
      *
      * @param string $type
      *
-     * @return Sequence
+     * @return Sequence<StatusFile>
      */
-    protected function filterByType($type)
+    protected function filterByType(string $type): \PhpCollection\Sequence
     {
         if (!$this->files) {
             return new Sequence();
         }
 
-        return new Sequence(array_filter($this->files, function (StatusFile $statusFile) use ($type) {
-            return $type === $statusFile->getIndexStatus();
-        }));
+        return new Sequence(
+            array_filter(
+                $this->files,
+                function (StatusFile $statusFile) use ($type) {
+                    return $type === $statusFile->getIndexStatus();
+                }
+            )
+        );
     }
 }
