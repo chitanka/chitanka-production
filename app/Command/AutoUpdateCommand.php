@@ -171,7 +171,7 @@ class AutoUpdateCommand extends Command {
 		if (!$gitBinary) {
 			throw new \Exception('The git binary is not configured.');
 		}
-		return new FetchGitResponse($this->runShellCommand("cd \"$targetDir\" && LC_ALL=C \"$gitBinary\" pull"));
+		return new FetchGitResponse($this->runShellCommand("cd \"$targetDir\" && \"$gitBinary\" pull"));
 	}
 
 	public function runRsyncCommand(string $remoteSource, string $localTarget, string $options = null): FetchRsyncResponse {
@@ -283,10 +283,10 @@ class FetchCommandResponse {
 class FetchGitResponse extends FetchCommandResponse {
 
 	public function hasUpdates(): bool {
-		// before version 2.15 the message was: "Already up-to-date"
-		// after that: "Already up to date"
-		// https://github.com/git/git/commit/7560f547e614244fe1d4648598d4facf7ed33a56
-		return strpos(str_replace('-', ' ', $this->text), 'Already up to date') === false;
+		// A commit range in the output means that new code was pulled.
+		// Example:
+		//     ec5d0bb..9cb28c3  master     -> origin/master
+		return preg_match('/\w\.\.\w/', $this->text) === 1;
 	}
 }
 
