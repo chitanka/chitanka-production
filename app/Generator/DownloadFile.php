@@ -365,11 +365,19 @@ class DownloadFile {
 	public static function setDlCache($textIds, $file, $format = '') {
 		$dbal = Setup::dbal();
 		$pk = self::getHashForTextIds($textIds, $format);
-		$dbal->executeUpdate('INSERT IGNORE '.DBT_DL_CACHE.' set id = '.$pk.', file = ?', [$file]);
+		$sqlPrefix = self::buildSqlPrefixForInsertIgnore($dbal);
+		$dbal->executeUpdate($sqlPrefix.' '.DBT_DL_CACHE.' (id, file) VALUES (?, ?)', [$pk, $file]);
 		foreach ( (array) $textIds as $textId ) {
-			$dbal->executeUpdate('INSERT IGNORE '.DBT_DL_CACHE_TEXT.' set dc_id = '.$pk.', text_id = ?', [$textId]);
+			$dbal->executeUpdate($sqlPrefix.' '.DBT_DL_CACHE_TEXT.' (dc_id, text_id) VALUES (?, ?)', [$pk, $textId]);
 		}
 		return $file;
+	}
+
+	private static function buildSqlPrefixForInsertIgnore(\Doctrine\DBAL\Connection $dbal): string {
+		if ($dbal->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\SqlitePlatform) {
+			return 'INSERT OR IGNORE INTO';
+		}
+		return 'INSERT IGNORE INTO';
 	}
 
 	public static function getDlFileByHash(string $hash) {
